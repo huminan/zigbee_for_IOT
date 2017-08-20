@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //                                                                            /
-// IAR C/C++ Compiler V8.10.3.10338/W32 for 8051        15/Aug/2017  23:22:54 /
+// IAR C/C++ Compiler V8.10.3.10338/W32 for 8051        20/Aug/2017  22:11:47 /
 // Copyright 2004-2011 IAR Systems AB.                                        /
 //                                                                            /
 //    Core               =  plain                                             /
@@ -44,13 +44,14 @@
 //                          -DQUEUED_POLL_RATE=100 -DRESPONSE_POLL_RATE=100)  /
 //                          -DREJOIN_POLL_RATE=440 D:\ProgramData\Hardware\zi /
 //                          gbee\Components\mac\low_level\srf04\mac_radio.c   /
-//                          -D ZTOOL_P1 -D MT_TASK -D MT_SYS_FUNC -D          /
-//                          MT_ZDO_FUNC -D LCD_SUPPORTED=DEBUG -lC            /
-//                          D:\ProgramData\Hardware\zigbee\Projects\zstack\Sa /
-//                          mples\SensorSys\CC2530DB\CoordinatorEB\List\ -lA  /
-//                          D:\ProgramData\Hardware\zigbee\Projects\zstack\Sa /
-//                          mples\SensorSys\CC2530DB\CoordinatorEB\List\      /
-//                          --diag_suppress Pe001,Pa010 -o                    /
+//                          -D HOLD_AUTO_START -D BUILD_ALL_DEVICES -D        /
+//                          REFLECTOR -D NV_INIT -D xNV_RESTORE -D xZTOOL_P1  /
+//                          -D xMT_TASK -D xMT_SYS_FUNC -D xMT_SAPI_FUNC -D   /
+//                          xMT_SAPI_CB_FUNC -lC D:\ProgramData\Hardware\zigb /
+//                          ee\Projects\zstack\Samples\SensorSys\CC2530DB\Coo /
+//                          rdinatorEB\List\ -lA D:\ProgramData\Hardware\zigb /
+//                          ee\Projects\zstack\Samples\SensorSys\CC2530DB\Coo /
+//                          rdinatorEB\List\ --diag_suppress Pe001,Pa010 -o   /
 //                          D:\ProgramData\Hardware\zigbee\Projects\zstack\Sa /
 //                          mples\SensorSys\CC2530DB\CoordinatorEB\Obj\ -e    /
 //                          --no_code_motion --debug --core=plain             /
@@ -481,7 +482,7 @@ macRadioUpdateTxPower SYMBOL "macRadioUpdateTxPower"
 //    6   Description:    Describe the purpose and contents of the file.
 //    7 
 //    8 
-//    9   Copyright 2006-2009 Texas Instruments Incorporated. All rights reserved.
+//    9   Copyright 2006-2012 Texas Instruments Incorporated. All rights reserved.
 //   10 
 //   11   IMPORTANT: Your use of this Software is limited to those specific rights
 //   12   granted under the terms of a software license agreement between the user
@@ -633,14 +634,14 @@ macRadioInit:
         MOV     DPTR,#reqChannel
         MOV     A,#0xb
         MOVX    @DPTR,A
-//  114   macPhyChannel = MAC_RADIO_CHANNEL_DEFAULT;
+//  114   macPhyChannel = MAC_RADIO_CHANNEL_INVALID;
         MOV     DPTR,#macPhyChannel
+        MOV     A,#-0x1
         MOVX    @DPTR,A
-//  115   reqTxPower    = MAC_RADIO_TX_POWER_DEFAULT;
+//  115   reqTxPower    = MAC_RADIO_TX_POWER_INVALID;
         MOV     DPTR,#reqTxPower
-        MOV     A,#0x32
         MOVX    @DPTR,A
-//  116   macPhyTxPower = MAC_RADIO_TX_POWER_DEFAULT;
+//  116   macPhyTxPower = MAC_RADIO_TX_POWER_INVALID;
         MOV     DPTR,#macPhyTxPower
         SJMP    ??Subroutine2_0
         CFI EndBlock cfiBlock0
@@ -978,20 +979,21 @@ macRadioSetIEEEAddr:
 //  229  *                        for it, txPower is the raw register value). If PA/LNA is installed
 //  230  *                        then txPower becomes positive dBm.
 //  231  *
-//  232  * @return      none
-//  233  **************************************************************************************************
-//  234  */
-//  235 #ifndef HAL_MAC_USE_REGISTER_POWER_VALUES
-//  236 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
-//  237 
+//  232  * @return      The minus dBm for power actually set according to what is possible according to
+//  233                 the build and run-time configuration set.
+//  234  **************************************************************************************************
+//  235  */
+//  236 #ifndef HAL_MAC_USE_REGISTER_POWER_VALUES
+//  237 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+//  238 
 
         RSEG BANKED_CODE:CODE:NOROOT(0)
-//  238 MAC_INTERNAL_API void macRadioSetTxPower(uint8 txPower)
+//  239 MAC_INTERNAL_API uint8 macRadioSetTxPower(uint8 txPower)
 macRadioSetTxPower:
         CFI Block cfiBlock10 Using cfiCommon0
         CFI Function macRadioSetTxPower
         CODE
-//  239 {
+//  240 {
         FUNCALL macRadioSetTxPower, macRadioUpdateTxPower
         LOCFRAME ISTACK, 0, STACK
         LOCFRAME PSTACK, 0, STACK
@@ -1020,17 +1022,17 @@ macRadioSetTxPower:
         ; Auto size: 0
         MOV     A,R1
         MOV     R6,A
-//  240   halIntState_t  s;
-//  241 #if defined MAC_RUNTIME_CC2591 || defined MAC_RUNTIME_CC2590
-//  242   const uint8 CODE *pTable = macRadioDefsTxPwrTables[macRadioDefsRefTableId >> 4];
-//  243 #elif defined HAL_PA_LNA || defined HAL_PA_LNA_CC2590
-//  244   const uint8 CODE *pTable = macRadioDefsTxPwrTables[0];
-//  245 #else
-//  246   const uint8 CODE *pTable = macRadioDefsTxPwrBare;
-//  247 #endif
-//  248 
-//  249   /* if the selected dBm is out of range, use the closest available */
-//  250   if ((int8)txPower > (int8)pTable[MAC_RADIO_DEFS_TBL_TXPWR_FIRST_ENTRY])
+//  241   halIntState_t  s;
+//  242 #if defined MAC_RUNTIME_CC2591 || defined MAC_RUNTIME_CC2590
+//  243   const uint8 CODE *pTable = macRadioDefsTxPwrTables[macRadioDefsRefTableId >> 4];
+//  244 #elif defined HAL_PA_LNA || defined HAL_PA_LNA_CC2590
+//  245   const uint8 CODE *pTable = macRadioDefsTxPwrTables[0];
+//  246 #else
+//  247   const uint8 CODE *pTable = macRadioDefsTxPwrBare;
+//  248 #endif
+//  249 
+//  250   /* if the selected dBm is out of range, use the closest available */
+//  251   if ((int8)txPower > (int8)pTable[MAC_RADIO_DEFS_TBL_TXPWR_FIRST_ENTRY])
         MOV     DPTR,#macRadioDefsTxPwrBare
         CLR     A
         MOVC    A,@A+DPTR
@@ -1040,11 +1042,11 @@ macRadioSetTxPower:
         XRL     A,PSW
         RLC     A
         JC      ??macRadioSetTxPower_0
-//  251   {
-//  252     /* greater than base value -- out of table range */
-//  253     txPower = pTable[MAC_RADIO_DEFS_TBL_TXPWR_FIRST_ENTRY];
-//  254   }
-//  255   else if ((int8)txPower < (int8)pTable[MAC_RADIO_DEFS_TBL_TXPWR_LAST_ENTRY])
+//  252   {
+//  253     /* greater than base value -- out of table range */
+//  254     txPower = pTable[MAC_RADIO_DEFS_TBL_TXPWR_FIRST_ENTRY];
+//  255   }
+//  256   else if ((int8)txPower < (int8)pTable[MAC_RADIO_DEFS_TBL_TXPWR_LAST_ENTRY])
         INC     DPTR
         CLR     A
         MOVC    A,@A+DPTR
@@ -1056,37 +1058,37 @@ macRadioSetTxPower:
         XRL     A,PSW
         RLC     A
         JNC     ??macRadioSetTxPower_1
-//  256   {
-//  257     /* smaller than the lowest power level -- out of table range */
-//  258     txPower = pTable[MAC_RADIO_DEFS_TBL_TXPWR_LAST_ENTRY];
+//  257   {
+//  258     /* smaller than the lowest power level -- out of table range */
+//  259     txPower = pTable[MAC_RADIO_DEFS_TBL_TXPWR_LAST_ENTRY];
 ??macRadioSetTxPower_0:
         CLR     A
         MOVC    A,@A+DPTR
         MOV     R6,A
-//  259   }
-//  260 
-//  261   /*
-//  262    *  Set the global variable reqTxPower.  This variable is referenced
-//  263    *  by the function macRadioUpdateTxPower() to write the radio register.
-//  264    *
-//  265    *  A lookup table is used to translate the power level to the register
-//  266    *  value.
-//  267    */
-//  268   HAL_ENTER_CRITICAL_SECTION(s);
+//  260   }
+//  261 
+//  262   /*
+//  263    *  Set the global variable reqTxPower.  This variable is referenced
+//  264    *  by the function macRadioUpdateTxPower() to write the radio register.
+//  265    *
+//  266    *  A lookup table is used to translate the power level to the register
+//  267    *  value.
+//  268    */
+//  269   HAL_ENTER_CRITICAL_SECTION(s);
 ??macRadioSetTxPower_1:
         MOV     A,0xa8
         MOV     R2,A
         CLR     0xa8.7
-//  269   /* When calculating index to the power register value table,
-//  270    * either txPower (of uint8 type) has to be explicitly type-casted to int8
-//  271    * or the subtraction expression has to be type-casted to uint8 to work
-//  272    * with the integral promotions.
-//  273    * The latter is more code size efficient and hence the latter is used.
-//  274    */
-//  275   {
-//  276     uint8 index = pTable[MAC_RADIO_DEFS_TBL_TXPWR_FIRST_ENTRY] - txPower
-//  277       + MAC_RADIO_DEFS_TBL_TXPWR_ENTRIES;
-//  278     reqTxPower = pTable[index];
+//  270   /* When calculating index to the power register value table,
+//  271    * either txPower (of uint8 type) has to be explicitly type-casted to int8
+//  272    * or the subtraction expression has to be type-casted to uint8 to work
+//  273    * with the integral promotions.
+//  274    * The latter is more code size efficient and hence the latter is used.
+//  275    */
+//  276   {
+//  277     uint8 index = pTable[MAC_RADIO_DEFS_TBL_TXPWR_FIRST_ENTRY] - txPower
+//  278       + MAC_RADIO_DEFS_TBL_TXPWR_ENTRIES;
+//  279     reqTxPower = pTable[index];
         MOV     DPTR,#macRadioDefsTxPwrBare
         CLR     A
         MOVC    A,@A+DPTR
@@ -1104,59 +1106,65 @@ macRadioSetTxPower:
         MOVC    A,@A+DPTR
         MOV     DPTR,#reqTxPower
         MOVX    @DPTR,A
-//  279   }
-//  280   HAL_EXIT_CRITICAL_SECTION(s);
+//  280   }
+//  281   HAL_EXIT_CRITICAL_SECTION(s);
         MOV     A,R2
         MOV     C,0xE0 /* A   */.7
         MOV     0xa8.7,C
-//  281 
-//  282   /* update the radio power setting */
-//  283   macRadioUpdateTxPower();
+//  282 
+//  283   /* update the radio power setting */
+//  284   macRadioUpdateTxPower();
         ; Setup parameters for call to function macRadioUpdateTxPower
         LCALL   ??macRadioUpdateTxPower?relay
-//  284 }
+//  285 
+//  286   return txPower;
+        MOV     A,R6
+        MOV     R1,A
         LJMP    ?Subroutine1 & 0xFFFF
         CFI EndBlock cfiBlock10
         REQUIRE _A_IEN0
-//  285 
-//  286 #else
-//  287 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+//  287 }
 //  288 
-//  289 MAC_INTERNAL_API void macRadioSetTxPower(uint8 txPower)
-//  290 {
-//  291   halIntState_t  s;
-//  292 
-//  293   /* same as above but with no lookup table, use raw register value */
-//  294   HAL_ENTER_CRITICAL_SECTION(s);
-//  295   reqTxPower = txPower;
-//  296   HAL_EXIT_CRITICAL_SECTION(s);
-//  297 
-//  298   /* update the radio power setting */
-//  299   macRadioUpdateTxPower();
-//  300 }
-//  301 
-//  302 #endif
+//  289 #else
+//  290 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+//  291 
+//  292 MAC_INTERNAL_API uint8 macRadioSetTxPower(uint8 txPower)
+//  293 {
+//  294   halIntState_t  s;
+//  295 
+//  296   /* same as above but with no lookup table, use raw register value */
+//  297   HAL_ENTER_CRITICAL_SECTION(s);
+//  298   reqTxPower = txPower;
+//  299   HAL_EXIT_CRITICAL_SECTION(s);
+//  300 
+//  301   /* update the radio power setting */
+//  302   macRadioUpdateTxPower();
 //  303 
-//  304 
-//  305 /**************************************************************************************************
-//  306  * @fn          macRadioUpdateTxPower
-//  307  *
-//  308  * @brief       Update the radio's transmit power if a new power level has been requested
-//  309  *
-//  310  * @param       reqTxPower - file scope variable that holds the last request power level
-//  311  *              macPhyTxPower - global variable that holds radio's set power level
+//  304   return txPower;
+//  305 }
+//  306 
+//  307 #endif
+//  308 
+//  309 
+//  310 /**************************************************************************************************
+//  311  * @fn          macRadioUpdateTxPower
 //  312  *
-//  313  * @return      none
-//  314  **************************************************************************************************
-//  315  */
+//  313  * @brief       Update the radio's transmit power if a new power level has been requested
+//  314  *
+//  315  * @param       reqTxPower - file scope variable that holds the last request power level
+//  316  *              macPhyTxPower - global variable that holds radio's set power level
+//  317  *
+//  318  * @return      none
+//  319  **************************************************************************************************
+//  320  */
 
         RSEG BANKED_CODE:CODE:NOROOT(0)
-//  316 MAC_INTERNAL_API void macRadioUpdateTxPower(void)
+//  321 MAC_INTERNAL_API void macRadioUpdateTxPower(void)
 macRadioUpdateTxPower:
         CFI Block cfiBlock11 Using cfiCommon0
         CFI Function macRadioUpdateTxPower
         CODE
-//  317 {
+//  322 {
         PUSH    DPL
         CFI DPL0 Frame(CFA_SP, 4)
         CFI CFA_SP SP+-4
@@ -1165,19 +1173,19 @@ macRadioUpdateTxPower:
         CFI CFA_SP SP+-5
         ; Saved register size: 2
         ; Auto size: 0
-//  318   halIntState_t  s;
-//  319 
-//  320   /*
-//  321    *  If the requested power setting is different from the actual radio setting,
-//  322    *  attempt to udpate to the new power setting.
-//  323    */
-//  324   HAL_ENTER_CRITICAL_SECTION(s);
+//  323   halIntState_t  s;
+//  324 
+//  325   /*
+//  326    *  If the requested power setting is different from the actual radio setting,
+//  327    *  attempt to udpate to the new power setting.
+//  328    */
+//  329   HAL_ENTER_CRITICAL_SECTION(s);
         MOV     C,0xa8.7
         CLR     A
         RLC     A
         MOV     R1,A
         CLR     0xa8.7
-//  325   if (reqTxPower != macPhyTxPower)
+//  330   if (reqTxPower != macPhyTxPower)
         MOV     DPTR,#reqTxPower
         MOVX    A,@DPTR
         MOV     R0,A
@@ -1185,14 +1193,14 @@ macRadioUpdateTxPower:
         MOVX    A,@DPTR
         XRL     A,R0
         JZ      ??macRadioUpdateTxPower_0
-//  326   {
-//  327     /*
-//  328      *  Radio power cannot be updated when the radio is physically transmitting.
-//  329      *  If there is a possibility radio is transmitting, do not change the power
-//  330      *  setting.  This function will be called again after the current transmit
-//  331      *  completes.
-//  332      */
-//  333     if (!macRxOutgoingAckFlag && !MAC_TX_IS_PHYSICALLY_ACTIVE())
+//  331   {
+//  332     /*
+//  333      *  Radio power cannot be updated when the radio is physically transmitting.
+//  334      *  If there is a possibility radio is transmitting, do not change the power
+//  335      *  setting.  This function will be called again after the current transmit
+//  336      *  completes.
+//  337      */
+//  338     if (!macRxOutgoingAckFlag && !MAC_TX_IS_PHYSICALLY_ACTIVE())
         MOV     DPTR,#macRxOutgoingAckFlag
         MOVX    A,@DPTR
         JNZ     ??macRadioUpdateTxPower_0
@@ -1200,50 +1208,51 @@ macRadioUpdateTxPower:
         MOVX    A,@DPTR
         MOV     C,0xE0 /* A   */.7
         JC      ??macRadioUpdateTxPower_0
-//  334     {
-//  335       /*
-//  336        *  Set new power level;  update the shadow value and write
-//  337        *  the new value to the radio hardware.
-//  338        */
-//  339       macPhyTxPower = reqTxPower;
+//  339     {
+//  340       /*
+//  341        *  Set new power level;  update the shadow value and write
+//  342        *  the new value to the radio hardware.
+//  343        */
+//  344       macPhyTxPower = reqTxPower;
         MOV     DPTR,#reqTxPower
         MOVX    A,@DPTR
         MOV     DPTR,#macPhyTxPower
         MOVX    @DPTR,A
-//  340       MAC_RADIO_SET_TX_POWER(macPhyTxPower);
+//  345       MAC_RADIO_SET_TX_POWER(macPhyTxPower);
         MOV     DPTR,#0x6190
         MOVX    @DPTR,A
-//  341     }
-//  342   }
-//  343   HAL_EXIT_CRITICAL_SECTION(s);
+//  346     }
+//  347   }
+//  348   HAL_EXIT_CRITICAL_SECTION(s);
 ??macRadioUpdateTxPower_0:
         MOV     A,R1
         MOV     C,0xE0 /* A   */.0
         MOV     0xa8.7,C
-//  344 }
+//  349 }
         LJMP    ??Subroutine3_0 & 0xFFFF
         CFI EndBlock cfiBlock11
         REQUIRE _A_IEN0
-//  345 
-//  346 
-//  347 /**************************************************************************************************
-//  348  * @fn          macRadioSetChannel
-//  349  *
-//  350  * @brief       Set radio channel.
-//  351  *
-//  352  * @param       channel - channel number, valid range is 11 through 26
-//  353  *
-//  354  * @return      none
-//  355  **************************************************************************************************
-//  356  */
+//  350 
+//  351 
+//  352 /**************************************************************************************************
+//  353  * @fn          macRadioSetChannel
+//  354  *
+//  355  * @brief       Set radio channel.
+//  356  *
+//  357  * @param       channel - channel number, valid range is 11 through 26. Allow
+//  358  *              channels 27 and 28 for some Japanese customers.
+//  359  *
+//  360  * @return      none
+//  361  **************************************************************************************************
+//  362  */
 
         RSEG BANKED_CODE:CODE:NOROOT(0)
-//  357 MAC_INTERNAL_API void macRadioSetChannel(uint8 channel)
+//  363 MAC_INTERNAL_API void macRadioSetChannel(uint8 channel)
 macRadioSetChannel:
         CFI Block cfiBlock12 Using cfiCommon0
         CFI Function macRadioSetChannel
         CODE
-//  358 {
+//  364 {
         FUNCALL macRadioSetChannel, halAssertHandler
         LOCFRAME ISTACK, 0, STACK
         LOCFRAME PSTACK, 0, STACK
@@ -1283,9 +1292,9 @@ macRadioSetChannel:
         ; Auto size: 0
         MOV     A,R1
         MOV     R6,A
-//  359   halIntState_t  s;
-//  360 
-//  361   MAC_ASSERT((channel >= 11) && (channel <= 28));  /* illegal channel */
+//  365   halIntState_t  s;
+//  366 
+//  367   MAC_ASSERT((channel >= 11) && (channel <= 28));  /* illegal channel */
         MOV     A,#-0xb
         ADD     A,R6
         CLR     C
@@ -1293,65 +1302,65 @@ macRadioSetChannel:
         JC      ??macRadioSetChannel_0
         ; Setup parameters for call to function halAssertHandler
         LCALL   ??halAssertHandler?relay
-//  362 
-//  363   /* critical section to make sure transmit does not start while updating channel */
-//  364   HAL_ENTER_CRITICAL_SECTION(s);
+//  368 
+//  369   /* critical section to make sure transmit does not start while updating channel */
+//  370   HAL_ENTER_CRITICAL_SECTION(s);
 ??macRadioSetChannel_0:
         MOV     C,0xa8.7
         CLR     A
         RLC     A
         MOV     R7,A
         CLR     0xa8.7
-//  365 
-//  366   /* set requested channel */
-//  367   reqChannel = channel;
+//  371 
+//  372   /* set requested channel */
+//  373   reqChannel = channel;
         MOV     A,R6
         MOV     DPTR,#reqChannel
         MOVX    @DPTR,A
-//  368 
-//  369   /*
-//  370    *  If transmit is not active, update the radio hardware immediately.  If transmit is active,
-//  371    *  the channel will be updated at the end of the current transmit.
-//  372    */
-//  373   if (!macTxActive)
+//  374 
+//  375   /*
+//  376    *  If transmit is not active, update the radio hardware immediately.  If transmit is active,
+//  377    *  the channel will be updated at the end of the current transmit.
+//  378    */
+//  379   if (!macTxActive)
         MOV     DPTR,#macTxActive
         MOVX    A,@DPTR
         JNZ     ??macRadioSetChannel_1
-//  374   {
-//  375     macRadioUpdateChannel();
+//  380   {
+//  381     macRadioUpdateChannel();
         ; Setup parameters for call to function macRadioUpdateChannel
         LCALL   ??macRadioUpdateChannel?relay
-//  376   }
-//  377 
-//  378   HAL_EXIT_CRITICAL_SECTION(s);
+//  382   }
+//  383 
+//  384   HAL_EXIT_CRITICAL_SECTION(s);
 ??macRadioSetChannel_1:
         MOV     A,R7
         MOV     C,0xE0 /* A   */.0
         MOV     0xa8.7,C
-//  379 }
+//  385 }
         LJMP    ?Subroutine1 & 0xFFFF
         CFI EndBlock cfiBlock12
         REQUIRE _A_IEN0
-//  380 
-//  381 
-//  382 /**************************************************************************************************
-//  383  * @fn          macRadioUpdateChannel
-//  384  *
-//  385  * @brief       Update the radio channel if a new channel has been requested.
-//  386  *
-//  387  * @param       none
-//  388  *
-//  389  * @return      none
-//  390  **************************************************************************************************
-//  391  */
+//  386 
+//  387 
+//  388 /**************************************************************************************************
+//  389  * @fn          macRadioUpdateChannel
+//  390  *
+//  391  * @brief       Update the radio channel if a new channel has been requested.
+//  392  *
+//  393  * @param       none
+//  394  *
+//  395  * @return      none
+//  396  **************************************************************************************************
+//  397  */
 
         RSEG BANKED_CODE:CODE:NOROOT(0)
-//  392 MAC_INTERNAL_API void macRadioUpdateChannel(void)
+//  398 MAC_INTERNAL_API void macRadioUpdateChannel(void)
 macRadioUpdateChannel:
         CFI Block cfiBlock13 Using cfiCommon0
         CFI Function macRadioUpdateChannel
         CODE
-//  393 {
+//  399 {
         FUNCALL macRadioUpdateChannel, halAssertHandler
         LOCFRAME ISTACK, 2, STACK
         LOCFRAME PSTACK, 0, STACK
@@ -1404,24 +1413,24 @@ macRadioUpdateChannel:
         CFI CFA_SP SP+-5
         ; Saved register size: 2
         ; Auto size: 0
-//  394   halIntState_t  s;
-//  395 
-//  396   MAC_ASSERT(!macTxActive); /* cannot change channel during a transmit */
+//  400   halIntState_t  s;
+//  401 
+//  402   MAC_ASSERT(!macTxActive); /* cannot change channel during a transmit */
         MOV     DPTR,#macTxActive
         MOVX    A,@DPTR
         JZ      ??macRadioUpdateChannel_0
         ; Setup parameters for call to function halAssertHandler
         LCALL   ??halAssertHandler?relay
-//  397 
-//  398   /* if the channel has changed, set the radio to the new channel */
-//  399   HAL_ENTER_CRITICAL_SECTION(s);
+//  403 
+//  404   /* if the channel has changed, set the radio to the new channel */
+//  405   HAL_ENTER_CRITICAL_SECTION(s);
 ??macRadioUpdateChannel_0:
         MOV     C,0xa8.7
         CLR     A
         RLC     A
         MOV     R1,A
         CLR     0xa8.7
-//  400   if (reqChannel != macPhyChannel)
+//  406   if (reqChannel != macPhyChannel)
         MOV     DPTR,#reqChannel
         MOVX    A,@DPTR
         MOV     R0,A
@@ -1429,22 +1438,22 @@ macRadioUpdateChannel:
         MOVX    A,@DPTR
         XRL     A,R0
         JZ      ??macRadioUpdateChannel_1
-//  401   {
-//  402     macPhyChannel = reqChannel;
+//  407   {
+//  408     macPhyChannel = reqChannel;
         MOV     DPTR,#reqChannel
         MOVX    A,@DPTR
         MOV     DPTR,#macPhyChannel
         MOVX    @DPTR,A
-//  403     HAL_EXIT_CRITICAL_SECTION(s);
+//  409     HAL_EXIT_CRITICAL_SECTION(s);
         MOV     A,R1
         MOV     C,0xE0 /* A   */.0
         MOV     0xa8.7,C
-//  404 
-//  405     /* changing the channel stops any receive in progress */
-//  406     macRxOff();
+//  410 
+//  411     /* changing the channel stops any receive in progress */
+//  412     macRxOff();
         ; Setup parameters for call to function macRxOff
         LCALL   ??macRxOff?relay
-//  407     MAC_RADIO_SET_CHANNEL(macPhyChannel);
+//  413     MAC_RADIO_SET_CHANNEL(macPhyChannel);
         MOV     B,#0x5
         MOV     DPTR,#macPhyChannel
         MOVX    A,@DPTR
@@ -1452,52 +1461,52 @@ macRadioUpdateChannel:
         ADD     A,#-0x2c
         MOV     DPTR,#0x618f
         MOVX    @DPTR,A
-//  408 
-//  409     /* If the channel is updated in the middle of receiving a frame, we must
-//  410      * clean up the Rx logic.
-//  411      */
-//  412     macRxHaltCleanup();
+//  414 
+//  415     /* If the channel is updated in the middle of receiving a frame, we must
+//  416      * clean up the Rx logic.
+//  417      */
+//  418     macRxHaltCleanup();
         ; Setup parameters for call to function macRxHaltCleanup
         LCALL   ??macRxHaltCleanup?relay
-//  413 
-//  414     macRxOnRequest();
+//  419 
+//  420     macRxOnRequest();
         ; Setup parameters for call to function macRxOnRequest
         LCALL   ??macRxOnRequest?relay
         SJMP    ??macRadioUpdateChannel_2
-//  415   }
-//  416   else
-//  417   {
-//  418     HAL_EXIT_CRITICAL_SECTION(s);
+//  421   }
+//  422   else
+//  423   {
+//  424     HAL_EXIT_CRITICAL_SECTION(s);
 ??macRadioUpdateChannel_1:
         MOV     A,R1
         MOV     C,0xE0 /* A   */.0
         MOV     0xa8.7,C
-//  419   }
-//  420 }
+//  425   }
+//  426 }
 ??macRadioUpdateChannel_2:
         LJMP    ??Subroutine3_0 & 0xFFFF
         CFI EndBlock cfiBlock13
         REQUIRE _A_IEN0
-//  421 
-//  422 
-//  423 /**************************************************************************************************
-//  424  * @fn          macRadioStartScan
-//  425  *
-//  426  * @brief       Puts radio into selected scan mode.
-//  427  *
-//  428  * @param       scanMode - scan mode, see #defines in .h file
-//  429  *
-//  430  * @return      none
-//  431  **************************************************************************************************
-//  432  */
+//  427 
+//  428 
+//  429 /**************************************************************************************************
+//  430  * @fn          macRadioStartScan
+//  431  *
+//  432  * @brief       Puts radio into selected scan mode.
+//  433  *
+//  434  * @param       scanMode - scan mode, see #defines in .h file
+//  435  *
+//  436  * @return      none
+//  437  **************************************************************************************************
+//  438  */
 
         RSEG BANKED_CODE:CODE:NOROOT(0)
-//  433 MAC_INTERNAL_API void macRadioStartScan(uint8 scanMode)
+//  439 MAC_INTERNAL_API void macRadioStartScan(uint8 scanMode)
 macRadioStartScan:
         CFI Block cfiBlock14 Using cfiCommon0
         CFI Function macRadioStartScan
         CODE
-//  434 {
+//  440 {
         FUNCALL macRadioStartScan, halAssertHandler
         LOCFRAME ISTACK, 0, STACK
         LOCFRAME PSTACK, 0, STACK
@@ -1548,45 +1557,45 @@ macRadioStartScan:
         ; Auto size: 0
         MOV     A,R1
         MOV     R6,A
-//  435   MAC_ASSERT(macSleepState == MAC_SLEEP_STATE_AWAKE); /* radio must be awake */
+//  441   MAC_ASSERT(macSleepState == MAC_SLEEP_STATE_AWAKE); /* radio must be awake */
         MOV     DPTR,#macSleepState
         MOVX    A,@DPTR
         JZ      ??macRadioStartScan_0
         ; Setup parameters for call to function halAssertHandler
         LCALL   ??halAssertHandler?relay
-//  436   MAC_ASSERT(macRxFilter == RX_FILTER_OFF); /* all filtering must be off to start scan */
+//  442   MAC_ASSERT(macRxFilter == RX_FILTER_OFF); /* all filtering must be off to start scan */
 ??macRadioStartScan_0:
         MOV     DPTR,#macRxFilter
         MOVX    A,@DPTR
         JZ      ??macRadioStartScan_1
         ; Setup parameters for call to function halAssertHandler
         LCALL   ??halAssertHandler?relay
-//  437 
-//  438   /* set the receive filter based on the selected scan mode */
-//  439   if (scanMode == MAC_SCAN_ED)
+//  443 
+//  444   /* set the receive filter based on the selected scan mode */
+//  445   if (scanMode == MAC_SCAN_ED)
 ??macRadioStartScan_1:
         MOV     A,R6
         JNZ     ??macRadioStartScan_2
-//  440   {
-//  441     macRxFilter = RX_FILTER_ALL;
+//  446   {
+//  447     macRxFilter = RX_FILTER_ALL;
         MOV     DPTR,#macRxFilter
         MOV     A,#0x1
         SJMP    ??macRadioStartScan_3
-//  442   }
-//  443   else if (scanMode == MAC_SCAN_ORPHAN)
+//  448   }
+//  449   else if (scanMode == MAC_SCAN_ORPHAN)
 ??macRadioStartScan_2:
         MOV     A,#0x3
         XRL     A,R6
         JNZ     ??macRadioStartScan_4
-//  444   {
-//  445     macRxFilter = RX_FILTER_NON_COMMAND_FRAMES;
+//  450   {
+//  451     macRxFilter = RX_FILTER_NON_COMMAND_FRAMES;
         MOV     DPTR,#macRxFilter
         MOV     A,#0x3
         SJMP    ??macRadioStartScan_3
-//  446   }
-//  447   else
-//  448   {
-//  449     MAC_ASSERT((scanMode == MAC_SCAN_ACTIVE) || (scanMode == MAC_SCAN_PASSIVE)); /* invalid scan type */
+//  452   }
+//  453   else
+//  454   {
+//  455     MAC_ASSERT((scanMode == MAC_SCAN_ACTIVE) || (scanMode == MAC_SCAN_PASSIVE)); /* invalid scan type */
 ??macRadioStartScan_4:
         MOV     A,#0x1
         XRL     A,R6
@@ -1596,14 +1605,14 @@ macRadioStartScan:
         JZ      ??macRadioStartScan_5
         ; Setup parameters for call to function halAssertHandler
         LCALL   ??halAssertHandler?relay
-//  450     macRxFilter = RX_FILTER_NON_BEACON_FRAMES;
+//  456     macRxFilter = RX_FILTER_NON_BEACON_FRAMES;
 ??macRadioStartScan_5:
         MOV     DPTR,#macRxFilter
         MOV     A,#0x2
         MOVX    @DPTR,A
-//  451 
-//  452     /* for active and passive scans, per spec the pan ID must be 0xFFFF */
-//  453     MAC_RADIO_SET_PAN_ID(0xFFFF);
+//  457 
+//  458     /* for active and passive scans, per spec the pan ID must be 0xFFFF */
+//  459     MAC_RADIO_SET_PAN_ID(0xFFFF);
         MOV     DPTR,#0x6172
         MOV     A,#-0x1
         MOVX    @DPTR,A
@@ -1611,8 +1620,8 @@ macRadioStartScan:
 ??macRadioStartScan_3:
         MOVX    @DPTR,A
         CFI EndBlock cfiBlock14
-//  454   }
-//  455 }
+//  460   }
+//  461 }
         REQUIRE ?Subroutine1
         ; // Fall through to label ?Subroutine1
 
@@ -1634,26 +1643,26 @@ macRadioStartScan:
         MOV     R7,#0x1
         LJMP    ?BANKED_LEAVE_XDATA
         CFI EndBlock cfiBlock15
-//  456 
-//  457 
-//  458 /**************************************************************************************************
-//  459  * @fn          macRadioStopScan
-//  460  *
-//  461  * @brief       Takes radio out of scan mode.  Note can be called if
-//  462  *
-//  463  * @param       none
-//  464  *
-//  465  * @return      none
-//  466  **************************************************************************************************
-//  467  */
+//  462 
+//  463 
+//  464 /**************************************************************************************************
+//  465  * @fn          macRadioStopScan
+//  466  *
+//  467  * @brief       Takes radio out of scan mode.  Note can be called if
+//  468  *
+//  469  * @param       none
+//  470  *
+//  471  * @return      none
+//  472  **************************************************************************************************
+//  473  */
 
         RSEG BANKED_CODE:CODE:NOROOT(0)
-//  468 MAC_INTERNAL_API void macRadioStopScan(void)
+//  474 MAC_INTERNAL_API void macRadioStopScan(void)
 macRadioStopScan:
         CFI Block cfiBlock16 Using cfiCommon0
         CFI Function macRadioStopScan
         CODE
-//  469 {
+//  475 {
         PUSH    DPL
         CFI DPL0 Frame(CFA_SP, 4)
         CFI CFA_SP SP+-4
@@ -1662,13 +1671,13 @@ macRadioStopScan:
         CFI CFA_SP SP+-5
         ; Saved register size: 2
         ; Auto size: 0
-//  470   macRxFilter = RX_FILTER_OFF;
+//  476   macRxFilter = RX_FILTER_OFF;
         MOV     DPTR,#macRxFilter
         CLR     A
         MOVX    @DPTR,A
-//  471 
-//  472   /* restore the pan ID (passive and active scans set pan ID to 0xFFFF) */
-//  473   MAC_RADIO_SET_PAN_ID(macPib.panId);
+//  477 
+//  478   /* restore the pan ID (passive and active scans set pan ID to 0xFFFF) */
+//  479   MAC_RADIO_SET_PAN_ID(macPib.panId);
         MOV     DPTR,#macPib + 29
         MOVX    A,@DPTR
         MOV     DPTR,#0x6172
@@ -1678,28 +1687,28 @@ macRadioStopScan:
         MOV     DPTR,#0x6173
         LJMP    ??Subroutine2_0 & 0xFFFF
         CFI EndBlock cfiBlock16
-//  474 }
-//  475 
-//  476 
-//  477 /**************************************************************************************************
-//  478  * @fn          macRadioEnergyDetectStart
-//  479  *
-//  480  * @brief       Initiates energy detect.  The highest energy detected is recorded from the time
-//  481  *              when this function is called until the energy detect is stopped.
-//  482  *
-//  483  * @param       none
-//  484  *
-//  485  * @return      none
-//  486  **************************************************************************************************
-//  487  */
+//  480 }
+//  481 
+//  482 
+//  483 /**************************************************************************************************
+//  484  * @fn          macRadioEnergyDetectStart
+//  485  *
+//  486  * @brief       Initiates energy detect.  The highest energy detected is recorded from the time
+//  487  *              when this function is called until the energy detect is stopped.
+//  488  *
+//  489  * @param       none
+//  490  *
+//  491  * @return      none
+//  492  **************************************************************************************************
+//  493  */
 
         RSEG BANKED_CODE:CODE:NOROOT(0)
-//  488 void macRadioEnergyDetectStart(void)
+//  494 void macRadioEnergyDetectStart(void)
 macRadioEnergyDetectStart:
         CFI Block cfiBlock17 Using cfiCommon0
         CFI Function macRadioEnergyDetectStart
         CODE
-//  489 {
+//  495 {
         FUNCALL macRadioEnergyDetectStart, macMcuRecordMaxRssiStart
         LOCFRAME ISTACK, 2, STACK
         LOCFRAME PSTACK, 0, STACK
@@ -1719,33 +1728,36 @@ macRadioEnergyDetectStart:
         CFI CFA_SP SP+-5
         ; Saved register size: 2
         ; Auto size: 0
-//  490   MAC_RADIO_RECORD_MAX_RSSI_START();
+//  496   /* Energy Detection Scan should be run with CC2591 compresson workaround off */
+//  497   COMPRESSION_WORKAROUND_OFF();
+//  498 
+//  499   MAC_RADIO_RECORD_MAX_RSSI_START();
         ; Setup parameters for call to function macMcuRecordMaxRssiStart
         LCALL   ??macMcuRecordMaxRssiStart?relay
-//  491 }
+//  500 }
         LJMP    ??Subroutine3_0 & 0xFFFF
         CFI EndBlock cfiBlock17
-//  492 
-//  493 
-//  494 /**************************************************************************************************
-//  495  * @fn          macRadioEnergyDetectStop
-//  496  *
-//  497  * @brief       Called at completion of an energy detect.  Note: can be called even if energy
-//  498  *              detect is already stopped (needed by reset).
-//  499  *
-//  500  * @param       none
-//  501  *
-//  502  * @return      highest energy detect measurement
-//  503  **************************************************************************************************
-//  504  */
+//  501 
+//  502 
+//  503 /**************************************************************************************************
+//  504  * @fn          macRadioEnergyDetectStop
+//  505  *
+//  506  * @brief       Called at completion of an energy detect.  Note: can be called even if energy
+//  507  *              detect is already stopped (needed by reset).
+//  508  *
+//  509  * @param       none
+//  510  *
+//  511  * @return      highest energy detect measurement
+//  512  **************************************************************************************************
+//  513  */
 
         RSEG BANKED_CODE:CODE:NOROOT(0)
-//  505 uint8 macRadioEnergyDetectStop(void)
+//  514 uint8 macRadioEnergyDetectStop(void)
 macRadioEnergyDetectStop:
         CFI Block cfiBlock18 Using cfiCommon0
         CFI Function macRadioEnergyDetectStop
         CODE
-//  506 {
+//  515 {
         FUNCALL macRadioEnergyDetectStop, macMcuRecordMaxRssiStop
         LOCFRAME ISTACK, 2, STACK
         LOCFRAME PSTACK, 0, STACK
@@ -1776,14 +1788,17 @@ macRadioEnergyDetectStop:
         CFI CFA_SP SP+-5
         ; Saved register size: 2
         ; Auto size: 0
-//  507   uint8 rssiDbm;
-//  508   uint8 energyDetectMeasurement;
-//  509 
-//  510   rssiDbm = MAC_RADIO_RECORD_MAX_RSSI_STOP() + MAC_RADIO_RSSI_OFFSET;
-//  511   MAC_RADIO_RSSI_LNA_OFFSET(rssiDbm);
-//  512   energyDetectMeasurement = radioComputeED(rssiDbm);
-//  513 
-//  514   return(energyDetectMeasurement);
+//  516   uint8 rssiDbm;
+//  517   uint8 energyDetectMeasurement;
+//  518 
+//  519   rssiDbm = MAC_RADIO_RECORD_MAX_RSSI_STOP() + MAC_RADIO_RSSI_OFFSET;
+//  520   MAC_RADIO_RSSI_LNA_OFFSET(rssiDbm);
+//  521   energyDetectMeasurement = radioComputeED(rssiDbm);
+//  522 
+//  523   /* Trun on CC2591 compresson workaround */
+//  524   COMPRESSION_WORKAROUND_ON();
+//  525 
+//  526   return(energyDetectMeasurement);
         ; Setup parameters for call to function radioComputeED
         ; Setup parameters for call to function macMcuRecordMaxRssiStop
         LCALL   ??macMcuRecordMaxRssiStop?relay
@@ -1793,49 +1808,49 @@ macRadioEnergyDetectStop:
         LCALL   ??radioComputeED?relay
         LJMP    ??Subroutine3_0 & 0xFFFF
         CFI EndBlock cfiBlock18
-//  515 }
-//  516 
-//  517 /*=================================================================================================
-//  518  * @fn          radioComputeED
-//  519  *
-//  520  * @brief       Compute energy detect measurement.
-//  521  *
-//  522  * @param       rssi - raw RSSI value from radio hardware
-//  523  *
-//  524  * @return      energy detect measurement in the range of 0x00-0xFF
-//  525  *=================================================================================================
-//  526  */
+//  527 }
+//  528 
+//  529 /*=================================================================================================
+//  530  * @fn          radioComputeED
+//  531  *
+//  532  * @brief       Compute energy detect measurement.
+//  533  *
+//  534  * @param       rssi - raw RSSI value from radio hardware
+//  535  *
+//  536  * @return      energy detect measurement in the range of 0x00-0xFF
+//  537  *=================================================================================================
+//  538  */
 
         RSEG BANKED_CODE:CODE:NOROOT(0)
-//  527 static uint8 radioComputeED(int8 rssiDbm)
+//  539 static uint8 radioComputeED(int8 rssiDbm)
 radioComputeED:
         CFI Block cfiBlock19 Using cfiCommon0
         CFI Function radioComputeED
         CODE
-//  528 {
+//  540 {
         ; Saved register size: 0
         ; Auto size: 0
         MOV     A,R1
         MOV     R4,A
-//  529   uint8 ed;
-//  530 
-//  531   /*
-//  532    *  Keep RF power between minimum and maximum values.
-//  533    *  This min/max range is derived from datasheet and specification.
-//  534    */
-//  535   if (rssiDbm < ED_RF_POWER_MIN_DBM)
+//  541   uint8 ed;
+//  542 
+//  543   /*
+//  544    *  Keep RF power between minimum and maximum values.
+//  545    *  This min/max range is derived from datasheet and specification.
+//  546    */
+//  547   if (rssiDbm < ED_RF_POWER_MIN_DBM)
         CLR     C
-        SUBB    A,#-0x51
+        SUBB    A,#-0x57
         MOV     C,0xD0 /* PSW */.2
         XRL     A,PSW
         RLC     A
         JNC     ??radioComputeED_0
-//  536   {
-//  537     rssiDbm = ED_RF_POWER_MIN_DBM;
-        MOV     R4,#-0x51
+//  548   {
+//  549     rssiDbm = ED_RF_POWER_MIN_DBM;
+        MOV     R4,#-0x57
         SJMP    ??radioComputeED_1
-//  538   }
-//  539   else if (rssiDbm > ED_RF_POWER_MAX_DBM)
+//  550   }
+//  551   else if (rssiDbm > ED_RF_POWER_MAX_DBM)
 ??radioComputeED_0:
         MOV     A,R4
         CLR     C
@@ -1844,21 +1859,21 @@ radioComputeED:
         XRL     A,PSW
         RLC     A
         JC      ??radioComputeED_1
-//  540   {
-//  541     rssiDbm = ED_RF_POWER_MAX_DBM;
+//  552   {
+//  553     rssiDbm = ED_RF_POWER_MAX_DBM;
         MOV     R4,#0xa
-//  542   }
-//  543 
-//  544   /*
-//  545    *  Create energy detect measurement by normalizing and scaling RF power level.
-//  546    *
-//  547    *  Note : The division operation below is designed for maximum accuracy and
-//  548    *         best granularity.  This is done by grouping the math operations to
-//  549    *         compute the entire numerator before doing any division.
-//  550    */
-//  551   ed = (MAC_SPEC_ED_MAX * (rssiDbm - ED_RF_POWER_MIN_DBM)) / (ED_RF_POWER_MAX_DBM - ED_RF_POWER_MIN_DBM);
-//  552 
-//  553   return(ed);
+//  554   }
+//  555 
+//  556   /*
+//  557    *  Create energy detect measurement by normalizing and scaling RF power level.
+//  558    *
+//  559    *  Note : The division operation below is designed for maximum accuracy and
+//  560    *         best granularity.  This is done by grouping the math operations to
+//  561    *         compute the entire numerator before doing any division.
+//  562    */
+//  563   ed = (MAC_SPEC_ED_MAX * (rssiDbm - ED_RF_POWER_MIN_DBM)) / (ED_RF_POWER_MAX_DBM - ED_RF_POWER_MIN_DBM);
+//  564 
+//  565   return(ed);
 ??radioComputeED_1:
         MOV     A,R4
         MOV     R0,A
@@ -1866,7 +1881,7 @@ radioComputeED:
         SUBB    A,0xE0 /* A   */
         MOV     R1,A
         MOV     A,R0
-        ADD     A,#0x51
+        ADD     A,#0x57
         MOV     R0,A
         MOV     A,R1
         ADDC    A,#0x0
@@ -1881,35 +1896,35 @@ radioComputeED:
         MUL     AB
         ADD     A,R2
         MOV     R1,A
-        MOV     R2,#0x5b
+        MOV     R2,#0x61
         MOV     R3,#0x0
         LCALL   ?S_DIV_MOD
         MOV     A,R0
         MOV     R1,A
         LJMP    ?BRET
         CFI EndBlock cfiBlock19
-//  554 }
-//  555 
-//  556 
-//  557 /**************************************************************************************************
-//  558  * @fn          macRadioComputeLQI
-//  559  *
-//  560  * @brief       Compute link quality indication.
-//  561  *
-//  562  * @param       rssi - raw RSSI value from radio hardware
-//  563  *              corr - correlation value from radio hardware
-//  564  *
-//  565  * @return      link quality indicator value
-//  566  **************************************************************************************************
-//  567  */
+//  566 }
+//  567 
+//  568 
+//  569 /**************************************************************************************************
+//  570  * @fn          macRadioComputeLQI
+//  571  *
+//  572  * @brief       Compute link quality indication.
+//  573  *
+//  574  * @param       rssi - raw RSSI value from radio hardware
+//  575  *              corr - correlation value from radio hardware
+//  576  *
+//  577  * @return      link quality indicator value
+//  578  **************************************************************************************************
+//  579  */
 
         RSEG BANKED_CODE:CODE:NOROOT(0)
-//  568 MAC_INTERNAL_API uint8 macRadioComputeLQI(int8 rssiDbm, uint8 corr)
+//  580 MAC_INTERNAL_API uint8 macRadioComputeLQI(int8 rssiDbm, uint8 corr)
 macRadioComputeLQI:
         CFI Block cfiBlock20 Using cfiCommon0
         CFI Function macRadioComputeLQI
         CODE
-//  569 {
+//  581 {
         FUNCALL macRadioComputeLQI, radioComputeED
         LOCFRAME ISTACK, 0, STACK
         LOCFRAME PSTACK, 0, STACK
@@ -1936,19 +1951,19 @@ macRadioComputeLQI:
         CFI CFA_XSP16 add(XSP16, 9)
         ; Saved register size: 9
         ; Auto size: 0
-//  570   (void) corr; /* suppress compiler warning of unused parameter */
-//  571 
-//  572   /*
-//  573    *  Note : Currently the LQI value is simply the energy detect measurement.
-//  574    *         A more accurate value could be derived by using the correlation
-//  575    *         value along with the RSSI value.
-//  576    */
-//  577   return(radioComputeED(rssiDbm));
+//  582   (void) corr; /* suppress compiler warning of unused parameter */
+//  583 
+//  584   /*
+//  585    *  Note : Currently the LQI value is simply the energy detect measurement.
+//  586    *         A more accurate value could be derived by using the correlation
+//  587    *         value along with the RSSI value.
+//  588    */
+//  589   return(radioComputeED(rssiDbm));
         ; Setup parameters for call to function radioComputeED
         LCALL   ??radioComputeED?relay
         LJMP    ?Subroutine1 & 0xFFFF
         CFI EndBlock cfiBlock20
-//  578 }
+//  590 }
 
         RSEG BANK_RELAYS:CODE:REORDER:NOROOT(0)
 ??macRadioInit?relay:
@@ -2053,17 +2068,17 @@ macRadioComputeLQI:
         DC24    macRadioComputeLQI
 
         END
-//  579 
-//  580 
-//  581 /**************************************************************************************************
-//  582 */
+//  591 
+//  592 
+//  593 /**************************************************************************************************
+//  594 */
 // 
-// 603 bytes in segment BANKED_CODE
+// 605 bytes in segment BANKED_CODE
 // 102 bytes in segment BANK_RELAYS
 //   1 byte  in segment SFR_AN
 //   4 bytes in segment XDATA_Z
 // 
-// 705 bytes of CODE  memory
+// 707 bytes of CODE  memory
 //   0 bytes of DATA  memory (+ 1 byte shared)
 //   4 bytes of XDATA memory
 //

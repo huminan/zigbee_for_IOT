@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //                                                                            /
-// IAR C/C++ Compiler V8.10.3.10338/W32 for 8051        15/Aug/2017  23:22:50 /
+// IAR C/C++ Compiler V8.10.3.10338/W32 for 8051        20/Aug/2017  22:11:46 /
 // Copyright 2004-2011 IAR Systems AB.                                        /
 //                                                                            /
 //    Core               =  plain                                             /
@@ -44,13 +44,14 @@
 //                          -DQUEUED_POLL_RATE=100 -DRESPONSE_POLL_RATE=100)  /
 //                          -DREJOIN_POLL_RATE=440 D:\ProgramData\Hardware\zi /
 //                          gbee\Components\hal\common\hal_assert.c -D        /
-//                          ZTOOL_P1 -D MT_TASK -D MT_SYS_FUNC -D             /
-//                          MT_ZDO_FUNC -D LCD_SUPPORTED=DEBUG -lC            /
-//                          D:\ProgramData\Hardware\zigbee\Projects\zstack\Sa /
-//                          mples\SensorSys\CC2530DB\CoordinatorEB\List\ -lA  /
-//                          D:\ProgramData\Hardware\zigbee\Projects\zstack\Sa /
-//                          mples\SensorSys\CC2530DB\CoordinatorEB\List\      /
-//                          --diag_suppress Pe001,Pa010 -o                    /
+//                          HOLD_AUTO_START -D BUILD_ALL_DEVICES -D           /
+//                          REFLECTOR -D NV_INIT -D xNV_RESTORE -D xZTOOL_P1  /
+//                          -D xMT_TASK -D xMT_SYS_FUNC -D xMT_SAPI_FUNC -D   /
+//                          xMT_SAPI_CB_FUNC -lC D:\ProgramData\Hardware\zigb /
+//                          ee\Projects\zstack\Samples\SensorSys\CC2530DB\Coo /
+//                          rdinatorEB\List\ -lA D:\ProgramData\Hardware\zigb /
+//                          ee\Projects\zstack\Samples\SensorSys\CC2530DB\Coo /
+//                          rdinatorEB\List\ --diag_suppress Pe001,Pa010 -o   /
 //                          D:\ProgramData\Hardware\zigbee\Projects\zstack\Sa /
 //                          mples\SensorSys\CC2530DB\CoordinatorEB\Obj\ -e    /
 //                          --no_code_motion --debug --core=plain             /
@@ -347,8 +348,8 @@ halAssertHazardLights SYMBOL "halAssertHazardLights"
 // D:\ProgramData\Hardware\zigbee\Components\hal\common\hal_assert.c
 //    1 /**************************************************************************************************
 //    2   Filename:       hal_assert.c
-//    3   Revised:        $Date: 2010-01-07 10:10:43 -0800 (Thu, 07 Jan 2010) $
-//    4   Revision:       $Revision: 21451 $
+//    3   Revised:        $Date: 2010-11-22 08:13:43 -0800 (Mon, 22 Nov 2010) $
+//    4   Revision:       $Revision: 24480 $
 //    5 
 //    6   Description:    Describe the purpose and contents of the file.
 //    7 
@@ -450,10 +451,10 @@ P1DIR:
 //   49 #include "hal_mcu.h"
 //   50 
 //   51 #if (defined HAL_MCU_AVR) || (defined HAL_MCU_CC2430) || (defined HAL_MCU_CC2530) || \ 
-//   52   (defined HAL_MCU_CC2533) || (defined HAL_MCU_MSP430)
+//   52     (defined HAL_MCU_CC2533) || (defined HAL_MCU_MSP430)
 //   53   /* for access to debug data */
-//   54   #include "mac_rx.h"
-//   55   #include "mac_tx.h"
+//   54 #include "mac_rx.h"
+//   55 #include "mac_tx.h"
 //   56 #endif
 //   57 
 //   58 /* ------------------------------------------------------------------------------------------------
@@ -503,13 +504,14 @@ halAssertHandler:
 //   77   /* execute code that handles asserts */
 //   78 #ifdef ASSERT_RESET
 //   79   HAL_SYSTEM_RESET();
-//   80 #else
+//   80 #elif !defined ASSERT_WHILE
 //   81   halAssertHazardLights();
         ; Setup parameters for call to function halAssertHazardLights
         LCALL   ??halAssertHazardLights?relay
-//   82 #endif
-//   83 
-//   84 }
+//   82 #else
+//   83   while(1);
+//   84 #endif
+//   85 }
         POP     DPH
         CFI DPH0 SameValue
         CFI CFA_SP SP+-4
@@ -518,26 +520,26 @@ halAssertHandler:
         CFI CFA_SP SP+-3
         LJMP    ?BRET
         CFI EndBlock cfiBlock0
-//   85 
 //   86 
-//   87 /**************************************************************************************************
-//   88  * @fn          halAssertHazardLights
-//   89  *
-//   90  * @brief       Blink LEDs to indicate an error.
-//   91  *
-//   92  * @param       none
-//   93  *
-//   94  * @return      none
-//   95  **************************************************************************************************
-//   96  */
+//   87 #if !defined ASSERT_WHILE
+//   88 /**************************************************************************************************
+//   89  * @fn          halAssertHazardLights
+//   90  *
+//   91  * @brief       Blink LEDs to indicate an error.
+//   92  *
+//   93  * @param       none
+//   94  *
+//   95  * @return      none
+//   96  **************************************************************************************************
+//   97  */
 
         RSEG BANKED_CODE:CODE:NOROOT(0)
-//   97 void halAssertHazardLights(void)
+//   98 void halAssertHazardLights(void)
 halAssertHazardLights:
         CFI Block cfiBlock1 Using cfiCommon0
         CFI Function halAssertHazardLights
         CODE
-//   98 {
+//   99 {
         MOV     A,#-0xc
         LCALL   ?BANKED_ENTER_XDATA
         CFI DPH0 load(1, XDATA, add(CFA_XSP16, literal(-1)))
@@ -559,34 +561,34 @@ halAssertHazardLights:
         MOV     A,#-0xa
         LCALL   ?ALLOC_XSTACK8
         CFI CFA_XSP16 add(XSP16, 22)
-//   99   enum
-//  100   {
-//  101     DEBUG_DATA_RSTACK_HIGH_OFS,
-//  102     DEBUG_DATA_RSTACK_LOW_OFS,
-//  103     DEBUG_DATA_TX_ACTIVE_OFS,
-//  104     DEBUG_DATA_RX_ACTIVE_OFS,
-//  105 
-//  106 #if (defined HAL_MCU_AVR) || (defined HAL_MCU_CC2430)
-//  107     DEBUG_DATA_INT_MASK_OFS,
-//  108 #elif (defined HAL_MCU_CC2530) || (defined HAL_MCU_CC2533)
-//  109     DEBUG_DATA_INT_MASK0_OFS,
-//  110     DEBUG_DATA_INT_MASK1_OFS,
-//  111 #endif
-//  112 
-//  113     DEBUG_DATA_SIZE
-//  114   };
-//  115 
-//  116   uint8 buttonHeld;
-//  117   uint8 debugData[DEBUG_DATA_SIZE];
-//  118 
-//  119   /* disable all interrupts before anything else */
-//  120   HAL_DISABLE_INTERRUPTS();
+//  100   enum
+//  101   {
+//  102     DEBUG_DATA_RSTACK_HIGH_OFS,
+//  103     DEBUG_DATA_RSTACK_LOW_OFS,
+//  104     DEBUG_DATA_TX_ACTIVE_OFS,
+//  105     DEBUG_DATA_RX_ACTIVE_OFS,
+//  106 
+//  107 #if (defined HAL_MCU_AVR) || (defined HAL_MCU_CC2430)
+//  108     DEBUG_DATA_INT_MASK_OFS,
+//  109 #elif (defined HAL_MCU_CC2530) || (defined HAL_MCU_CC2533)
+//  110     DEBUG_DATA_INT_MASK0_OFS,
+//  111     DEBUG_DATA_INT_MASK1_OFS,
+//  112 #endif
+//  113 
+//  114     DEBUG_DATA_SIZE
+//  115   };
+//  116 
+//  117   uint8 buttonHeld;
+//  118   uint8 debugData[DEBUG_DATA_SIZE];
+//  119 
+//  120   /* disable all interrupts before anything else */
+//  121   HAL_DISABLE_INTERRUPTS();
         CLR     0xa8.7
-//  121 
-//  122   /*-------------------------------------------------------------------------------
-//  123    *  Initialize LEDs and turn them off.
-//  124    */
-//  125   HAL_BOARD_INIT();
+//  122 
+//  123   /*-------------------------------------------------------------------------------
+//  124    *  Initialize LEDs and turn them off.
+//  125    */
+//  126   HAL_BOARD_INIT();
         ANL     0xbe,#0xfb
 ??halAssertHazardLights_0:
         MOV     A,0x9d
@@ -614,191 +616,194 @@ halAssertHazardLights:
         MOV     DPTR,#0x6270
         MOV     A,#0x8
         MOVX    @DPTR,A
+        CLR     0x90.0
         ORL     0xfe,#0x1
+        CLR     0x90.1
         ORL     0xfe,#0x2
+        CLR     0x90.4
         ORL     0xfe,#0x10
         ORL     0x8f,#0x1
-//  126 
-//  127   HAL_TURN_OFF_LED1();
+//  127 
+//  128   HAL_TURN_OFF_LED1();
         CLR     0x90.0
-//  128   HAL_TURN_OFF_LED2();
+//  129   HAL_TURN_OFF_LED2();
         CLR     0x90.1
-//  129   HAL_TURN_OFF_LED3();
+//  130   HAL_TURN_OFF_LED3();
         CLR     0x90.4
-//  130   HAL_TURN_OFF_LED4();
+//  131   HAL_TURN_OFF_LED4();
         SJMP    ??halAssertHazardLights_3
-//  131 
-//  132   /*-------------------------------------------------------------------------------
-//  133    *  Master infinite loop.
-//  134    */
-//  135   for (;;)
-//  136   {
-//  137     buttonHeld = 0;
-//  138 
-//  139     /*-------------------------------------------------------------------------------
-//  140      *  "Hazard lights" loop.  A held keypress will exit this loop.
-//  141      */
-//  142     do
-//  143     {
-//  144       HAL_LED_BLINK_DELAY();
-//  145 
-//  146       /* toggle LEDS, the #ifdefs are in case HAL has logically remapped non-existent LEDs */
-//  147 #if (HAL_NUM_LEDS >= 1)
-//  148       HAL_TOGGLE_LED1();
-//  149 #if (HAL_NUM_LEDS >= 2)
-//  150       HAL_TOGGLE_LED2();
-//  151 #if (HAL_NUM_LEDS >= 3)
-//  152       HAL_TOGGLE_LED3();
-//  153 #if (HAL_NUM_LEDS >= 4)
-//  154       HAL_TOGGLE_LED4();
-//  155 #endif
+//  132 
+//  133   /*-------------------------------------------------------------------------------
+//  134    *  Master infinite loop.
+//  135    */
+//  136   for (;;)
+//  137   {
+//  138     buttonHeld = 0;
+//  139 
+//  140     /*-------------------------------------------------------------------------------
+//  141      *  "Hazard lights" loop.  A held keypress will exit this loop.
+//  142      */
+//  143     do
+//  144     {
+//  145       HAL_LED_BLINK_DELAY();
+//  146 
+//  147       /* toggle LEDS, the #ifdefs are in case HAL has logically remapped non-existent LEDs */
+//  148 #if (HAL_NUM_LEDS >= 1)
+//  149       HAL_TOGGLE_LED1();
+//  150 #if (HAL_NUM_LEDS >= 2)
+//  151       HAL_TOGGLE_LED2();
+//  152 #if (HAL_NUM_LEDS >= 3)
+//  153       HAL_TOGGLE_LED3();
+//  154 #if (HAL_NUM_LEDS >= 4)
+//  155       HAL_TOGGLE_LED4();
 //  156 #endif
 //  157 #endif
 //  158 #endif
-//  159 
-//  160       /* escape hatch to continue execution, set escape to '1' to continue execution */
-//  161       {
-//  162         static uint8 escape = 0;
-//  163         if (escape)
-//  164         {
-//  165           escape = 0;
-//  166           return;
-//  167         }
-//  168       }
-//  169 
-//  170       /* break out of loop if button is held long enough */
-//  171       if (HAL_PUSH_BUTTON1())
-//  172       {
-//  173         buttonHeld++;
-//  174       }
-//  175       else
-//  176       {
-//  177         buttonHeld = 0;
-//  178       }
-//  179     }
-//  180     while (buttonHeld != 10);  /* loop until button is held specified number of loops */
-//  181 
-//  182     /*-------------------------------------------------------------------------------
-//  183      *  Just exited from "hazard lights" loop.
-//  184      */
-//  185 
-//  186     /* turn off all LEDs */
-//  187     HAL_TURN_OFF_LED1();
-//  188     HAL_TURN_OFF_LED2();
-//  189     HAL_TURN_OFF_LED3();
-//  190     HAL_TURN_OFF_LED4();
-//  191 
-//  192     /* wait for button release */
-//  193     HAL_DEBOUNCE(!HAL_PUSH_BUTTON1());
-//  194 
-//  195     /*-------------------------------------------------------------------------------
-//  196      *  Load debug data into memory.
-//  197      */
-//  198 #ifdef HAL_MCU_AVR
-//  199     {
-//  200       uint8 * pStack;
-//  201       pStack = (uint8 *) SP;
-//  202       pStack++; /* point to return address on stack */
-//  203       debugData[DEBUG_DATA_RSTACK_HIGH_OFS] = *pStack;
-//  204       pStack++;
-//  205       debugData[DEBUG_DATA_RSTACK_LOW_OFS] = *pStack;
-//  206     }
-//  207     debugData[DEBUG_DATA_INT_MASK_OFS] = EIMSK;
-//  208 #endif
-//  209 
-//  210 #if (defined HAL_MCU_CC2430)
-//  211     debugData[DEBUG_DATA_INT_MASK_OFS] = RFIM;
-//  212 #elif (defined HAL_MCU_CC2530) || (defined HAL_MCU_CC2533)
-//  213     debugData[DEBUG_DATA_INT_MASK0_OFS] = RFIRQM0;
-//  214     debugData[DEBUG_DATA_INT_MASK1_OFS] = RFIRQM1;
-//  215 #endif
-//  216 
+//  159 #endif
+//  160 
+//  161       /* escape hatch to continue execution, set escape to '1' to continue execution */
+//  162       {
+//  163         static uint8 escape = 0;
+//  164         if (escape)
+//  165         {
+//  166           escape = 0;
+//  167           return;
+//  168         }
+//  169       }
+//  170 
+//  171       /* break out of loop if button is held long enough */
+//  172       if (HAL_PUSH_BUTTON1())
+//  173       {
+//  174         buttonHeld++;
+//  175       }
+//  176       else
+//  177       {
+//  178         buttonHeld = 0;
+//  179       }
+//  180     }
+//  181     while (buttonHeld != 10);  /* loop until button is held specified number of loops */
+//  182 
+//  183     /*-------------------------------------------------------------------------------
+//  184      *  Just exited from "hazard lights" loop.
+//  185      */
+//  186 
+//  187     /* turn off all LEDs */
+//  188     HAL_TURN_OFF_LED1();
+//  189     HAL_TURN_OFF_LED2();
+//  190     HAL_TURN_OFF_LED3();
+//  191     HAL_TURN_OFF_LED4();
+//  192 
+//  193     /* wait for button release */
+//  194     HAL_DEBOUNCE(!HAL_PUSH_BUTTON1());
+//  195 
+//  196     /*-------------------------------------------------------------------------------
+//  197      *  Load debug data into memory.
+//  198      */
+//  199 #ifdef HAL_MCU_AVR
+//  200     {
+//  201       uint8 * pStack;
+//  202       pStack = (uint8 *) SP;
+//  203       pStack++; /* point to return address on stack */
+//  204       debugData[DEBUG_DATA_RSTACK_HIGH_OFS] = *pStack;
+//  205       pStack++;
+//  206       debugData[DEBUG_DATA_RSTACK_LOW_OFS] = *pStack;
+//  207     }
+//  208     debugData[DEBUG_DATA_INT_MASK_OFS] = EIMSK;
+//  209 #endif
+//  210 
+//  211 #if (defined HAL_MCU_CC2430)
+//  212     debugData[DEBUG_DATA_INT_MASK_OFS] = RFIM;
+//  213 #elif (defined HAL_MCU_CC2530) || (defined HAL_MCU_CC2533)
+//  214     debugData[DEBUG_DATA_INT_MASK0_OFS] = RFIRQM0;
+//  215     debugData[DEBUG_DATA_INT_MASK1_OFS] = RFIRQM1;
+//  216 #endif
 //  217 
-//  218 #if (defined HAL_MCU_AVR) || (defined HAL_MCU_CC2430) || (defined HAL_MCU_CC2530) || \ 
-//  219   (defined HAL_MCU_CC2533) || (defined HAL_MCU_MSP430)
-//  220     debugData[DEBUG_DATA_TX_ACTIVE_OFS] = macTxActive;
-//  221     debugData[DEBUG_DATA_RX_ACTIVE_OFS] = macRxActive;
-//  222 #endif
-//  223 
-//  224    /* initialize for data dump loop */
-//  225     {
-//  226       uint8 iBit;
-//  227       uint8 iByte;
-//  228 
-//  229       iBit  = 0;
-//  230       iByte = 0;
-//  231 
-//  232       /*-------------------------------------------------------------------------------
-//  233        *  Data dump loop.  A button press cycles data bits to an LED.
-//  234        */
-//  235       while (iByte < DEBUG_DATA_SIZE)
-//  236       {
-//  237         /* wait for key press */
-//  238         while(!HAL_PUSH_BUTTON1());
-//  239 
-//  240         /* turn on all LEDs for first bit of byte, turn on three LEDs if not first bit */
-//  241         HAL_TURN_ON_LED1();
-//  242         HAL_TURN_ON_LED2();
-//  243         HAL_TURN_ON_LED3();
-//  244         if (iBit == 0)
-//  245         {
-//  246           HAL_TURN_ON_LED4();
-//  247         }
-//  248         else
-//  249         {
-//  250           HAL_TURN_OFF_LED4();
-//  251         }
-//  252 
-//  253         /* wait for debounced key release */
-//  254         HAL_DEBOUNCE(!HAL_PUSH_BUTTON1());
-//  255 
-//  256         /* turn off all LEDs */
-//  257         HAL_TURN_OFF_LED1();
-//  258         HAL_TURN_OFF_LED2();
-//  259         HAL_TURN_OFF_LED3();
-//  260         HAL_TURN_OFF_LED4();
-//  261 
-//  262         /* output value of data bit to LED1 */
-//  263         if (debugData[iByte] & (1 << (7 - iBit)))
-//  264         {
-//  265           HAL_TURN_ON_LED1();
-//  266         }
-//  267         else
-//  268         {
-//  269           HAL_TURN_OFF_LED1();
+//  218 
+//  219 #if (defined HAL_MCU_AVR) || (defined HAL_MCU_CC2430) || (defined HAL_MCU_CC2530) || \ 
+//  220     (defined HAL_MCU_CC2533) || (defined HAL_MCU_MSP430)
+//  221     debugData[DEBUG_DATA_TX_ACTIVE_OFS] = macTxActive;
+//  222     debugData[DEBUG_DATA_RX_ACTIVE_OFS] = macRxActive;
+//  223 #endif
+//  224 
+//  225    /* initialize for data dump loop */
+//  226     {
+//  227       uint8 iBit;
+//  228       uint8 iByte;
+//  229 
+//  230       iBit  = 0;
+//  231       iByte = 0;
+//  232 
+//  233       /*-------------------------------------------------------------------------------
+//  234        *  Data dump loop.  A button press cycles data bits to an LED.
+//  235        */
+//  236       while (iByte < DEBUG_DATA_SIZE)
+//  237       {
+//  238         /* wait for key press */
+//  239         while(!HAL_PUSH_BUTTON1());
+//  240 
+//  241         /* turn on all LEDs for first bit of byte, turn on three LEDs if not first bit */
+//  242         HAL_TURN_ON_LED1();
+//  243         HAL_TURN_ON_LED2();
+//  244         HAL_TURN_ON_LED3();
+//  245         if (iBit == 0)
+//  246         {
+//  247           HAL_TURN_ON_LED4();
+//  248         }
+//  249         else
+//  250         {
+//  251           HAL_TURN_OFF_LED4();
+//  252         }
+//  253 
+//  254         /* wait for debounced key release */
+//  255         HAL_DEBOUNCE(!HAL_PUSH_BUTTON1());
+//  256 
+//  257         /* turn off all LEDs */
+//  258         HAL_TURN_OFF_LED1();
+//  259         HAL_TURN_OFF_LED2();
+//  260         HAL_TURN_OFF_LED3();
+//  261         HAL_TURN_OFF_LED4();
+//  262 
+//  263         /* output value of data bit to LED1 */
+//  264         if (debugData[iByte] & (1 << (7 - iBit)))
+//  265         {
+//  266           HAL_TURN_ON_LED1();
+//  267         }
+//  268         else
+//  269         {
+//  270           HAL_TURN_OFF_LED1();
 ??halAssertHazardLights_4:
         CLR     0x90.0
-//  270         }
-//  271 
-//  272         /* advance to next bit */
-//  273         iBit++;
+//  271         }
+//  272 
+//  273         /* advance to next bit */
+//  274         iBit++;
 ??halAssertHazardLights_5:
         INC     R3
-//  274         if (iBit == 8)
+//  275         if (iBit == 8)
         MOV     A,#0x8
         XRL     A,R3
         JZ      $+5
         LJMP    ??halAssertHazardLights_6 & 0xFFFF
-//  275         {
-//  276           iBit = 0;
+//  276         {
+//  277           iBit = 0;
         MOV     R3,#0x0
-//  277           iByte++;
+//  278           iByte++;
         INC     R2
-//  278         }
+//  279         }
         MOV     A,R2
         CLR     C
         SUBB    A,#0x6
         JNC     $+5
         LJMP    ??halAssertHazardLights_6 & 0xFFFF
-//  279       }
-//  280     }
-//  281 
-//  282     /*
-//  283      *  About to enter "hazard lights" loop again.  Turn off LED1 in case the last bit
-//  284      *  displayed happened to be one.  This guarantees all LEDs are off at the start of
-//  285      *  the flashing loop which uses a toggle operation to change LED states.
-//  286      */
-//  287     HAL_TURN_OFF_LED1();
+//  280       }
+//  281     }
+//  282 
+//  283     /*
+//  284      *  About to enter "hazard lights" loop again.  Turn off LED1 in case the last bit
+//  285      *  displayed happened to be one.  This guarantees all LEDs are off at the start of
+//  286      *  the flashing loop which uses a toggle operation to change LED states.
+//  287      */
+//  288     HAL_TURN_OFF_LED1();
 ??halAssertHazardLights_3:
         CLR     0x90.0
 ??halAssertHazardLights_7:
@@ -983,12 +988,12 @@ halAssertHazardLights:
         REQUIRE SLEEPSTA
         REQUIRE CLKCONCMD
         REQUIRE CLKCONSTA
+        REQUIRE _A_P1
         REQUIRE P1DIR
         REQUIRE P0INP
-        REQUIRE _A_P1
         REQUIRE _A_P0
-//  288   }
-//  289 }
+//  289   }
+//  290 }
 
         RSEG BANKED_CODE:CODE:NOROOT(0)
 ?Subroutine0:
@@ -1082,32 +1087,32 @@ __Constant_5800:
         DC24    halAssertHazardLights
 
         END
-//  290 
-//  291 
-//  292 /* ------------------------------------------------------------------------------------------------
-//  293  *                                    Compile Time Assertions
-//  294  * ------------------------------------------------------------------------------------------------
-//  295  */
-//  296 
-//  297 /* integrity check of type sizes */
-//  298 HAL_ASSERT_SIZE(  int8, 1);
-//  299 HAL_ASSERT_SIZE( uint8, 1);
-//  300 HAL_ASSERT_SIZE( int16, 2);
-//  301 HAL_ASSERT_SIZE(uint16, 2);
-//  302 HAL_ASSERT_SIZE( int32, 4);
-//  303 HAL_ASSERT_SIZE(uint32, 4);
-//  304 
+//  291 #endif
+//  292 
+//  293 /* ------------------------------------------------------------------------------------------------
+//  294  *                                    Compile Time Assertions
+//  295  * ------------------------------------------------------------------------------------------------
+//  296  */
+//  297 
+//  298 /* integrity check of type sizes */
+//  299 HAL_ASSERT_SIZE(  int8, 1);
+//  300 HAL_ASSERT_SIZE( uint8, 1);
+//  301 HAL_ASSERT_SIZE( int16, 2);
+//  302 HAL_ASSERT_SIZE(uint16, 2);
+//  303 HAL_ASSERT_SIZE( int32, 4);
+//  304 HAL_ASSERT_SIZE(uint32, 4);
 //  305 
-//  306 /**************************************************************************************************
-//  307 */
+//  306 
+//  307 /**************************************************************************************************
+//  308 */
 // 
-// 434 bytes in segment BANKED_CODE
+// 440 bytes in segment BANKED_CODE
 //  12 bytes in segment BANK_RELAYS
 //   9 bytes in segment SFR_AN
 //  12 bytes in segment XDATA_ROM_C
 //   1 byte  in segment XDATA_Z
 // 
-// 446 bytes of CODE  memory
+// 452 bytes of CODE  memory
 //   0 bytes of CONST memory (+ 12 bytes shared)
 //   0 bytes of DATA  memory (+  9 bytes shared)
 //   1 byte  of XDATA memory

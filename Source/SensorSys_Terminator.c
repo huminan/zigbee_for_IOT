@@ -111,8 +111,13 @@ const cId_t Button_ClusterList[BUTTON_MAX_CLUSTERS] =
 	BUTTON_CLUSTERID
 };
 
+const cId_t Zb_ClusterList[ZB_MAX_CLUSTERS] =
+{
+  ZB_CLUSTERID
+};
+
 // Sys 端点简单描述符
-const SimpleDescriptionFormat_t Button_SimpleDesc =
+const SimpleDescriptionFormat_t Sys_SimpleDesc =
 {
 	SYS_ENDPOINT,           //  int Endpoint;
 	SYS_PROFID,                //  uint16 AppProfId[2];
@@ -139,6 +144,18 @@ const SimpleDescriptionFormat_t Button_SimpleDesc =
 	(cId_t *)Button_ClusterList   //  byte *pAppInClusterList;
 };
 
+const SimpleDescriptionFormat_t zb_SimpleDesc =
+{
+	ZB_ENDPOINT,           //  int Endpoint;
+	SYS_PROFID,                //  uint16 AppProfId[2];
+	SYS_DEVICEID,              //  uint16 AppDeviceId[2];
+	SYS_DEVICE_VERSION,        //  int   AppDevVer:4;
+	SYS_FLAGS,                 //  int   AppFlags:4;
+	ZB_MAX_CLUSTERS,          //  byte  AppNumInClusters;
+	(cId_t *)Zb_ClusterList,  //  byte *pAppInClusterList;
+	ZB_MAX_CLUSTERS,          //  byte  AppNumInClusters;
+	(cId_t *)Zb_ClusterList   //  byte *pAppInClusterList;
+};
 
 // This is the Endpoint/Interface description.  It is defined here, but
 // filled-in in Button_Init().  Another way to go would be to fill
@@ -180,9 +197,9 @@ afAddrType_t Button_DstAddr;
 void Sys_Init( byte task_id );
 void Button_Init( byte task_id );
 void Button_HandleKeys( byte keys );
-UINT16 SensorSys_ProcessEvent( byte task_id, UINT16 events );
-void SensorSys_MessageMSGCB( afIncomingMSGPacket_t *pckt, byte task_id );
-// void SensorSys_SendMessage( byte task_id );
+UINT16 Sys_ProcessEvent( byte task_id, UINT16 events );
+void Sys_MessageMSGCB( afIncomingMSGPacket_t *pckt, byte task_id );
+// void Sys_SendMessage( byte task_id );
 void zb_ReceiveDataIndication( uint16 source, uint16 command, uint16 len, uint8 *pData  );
 
 /*********************************************************************
@@ -278,7 +295,7 @@ void Button_Init( byte task_id )
 }
 
 /*********************************************************************
- * @fn      SensorSys_ProcessEvent
+ * @fn      Sys_ProcessEvent
  *
  * @brief   Generic Application Task event processor.  This function
  *          is called to process all events for the task.  Events
@@ -290,7 +307,7 @@ void Button_Init( byte task_id )
  *
  * @return  none
  */
-UINT16 SensorSys_ProcessEvent( byte task_id, UINT16 events )
+UINT16 Sys_ProcessEvent( byte task_id, UINT16 events )
 {
 	afIncomingMSGPacket_t *MSGpkt = NULL;
 	afDataConfirm_t *afDataConfirm;
@@ -331,7 +348,7 @@ UINT16 SensorSys_ProcessEvent( byte task_id, UINT16 events )
 						break;
 
 					case AF_INCOMING_MSG_CMD:   // 接收信息
-						SensorSys_MessageMSGCB( MSGpkt, task_id );
+						Sys_MessageMSGCB( MSGpkt, task_id );
 						break;
 
 					case ZDO_STATE_CHANGE:      // 设备网络状态改变
@@ -480,7 +497,7 @@ void Button_HandleKeys( byte keys )
  */
 
 /*********************************************************************
- * @fn      SensorSys_MessageMSGCB
+ * @fn      Sys_MessageMSGCB
  *
  * @brief   Data message processor callback.  This function processes
  *          any incoming data - probably from other devices.  So, based
@@ -490,11 +507,12 @@ void Button_HandleKeys( byte keys )
  *
  * @return  none
  */
-void SensorSys_MessageMSGCB( afIncomingMSGPacket_t *pkt, byte task_id )
+void Sys_MessageMSGCB( afIncomingMSGPacket_t *pkt, byte task_id )
 {
 	switch ( pkt->clusterId )
 	{
 		case SYS_CLUSTERID:
+                {
 			char flag[4];
 			memcpy(flag, pkt->cmd.Data, 4);
 			if( !strcmp( flag, "bind") )
@@ -510,11 +528,12 @@ void SensorSys_MessageMSGCB( afIncomingMSGPacket_t *pkt, byte task_id )
 			WPRINTSTR( pkt->cmd.Data );
 #endif
 			break;
+                }
 	}
 }
 
 /*********************************************************************
- * @fn      SensorSys_SendMessage
+ * @fn      Sys_SendMessage
  *
  * @brief   Send message.
  *
@@ -522,7 +541,7 @@ void SensorSys_MessageMSGCB( afIncomingMSGPacket_t *pkt, byte task_id )
  *
  * @return  none
  *//*
-void SensorSys_SendMessage( void )
+void Sys_SendMessage( void )
 {
 	char theMessageData[] = "";
 
@@ -540,7 +559,7 @@ void SensorSys_SendMessage( void )
 		// Error occurred in request to send.
 	}
 }
-
+*/
 /******************************************************************************
  * @fn          zb_ReceiveDataIndication
  * 
@@ -565,3 +584,78 @@ void zb_ReceiveDataIndication( uint16 source, uint16 command, uint16 len, uint8 
 }
 /*********************************************************************
 *********************************************************************/
+/******************************************************************************
+ * @fn          zb_StartConfirm
+ *
+ * @brief       The zb_StartConfirm callback is called by the ZigBee stack
+ *              after a start request operation completes
+ *
+ * @param       status - The status of the start operation.  Status of
+ *                       ZB_SUCCESS indicates the start operation completed
+ *                       successfully.  Else the status is an error code.
+ *
+ * @return      none
+ */
+void zb_StartConfirm( uint8 status )
+{
+}
+/******************************************************************************
+ * @fn          zb_SendDataConfirm
+ *
+ * @brief       The zb_SendDataConfirm callback function is called by the
+ *              ZigBee after a send data operation completes
+ *
+ * @param       handle - The handle identifying the data transmission.
+ *              status - The status of the operation.
+ *
+ * @return      none
+ */
+void zb_SendDataConfirm( uint8 handle, uint8 status )
+{
+}
+/******************************************************************************
+ * @fn          zb_BindConfirm
+ *
+ * @brief       The zb_BindConfirm callback is called by the ZigBee stack
+ *              after a bind operation completes.
+ *
+ * @param       commandId - The command ID of the binding being confirmed.
+ *              status - The status of the bind operation.
+ *
+ * @return      none
+ */
+void zb_BindConfirm( uint16 commandId, uint8 status )
+{
+}
+/******************************************************************************
+ * @fn          zb_AllowBindConfirm
+ *
+ * @brief       Indicates when another device attempted to bind to this device
+ *
+ * @param
+ *
+ * @return      none
+ */
+void zb_AllowBindConfirm( uint16 source )
+{
+}
+/******************************************************************************
+ * @fn          zb_FindDeviceConfirm
+ *
+ * @brief       The zb_FindDeviceConfirm callback function is called by the
+ *              ZigBee stack when a find device operation completes.
+ *
+ * @param       searchType - The type of search that was performed.
+ *              searchKey - Value that the search was executed on.
+ *              result - The result of the search.
+ *
+ * @return      none
+ */
+void zb_FindDeviceConfirm( uint8 searchType, uint8 *searchKey, uint8 *result )
+{
+}
+
+void zb_HandleOsalEvent( uint16 event )
+{
+
+}

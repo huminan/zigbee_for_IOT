@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //                                                                            /
-// IAR C/C++ Compiler V8.10.3.10338/W32 for 8051        15/Aug/2017  23:22:53 /
+// IAR C/C++ Compiler V8.10.3.10338/W32 for 8051        20/Aug/2017  22:11:38 /
 // Copyright 2004-2011 IAR Systems AB.                                        /
 //                                                                            /
 //    Core               =  plain                                             /
@@ -44,13 +44,14 @@
 //                          -DQUEUED_POLL_RATE=100 -DRESPONSE_POLL_RATE=100)  /
 //                          -DREJOIN_POLL_RATE=440 D:\ProgramData\Hardware\zi /
 //                          gbee\Components\mac\low_level\srf04\mac_low_level /
-//                          .c -D ZTOOL_P1 -D MT_TASK -D MT_SYS_FUNC -D       /
-//                          MT_ZDO_FUNC -D LCD_SUPPORTED=DEBUG -lC            /
-//                          D:\ProgramData\Hardware\zigbee\Projects\zstack\Sa /
-//                          mples\SensorSys\CC2530DB\CoordinatorEB\List\ -lA  /
-//                          D:\ProgramData\Hardware\zigbee\Projects\zstack\Sa /
-//                          mples\SensorSys\CC2530DB\CoordinatorEB\List\      /
-//                          --diag_suppress Pe001,Pa010 -o                    /
+//                          .c -D HOLD_AUTO_START -D BUILD_ALL_DEVICES -D     /
+//                          REFLECTOR -D NV_INIT -D xNV_RESTORE -D xZTOOL_P1  /
+//                          -D xMT_TASK -D xMT_SYS_FUNC -D xMT_SAPI_FUNC -D   /
+//                          xMT_SAPI_CB_FUNC -lC D:\ProgramData\Hardware\zigb /
+//                          ee\Projects\zstack\Samples\SensorSys\CC2530DB\Coo /
+//                          rdinatorEB\List\ -lA D:\ProgramData\Hardware\zigb /
+//                          ee\Projects\zstack\Samples\SensorSys\CC2530DB\Coo /
+//                          rdinatorEB\List\ --diag_suppress Pe001,Pa010 -o   /
 //                          D:\ProgramData\Hardware\zigbee\Projects\zstack\Sa /
 //                          mples\SensorSys\CC2530DB\CoordinatorEB\Obj\ -e    /
 //                          --no_code_motion --debug --core=plain             /
@@ -144,7 +145,6 @@
         PUBLIC ??macLowLevelReset?relay
         FUNCTION ??macLowLevelReset?relay,0203H
         PUBWEAK _A_IEN0
-        PUBLIC macBeaconMarginDCO
         PUBLIC macLowLevelInit
         FUNCTION macLowLevelInit,021203H
         ARGFRAME XSTACK, 0, STACK
@@ -368,7 +368,6 @@ macLowLevelReset    SYMBOL "macLowLevelReset"
         FUNCTION ??macSleepWakeUp?relay,00H
         EXTERN ??macTxInit?relay
         FUNCTION ??macTxInit?relay,00H
-        EXTERN macBeaconMargin
         EXTERN macSleepState
 
 // D:\ProgramData\Hardware\zigbee\Components\mac\low_level\srf04\mac_low_level.c
@@ -445,28 +444,7 @@ _A_IEN0:
 //   65 
 //   66 #if !defined ( HAL_CLOCK_CRYSTAL )
 //   67 /* DCO has a frequency error of 2% */
-
-        RSEG CODE_C:CODE:REORDER:NOROOT(0)
-        DATA8
 //   68 const uint16 CODE macBeaconMarginDCO[] =
-macBeaconMarginDCO:
-        DATA16
-        DW 3
-        DW 3
-        DW 4
-        DW 8
-        DW 16
-        DW 31
-        DW 62
-        DW 123
-        DW 246
-        DW 492
-        DW 983
-        DW 1967
-        DW 3933
-        DW 7865
-        DW 15729
-        DW 0
 //   69 {
 //   70   3,
 //   71   3,
@@ -590,46 +568,9 @@ macLowLevelInit:
 //  107     uint8 i;
 //  108 
 //  109     for (i = 0; i < sizeof(macBeaconMarginDCO)/sizeof(macBeaconMarginDCO[0]); i++)
-        MOV     R4,#0x0
 //  110     {
 //  111       macBeaconMargin[i] = macBeaconMarginDCO[i];
-??macLowLevelInit_0:
-        MOV     A,R4
-        CLR     C
-        RLC     A
-        MOV     R0,A
-        CLR     A
-        RLC     A
-        MOV     R1,A
-        MOV     A,#macBeaconMarginDCO & 0xff
-        ADD     A,R0
-        MOV     DPL,A
-        MOV     A,#(macBeaconMarginDCO >> 8) & 0xff
-        ADDC    A,R1
-        MOV     DPH,A
-        CLR     A
-        MOVC    A,@A+DPTR
-        MOV     R2,A
-        MOV     A,#0x1
-        MOVC    A,@A+DPTR
-        MOV     R3,A
-        MOV     A,#macBeaconMargin & 0xff
-        ADD     A,R0
-        MOV     DPL,A
-        MOV     A,#(macBeaconMargin >> 8) & 0xff
-        ADDC    A,R1
-        MOV     DPH,A
-        MOV     A,R2
-        MOVX    @DPTR,A
-        INC     DPTR
-        MOV     A,R3
-        MOVX    @DPTR,A
 //  112     }
-        INC     R4
-        MOV     A,R4
-        CLR     C
-        SUBB    A,#0x10
-        JC      ??macLowLevelInit_0
 //  113   }
 //  114 #endif
 //  115 
@@ -806,13 +747,12 @@ macLowLevelReset:
 //  154 /**************************************************************************************************
 //  155 */
 // 
-// 108 bytes in segment BANKED_CODE
-//  12 bytes in segment BANK_RELAYS
-//  32 bytes in segment CODE_C
-//   1 byte  in segment SFR_AN
+// 60 bytes in segment BANKED_CODE
+// 12 bytes in segment BANK_RELAYS
+//  1 byte  in segment SFR_AN
 // 
-// 152 bytes of CODE memory
-//   0 bytes of DATA memory (+ 1 byte shared)
+// 72 bytes of CODE memory
+//  0 bytes of DATA memory (+ 1 byte shared)
 //
 //Errors: none
 //Warnings: none

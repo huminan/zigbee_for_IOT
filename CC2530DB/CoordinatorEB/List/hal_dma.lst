@@ -1,6 +1,6 @@
 ###############################################################################
 #                                                                             #
-# IAR C/C++ Compiler V8.10.3.10338/W32 for 8051         15/Aug/2017  23:22:50 #
+# IAR C/C++ Compiler V8.10.3.10338/W32 for 8051         20/Aug/2017  22:11:38 #
 # Copyright 2004-2011 IAR Systems AB.                                         #
 #                                                                             #
 #    Core               =  plain                                              #
@@ -44,13 +44,14 @@
 #                          -DQUEUED_POLL_RATE=100 -DRESPONSE_POLL_RATE=100)   #
 #                          -DREJOIN_POLL_RATE=440 D:\ProgramData\Hardware\zig #
 #                          bee\Components\hal\target\CC2530EB\hal_dma.c -D    #
-#                          ZTOOL_P1 -D MT_TASK -D MT_SYS_FUNC -D MT_ZDO_FUNC  #
-#                          -D LCD_SUPPORTED=DEBUG -lC                         #
-#                          D:\ProgramData\Hardware\zigbee\Projects\zstack\Sam #
-#                          ples\SensorSys\CC2530DB\CoordinatorEB\List\ -lA    #
-#                          D:\ProgramData\Hardware\zigbee\Projects\zstack\Sam #
-#                          ples\SensorSys\CC2530DB\CoordinatorEB\List\        #
-#                          --diag_suppress Pe001,Pa010 -o                     #
+#                          HOLD_AUTO_START -D BUILD_ALL_DEVICES -D REFLECTOR  #
+#                          -D NV_INIT -D xNV_RESTORE -D xZTOOL_P1 -D          #
+#                          xMT_TASK -D xMT_SYS_FUNC -D xMT_SAPI_FUNC -D       #
+#                          xMT_SAPI_CB_FUNC -lC D:\ProgramData\Hardware\zigbe #
+#                          e\Projects\zstack\Samples\SensorSys\CC2530DB\Coord #
+#                          inatorEB\List\ -lA D:\ProgramData\Hardware\zigbee\ #
+#                          Projects\zstack\Samples\SensorSys\CC2530DB\Coordin #
+#                          atorEB\List\ --diag_suppress Pe001,Pa010 -o        #
 #                          D:\ProgramData\Hardware\zigbee\Projects\zstack\Sam #
 #                          ples\SensorSys\CC2530DB\CoordinatorEB\Obj\ -e      #
 #                          --no_code_motion --debug --core=plain --dptr=16,1  #
@@ -121,13 +122,13 @@
 D:\ProgramData\Hardware\zigbee\Components\hal\target\CC2530EB\hal_dma.c
       1          /**************************************************************************************************
       2            Filename:       hal_dma.c
-      3            Revised:        $Date: 2009-08-05 18:23:26 -0700 (Wed, 05 Aug 2009) $
-      4            Revision:       $Revision: 20480 $
+      3            Revised:        $Date: 2010-07-21 16:20:44 -0700 (Wed, 21 Jul 2010) $
+      4            Revision:       $Revision: 23090 $
       5          
       6            Description:    This file contains the interface to the DMA.
       7          
       8          
-      9            Copyright 2007-2009 Texas Instruments Incorporated. All rights reserved.
+      9            Copyright 2007-2010 Texas Instruments Incorporated. All rights reserved.
      10          
      11            IMPORTANT: Your use of this Software is limited to those specific rights
      12            granted under the terms of a software license agreement between the user
@@ -165,21 +166,6 @@ D:\ProgramData\Hardware\zigbee\Components\hal\target\CC2530EB\hal_dma.c
      44          #include "hal_types.h"
      45          #include "hal_defs.h"
      46          #include "hal_dma.h"
-
-   \                                 In  segment SFR_AN, at 0xb8
-   \   union <unnamed> volatile __sfr _A_IEN1
-   \                     _A_IEN1:
-   \   000000                DS 1
-
-   \                                 In  segment SFR_AN, at 0xc0
-   \   union <unnamed> volatile __sfr _A_IRCON
-   \                     _A_IRCON:
-   \   000000                DS 1
-
-   \                                 In  segment SFR_AN, at 0xd1
-   \   unsigned char volatile __sfr DMAIRQ
-   \                     DMAIRQ:
-   \   000000                DS 1
 
    \                                 In  segment SFR_AN, at 0xd2
    \   unsigned char volatile __sfr DMA1CFGL
@@ -272,14 +258,10 @@ D:\ProgramData\Hardware\zigbee\Components\hal\target\CC2530EB\hal_dma.c
    \   000000                ; Saved register size: 0
    \   000000                ; Auto size: 0
     103            HAL_DMA_SET_ADDR_DESC0( &dmaCh0 );
-                   ^
-Warning[Pe069]: integer conversion resulted in truncation
    \   000000   74..         MOV     A,#(dmaCh0 >> 8) & 0xff
    \   000002   F5D5         MOV     0xd5,A
    \   000004   75D4..       MOV     0xd4,#dmaCh0 & 0xff
     104            HAL_DMA_SET_ADDR_DESC1234( dmaCh1234 );
-                   ^
-Warning[Pe069]: integer conversion resulted in truncation
    \   000007   74..         MOV     A,#(dmaCh1234 >> 8) & 0xff
    \   000009   F5D3         MOV     0xd3,A
    \   00000B   75D2..       MOV     0xd2,#dmaCh1234 & 0xff
@@ -287,15 +269,18 @@ Warning[Pe069]: integer conversion resulted in truncation
     106             ((defined HAL_SPI) && (HAL_SPI == TRUE))  || \
     107             ((defined HAL_IRGEN) && (HAL_IRGEN == TRUE)))
     108            DMAIE = 1;
-   \   00000E   D2B8         SETB    0xb8.0
     109          #endif
     110          }
-   \   000010   02....       LJMP    ?BRET
-   \   000013                REQUIRE DMA0CFGH
-   \   000013                REQUIRE DMA0CFGL
-   \   000013                REQUIRE DMA1CFGH
-   \   000013                REQUIRE DMA1CFGL
-   \   000013                REQUIRE _A_IEN1
+   \   00000E   02....       LJMP    ?BRET
+   \   000011                REQUIRE DMA0CFGH
+   \   000011                REQUIRE DMA0CFGL
+   \   000011                REQUIRE DMA1CFGH
+   \   000011                REQUIRE DMA1CFGL
+
+   \                                 In  segment BANK_RELAYS, align 1
+   \                     ??HalDmaInit?relay:
+   \   000000   12....       LCALL   ?BDISPATCH
+   \   000003   ......       DC24    HalDmaInit
     111          
     112          #if (HAL_UART_DMA || \
     113             ((defined HAL_SPI) && (HAL_SPI == TRUE))  || \
@@ -309,112 +294,80 @@ Warning[Pe069]: integer conversion resulted in truncation
     121           *
     122           * @return  None
     123           *****************************************************************************/
-
-   \                                 In  segment NEAR_CODE, align 1, keep-with-next
     124          HAL_ISR_FUNCTION( halDmaIsr, DMA_VECTOR )
-   \                     halDmaIsr:
     125          {
-   \   000000   C0E0         PUSH    A
-   \   000002   74F2         MOV     A,#-0xe
-   \   000004   12....       LCALL   ?INTERRUPT_ENTER_XSP
-   \   000007                ; Saved register size: 14
-   \   000007                ; Auto size: 0
     126            extern void HalUARTIsrDMA(void);
     127          
-    128            DMAIF = 0;
-   \   000007   C2C0         CLR     0xc0.0
+    128            HAL_ENTER_ISR();
     129          
-    130          #if HAL_UART_DMA
-    131            if (HAL_DMA_CHECK_IRQ(HAL_DMA_CH_TX))
-   \   000009   E5D1         MOV     A,0xd1
-   \   00000B   A2E4         MOV     C,0xE0 /* A   */.4
-   \   00000D   5003         JNC     ??halDmaIsr_0
-    132            {
-    133              HalUARTIsrDMA();
-   \   00000F                ; Setup parameters for call to function HalUARTIsrDMA
-   \   00000F   12....       LCALL   ??HalUARTIsrDMA?relay
-    134            }
-    135          #endif // HAL_UART_DMA
-    136          
-    137          #if (defined HAL_SPI) && (HAL_SPI == TRUE)
-    138            if ( HAL_DMA_CHECK_IRQ( HAL_DMA_CH_RX ) )
-    139            {
-    140              HAL_DMA_CLEAR_IRQ( HAL_DMA_CH_RX );
-    141              HalSpiRxIsr();
-    142            }
-    143          
-    144            if ( HAL_DMA_CHECK_IRQ( HAL_DMA_CH_TX ) )
-    145            {
-    146              HAL_DMA_CLEAR_IRQ( HAL_DMA_CH_TX );
-    147              HalSpiTxIsr();
-    148            }
-    149          #endif // (defined HAL_SPI) && (HAL_SPI == TRUE)
-    150          
-    151          #if (defined HAL_IRGEN) && (HAL_IRGEN == TRUE)
-    152            if ( HAL_IRGEN == TRUE && HAL_DMA_CHECK_IRQ( HAL_IRGEN_DMA_CH ) )
-    153            {
-    154              HAL_DMA_CLEAR_IRQ( HAL_IRGEN_DMA_CH );
-    155              HalIrGenDmaIsr();
-    156            }
-    157          #endif // (defined HAL_IRGEN) && (HAL_IRGEN == TRUE)
-    158          }
-   \                     ??halDmaIsr_0:
-   \   000012   7F01         MOV     R7,#0x1
-   \   000014   02....       LJMP    ?INTERRUPT_LEAVE_XSP
-   \   000017                REQUIRE _A_IRCON
-   \   000017                REQUIRE DMAIRQ
-
-   \                                 In  segment INTVEC, offset 0x43, root
-   \                     `??halDmaIsr??INTVEC 67`:
-   \   000043   02....       LJMP       (halDmaIsr)
-
-   \                                 In  segment BANK_RELAYS, align 1
-   \                     ??HalDmaInit?relay:
-   \   000000   12....       LCALL   ?BDISPATCH
-   \   000003   ......       DC24    HalDmaInit
-    159          #endif
-    160          #endif  // #if ((defined HAL_DMA) && (HAL_DMA == TRUE))
-    161          /******************************************************************************
-    162          ******************************************************************************/
+    130            DMAIF = 0;
+    131          
+    132          #if HAL_UART_DMA
+    133            if (HAL_DMA_CHECK_IRQ(HAL_DMA_CH_TX))
+    134            {
+    135              HalUARTIsrDMA();
+    136            }
+    137          #endif // HAL_UART_DMA
+    138          
+    139          #if (defined HAL_SPI) && (HAL_SPI == TRUE)
+    140            if ( HAL_DMA_CHECK_IRQ( HAL_DMA_CH_RX ) )
+    141            {
+    142              HAL_DMA_CLEAR_IRQ( HAL_DMA_CH_RX );
+    143              HalSpiRxIsr();
+    144            }
+    145          
+    146            if ( HAL_DMA_CHECK_IRQ( HAL_DMA_CH_TX ) )
+    147            {
+    148              HAL_DMA_CLEAR_IRQ( HAL_DMA_CH_TX );
+    149              HalSpiTxIsr();
+    150            }
+    151          #endif // (defined HAL_SPI) && (HAL_SPI == TRUE)
+    152          
+    153          #if (defined HAL_IRGEN) && (HAL_IRGEN == TRUE)
+    154            if ( HAL_IRGEN == TRUE && HAL_DMA_CHECK_IRQ( HAL_IRGEN_DMA_CH ) )
+    155            {
+    156              HAL_DMA_CLEAR_IRQ( HAL_IRGEN_DMA_CH );
+    157              HalIrGenDmaIsr();
+    158            }
+    159          #endif // (defined HAL_IRGEN) && (HAL_IRGEN == TRUE)
+    160          
+    161            CLEAR_SLEEP_MODE();
+    162            HAL_EXIT_ISR();
+    163          }
+    164          #endif
+    165          #endif  // #if ((defined HAL_DMA) && (HAL_DMA == TRUE))
+    166          /******************************************************************************
+    167          ******************************************************************************/
 
    Maximum stack usage in bytes:
 
-     Function           ISTACK PSTACK XSTACK
-     --------           ------ ------ ------
-     HalDmaInit             0      0      0
-     halDmaIsr              0      0     14
-       -> HalUARTIsrDMA     0      0     28
+     Function   ISTACK PSTACK XSTACK
+     --------   ------ ------ ------
+     HalDmaInit     0      0      0
 
 
    Segment part sizes:
 
-     Function/Label         Bytes
-     --------------         -----
-     _A_IEN1                   1
-     _A_IRCON                  1
-     DMAIRQ                    1
-     DMA1CFGL                  1
-     DMA1CFGH                  1
-     DMA0CFGL                  1
-     DMA0CFGH                  1
-     dmaCh0                    8
-     dmaCh1234                32
-     HalDmaInit               19
-     halDmaIsr                23
-     ??halDmaIsr??INTVEC 67    3
-     ??HalDmaInit?relay        6
+     Function/Label     Bytes
+     --------------     -----
+     DMA1CFGL              1
+     DMA1CFGH              1
+     DMA0CFGL              1
+     DMA0CFGH              1
+     dmaCh0                8
+     dmaCh1234            32
+     HalDmaInit           17
+     ??HalDmaInit?relay    6
 
  
- 19 bytes in segment BANKED_CODE
+ 17 bytes in segment BANKED_CODE
   6 bytes in segment BANK_RELAYS
-  3 bytes in segment INTVEC
- 23 bytes in segment NEAR_CODE
-  7 bytes in segment SFR_AN
+  4 bytes in segment SFR_AN
  40 bytes in segment XDATA_Z
  
- 48 bytes of CODE  memory (+ 3 bytes shared)
-  0 bytes of DATA  memory (+ 7 bytes shared)
+ 23 bytes of CODE  memory
+  0 bytes of DATA  memory (+ 4 bytes shared)
  40 bytes of XDATA memory
 
 Errors: none
-Warnings: 2
+Warnings: none

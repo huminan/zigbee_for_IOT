@@ -1,6 +1,6 @@
 ###############################################################################
 #                                                                             #
-# IAR C/C++ Compiler V8.10.3.10338/W32 for 8051         15/Aug/2017  23:22:55 #
+# IAR C/C++ Compiler V8.10.3.10338/W32 for 8051         20/Aug/2017  22:11:47 #
 # Copyright 2004-2011 IAR Systems AB.                                         #
 #                                                                             #
 #    Core               =  plain                                              #
@@ -44,13 +44,14 @@
 #                          -DQUEUED_POLL_RATE=100 -DRESPONSE_POLL_RATE=100)   #
 #                          -DREJOIN_POLL_RATE=440 D:\ProgramData\Hardware\zig #
 #                          bee\Components\mac\low_level\srf04\mac_sleep.c -D  #
-#                          ZTOOL_P1 -D MT_TASK -D MT_SYS_FUNC -D MT_ZDO_FUNC  #
-#                          -D LCD_SUPPORTED=DEBUG -lC                         #
-#                          D:\ProgramData\Hardware\zigbee\Projects\zstack\Sam #
-#                          ples\SensorSys\CC2530DB\CoordinatorEB\List\ -lA    #
-#                          D:\ProgramData\Hardware\zigbee\Projects\zstack\Sam #
-#                          ples\SensorSys\CC2530DB\CoordinatorEB\List\        #
-#                          --diag_suppress Pe001,Pa010 -o                     #
+#                          HOLD_AUTO_START -D BUILD_ALL_DEVICES -D REFLECTOR  #
+#                          -D NV_INIT -D xNV_RESTORE -D xZTOOL_P1 -D          #
+#                          xMT_TASK -D xMT_SYS_FUNC -D xMT_SAPI_FUNC -D       #
+#                          xMT_SAPI_CB_FUNC -lC D:\ProgramData\Hardware\zigbe #
+#                          e\Projects\zstack\Samples\SensorSys\CC2530DB\Coord #
+#                          inatorEB\List\ -lA D:\ProgramData\Hardware\zigbee\ #
+#                          Projects\zstack\Samples\SensorSys\CC2530DB\Coordin #
+#                          atorEB\List\ --diag_suppress Pe001,Pa010 -o        #
 #                          D:\ProgramData\Hardware\zigbee\Projects\zstack\Sam #
 #                          ples\SensorSys\CC2530DB\CoordinatorEB\Obj\ -e      #
 #                          --no_code_motion --debug --core=plain --dptr=16,1  #
@@ -192,6 +193,11 @@ D:\ProgramData\Hardware\zigbee\Components\mac\low_level\srf04\mac_sleep.c
    \                     SLEEPSTA:
    \   000000                DS 1
 
+   \                                 In  segment SFR_AN, at 0x9e
+   \   unsigned char volatile __sfr CLKCONSTA
+   \                     CLKCONSTA:
+   \   000000                DS 1
+
    \                                 In  segment SFR_AN, at 0xa8
    \   union <unnamed> volatile __sfr _A_IEN0
    \                     _A_IEN0:
@@ -237,74 +243,78 @@ D:\ProgramData\Hardware\zigbee\Components\mac\low_level\srf04\mac_sleep.c
      88            if (macSleepState == MAC_SLEEP_STATE_AWAKE)
    \   000004   90....       MOV     DPTR,#macSleepState
    \   000007   E0           MOVX    A,@DPTR
-   \   000008   602F         JZ      ??macSleepWakeUp_0
+   \   000008   6033         JZ      ??macSleepWakeUp_0
      89            {
      90              return;
      91            }
      92          
      93            /* wake up MAC timer */
      94            MAC_RADIO_TIMER_WAKE_UP();
-   \   00000A   439401       ORL     0x94,#0x1
    \                     ??macSleepWakeUp_1:
-   \   00000D   E594         MOV     A,0x94
-   \   00000F   A2E2         MOV     C,0xE0 /* A   */.2
-   \   000011   50FA         JNC     ??macSleepWakeUp_1
+   \   00000A   E59E         MOV     A,0x9e
+   \   00000C   70FC         JNZ     ??macSleepWakeUp_1
+   \   00000E   439403       ORL     0x94,#0x3
+   \                     ??macSleepWakeUp_2:
+   \   000011   E594         MOV     A,0x94
+   \   000013   A2E2         MOV     C,0xE0 /* A   */.2
+   \   000015   50FA         JNC     ??macSleepWakeUp_2
      95          
      96            /* if radio was completely off, restore from that state first */
      97            if (macSleepState == MAC_SLEEP_STATE_RADIO_OFF)
-   \   000013   E0           MOVX    A,@DPTR
-   \   000014   6402         XRL     A,#0x2
-   \   000016   7008         JNZ     ??macSleepWakeUp_2
+   \   000017   E0           MOVX    A,@DPTR
+   \   000018   6402         XRL     A,#0x2
+   \   00001A   7008         JNZ     ??macSleepWakeUp_3
      98            {
      99              /* turn on radio power (turns on oscillator too) */
     100              MAC_RADIO_TURN_ON_POWER();
-   \   000018                ; Setup parameters for call to function macRadioTurnOnPower
-   \   000018   12....       LCALL   ??macRadioTurnOnPower?relay
+   \   00001C                ; Setup parameters for call to function macRadioTurnOnPower
+   \   00001C   12....       LCALL   ??macRadioTurnOnPower?relay
     101          
     102              /* power-up initialization of receive logic */
     103              macRxRadioPowerUpInit();
-   \   00001B                ; Setup parameters for call to function macRxRadioPowerUpInit
-   \   00001B   12....       LCALL   ??macRxRadioPowerUpInit?relay
-   \   00001E   8011         SJMP    ??macSleepWakeUp_3
+   \   00001F                ; Setup parameters for call to function macRxRadioPowerUpInit
+   \   00001F   12....       LCALL   ??macRxRadioPowerUpInit?relay
+   \   000022   8011         SJMP    ??macSleepWakeUp_4
     104            }
     105            else
     106            {
     107              MAC_ASSERT(macSleepState == MAC_SLEEP_STATE_OSC_OFF);
-   \                     ??macSleepWakeUp_2:
-   \   000020   E0           MOVX    A,@DPTR
-   \   000021   6401         XRL     A,#0x1
-   \   000023   6003         JZ      ??macSleepWakeUp_4
-   \   000025                ; Setup parameters for call to function halAssertHandler
-   \   000025   12....       LCALL   ??halAssertHandler?relay
+   \                     ??macSleepWakeUp_3:
+   \   000024   E0           MOVX    A,@DPTR
+   \   000025   6401         XRL     A,#0x1
+   \   000027   6003         JZ      ??macSleepWakeUp_5
+   \   000029                ; Setup parameters for call to function halAssertHandler
+   \   000029   12....       LCALL   ??halAssertHandler?relay
     108          
     109              /* turn on the oscillator */
     110              MAC_RADIO_TURN_ON_OSC();
-   \                     ??macSleepWakeUp_4:
-   \   000028   E59D         MOV     A,0x9d
-   \   00002A   A2E6         MOV     C,0xE0 /* A   */.6
-   \   00002C   4003         JC      ??macSleepWakeUp_3
-   \   00002E                ; Setup parameters for call to function halAssertHandler
-   \   00002E   12....       LCALL   ??halAssertHandler?relay
+   \                     ??macSleepWakeUp_5:
+   \   00002C   E59D         MOV     A,0x9d
+   \   00002E   A2E6         MOV     C,0xE0 /* A   */.6
+   \   000030   4003         JC      ??macSleepWakeUp_4
+   \   000032                ; Setup parameters for call to function halAssertHandler
+   \   000032   12....       LCALL   ??halAssertHandler?relay
     111            }
     112          
     113            /* update sleep state here before requesting to turn on receiver */
     114            macSleepState = MAC_SLEEP_STATE_AWAKE;
-   \                     ??macSleepWakeUp_3:
-   \   000031   90....       MOV     DPTR,#macSleepState
-   \   000034   E4           CLR     A
-   \   000035   F0           MOVX    @DPTR,A
+   \                     ??macSleepWakeUp_4:
+   \   000035   90....       MOV     DPTR,#macSleepState
+   \   000038   E4           CLR     A
+   \   000039   F0           MOVX    @DPTR,A
     115          
     116            /* turn on the receiver if enabled */
     117            macRxOnRequest();
-   \   000036                ; Setup parameters for call to function macRxOnRequest
-   \   000036   12....       LCALL   ??macRxOnRequest?relay
+   \   00003A                ; Setup parameters for call to function macRxOnRequest
+   \   00003A   12....       LCALL   ??macRxOnRequest?relay
     118          }
    \                     ??macSleepWakeUp_0:
-   \   000039   D083         POP     DPH
-   \   00003B   D082         POP     DPL
-   \   00003D   02....       LJMP    ?BRET
-   \   000040                REQUIRE T2CTRL
-   \   000040                REQUIRE SLEEPSTA
+   \   00003D   D083         POP     DPH
+   \   00003F   D082         POP     DPL
+   \   000041   02....       LJMP    ?BRET
+   \   000044                REQUIRE CLKCONSTA
+   \   000044                REQUIRE T2CTRL
+   \   000044                REQUIRE SLEEPSTA
     119          
     120          
     121          /**************************************************************************************************
@@ -492,23 +502,24 @@ D:\ProgramData\Hardware\zigbee\Components\mac\low_level\srf04\mac_sleep.c
      --------------                   -----
      T2CTRL                              1
      SLEEPSTA                            1
+     CLKCONSTA                           1
      _A_IEN0                             1
      macSleepState                       1
-     macSleepWakeUp                     64
+     macSleepWakeUp                     68
      macSleep                          110
      ?<Initializer for macSleepState>    1
      ??macSleepWakeUp?relay              6
      ??macSleep?relay                    6
 
  
- 174 bytes in segment BANKED_CODE
+ 178 bytes in segment BANKED_CODE
   12 bytes in segment BANK_RELAYS
-   3 bytes in segment SFR_AN
+   4 bytes in segment SFR_AN
    1 byte  in segment XDATA_I
    1 byte  in segment XDATA_ID
  
- 187 bytes of CODE  memory
-   0 bytes of DATA  memory (+ 3 bytes shared)
+ 191 bytes of CODE  memory
+   0 bytes of DATA  memory (+ 4 bytes shared)
    1 byte  of XDATA memory
 
 Errors: none

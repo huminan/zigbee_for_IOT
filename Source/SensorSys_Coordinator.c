@@ -65,6 +65,7 @@
 #include "ZDApp.h"
 #include "ZDObject.h"
 #include "ZDProfile.h"
+#include "sapi.h"
 
 #include "SensorSys.h"
 #include "DebugTrace.h"
@@ -109,6 +110,11 @@ const cId_t Button_ClusterList[BUTTON_MAX_CLUSTERS] =
   BUTTON_CLUSTERID
 };
 
+const cId_t Zb_ClusterList[ZB_MAX_CLUSTERS] =
+{
+  ZB_CLUSTERID
+};
+
 // Sys 端点简单描述符
 const SimpleDescriptionFormat_t Sys_SimpleDesc =
 {
@@ -137,6 +143,18 @@ const SimpleDescriptionFormat_t Button_SimpleDesc =
 	(cId_t *)Button_ClusterList   //  byte *pAppInClusterList;
 };
 
+const SimpleDescriptionFormat_t zb_SimpleDesc =
+{
+	ZB_ENDPOINT,           //  int Endpoint;
+	SYS_PROFID,                //  uint16 AppProfId[2];
+	SYS_DEVICEID,              //  uint16 AppDeviceId[2];
+	SYS_DEVICE_VERSION,        //  int   AppDevVer:4;
+	SYS_FLAGS,                 //  int   AppFlags:4;
+	ZB_MAX_CLUSTERS,          //  byte  AppNumInClusters;
+	(cId_t *)Zb_ClusterList,  //  byte *pAppInClusterList;
+	ZB_MAX_CLUSTERS,          //  byte  AppNumInClusters;
+	(cId_t *)Zb_ClusterList   //  byte *pAppInClusterList;
+};
 
 // This is the Endpoint/Interface description.  It is defined here, but
 // filled-in in Button_Init().  Another way to go would be to fill
@@ -157,6 +175,8 @@ endPointDesc_t Button_epDesc;
  * LOCAL VARIABLES
  */
 static uint8 myAppState = APP_INIT;
+
+static byte type_join;
 
 byte Sys_TaskID;
 byte Button_TaskID;   // Task ID for internal task/event processing
@@ -432,9 +452,9 @@ void Sys_ProcessZDOMsgs( zdoIncomingMsg_t *inMsg , byte task_id )
         {
           if ( pRsp->status == ZSuccess && pRsp->cnt )
           {
-            switch (task_id)
+            switch (type_join)
             {
-              case Button_TaskID:
+              case BUTTON_TYPE_ID:
               {
                 Button_DstAddr.addrMode = (afAddrMode_t)Addr16Bit;
                 Button_DstAddr.addr.shortAddr = pRsp->nwkAddr;
@@ -568,7 +588,7 @@ void Sys_SendPreBindMessage( byte type_id )
   char theMessageData[5] = "bind";
   theMessageData[4] = type_id;
 
-  if ( AF_DataRequest( &Boardcast_DstAddr, &Sys_epDesc,
+  if ( AF_DataRequest( &Broadcast_DstAddr, &Sys_epDesc,
                        SYS_CLUSTERID,
                        (byte)osal_strlen( theMessageData ) + 1,
                        (byte *)&theMessageData,
@@ -577,7 +597,9 @@ void Sys_SendPreBindMessage( byte type_id )
   {
     // Successfully requested to be sent.
    //if(想要绑定什么就对应的 TypeID)
-   if(type_id == BUTTON_TYPE_ID)
+
+    type_join = type_id;
+    if(type_id == BUTTON_TYPE_ID)
       osal_start_timerEx(Button_TaskID, MATCH_BIND_EVT, 5000);
 
   }
@@ -589,3 +611,97 @@ void Sys_SendPreBindMessage( byte type_id )
 
 /*********************************************************************
 *********************************************************************/
+
+
+/******************************************************************************
+ * @fn          zb_StartConfirm
+ *
+ * @brief       The zb_StartConfirm callback is called by the ZigBee stack
+ *              after a start request operation completes
+ *
+ * @param       status - The status of the start operation.  Status of
+ *                       ZB_SUCCESS indicates the start operation completed
+ *                       successfully.  Else the status is an error code.
+ *
+ * @return      none
+ */
+void zb_StartConfirm( uint8 status )
+{
+}
+/******************************************************************************
+ * @fn          zb_SendDataConfirm
+ *
+ * @brief       The zb_SendDataConfirm callback function is called by the
+ *              ZigBee after a send data operation completes
+ *
+ * @param       handle - The handle identifying the data transmission.
+ *              status - The status of the operation.
+ *
+ * @return      none
+ */
+void zb_SendDataConfirm( uint8 handle, uint8 status )
+{
+}
+/******************************************************************************
+ * @fn          zb_BindConfirm
+ *
+ * @brief       The zb_BindConfirm callback is called by the ZigBee stack
+ *              after a bind operation completes.
+ *
+ * @param       commandId - The command ID of the binding being confirmed.
+ *              status - The status of the bind operation.
+ *
+ * @return      none
+ */
+void zb_BindConfirm( uint16 commandId, uint8 status )
+{
+}
+/******************************************************************************
+ * @fn          zb_AllowBindConfirm
+ *
+ * @brief       Indicates when another device attempted to bind to this device
+ *
+ * @param
+ *
+ * @return      none
+ */
+void zb_AllowBindConfirm( uint16 source )
+{
+}
+/******************************************************************************
+ * @fn          zb_FindDeviceConfirm
+ *
+ * @brief       The zb_FindDeviceConfirm callback function is called by the
+ *              ZigBee stack when a find device operation completes.
+ *
+ * @param       searchType - The type of search that was performed.
+ *              searchKey - Value that the search was executed on.
+ *              result - The result of the search.
+ *
+ * @return      none
+ */
+void zb_FindDeviceConfirm( uint8 searchType, uint8 *searchKey, uint8 *result )
+{
+}
+/******************************************************************************
+ * @fn          zb_ReceiveDataIndication
+ *
+ * @brief       The zb_ReceiveDataIndication callback function is called
+ *              asynchronously by the ZigBee stack to notify the application
+ *              when data is received from a peer device.
+ *
+ * @param       source - The short address of the peer device that sent the data
+ *              command - The commandId associated with the data
+ *              len - The number of bytes in the pData parameter
+ *              pData - The data sent by the peer device
+ *
+ * @return      none
+ */
+void zb_ReceiveDataIndication( uint16 source, uint16 command, uint16 len, uint8 *pData  )
+{
+}
+
+void zb_HandleOsalEvent( uint16 event )
+{
+
+}

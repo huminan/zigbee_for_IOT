@@ -1,6 +1,6 @@
 ###############################################################################
 #                                                                             #
-# IAR C/C++ Compiler V8.10.3.10338/W32 for 8051         15/Aug/2017  23:22:42 #
+# IAR C/C++ Compiler V8.10.3.10338/W32 for 8051         20/Aug/2017  22:11:45 #
 # Copyright 2004-2011 IAR Systems AB.                                         #
 #                                                                             #
 #    Core               =  plain                                              #
@@ -44,13 +44,14 @@
 #                          -DQUEUED_POLL_RATE=100 -DRESPONSE_POLL_RATE=100)   #
 #                          -DREJOIN_POLL_RATE=440 D:\ProgramData\Hardware\zig #
 #                          bee\Components\osal\common\OSAL_Memory.c -D        #
-#                          ZTOOL_P1 -D MT_TASK -D MT_SYS_FUNC -D MT_ZDO_FUNC  #
-#                          -D LCD_SUPPORTED=DEBUG -lC                         #
-#                          D:\ProgramData\Hardware\zigbee\Projects\zstack\Sam #
-#                          ples\SensorSys\CC2530DB\CoordinatorEB\List\ -lA    #
-#                          D:\ProgramData\Hardware\zigbee\Projects\zstack\Sam #
-#                          ples\SensorSys\CC2530DB\CoordinatorEB\List\        #
-#                          --diag_suppress Pe001,Pa010 -o                     #
+#                          HOLD_AUTO_START -D BUILD_ALL_DEVICES -D REFLECTOR  #
+#                          -D NV_INIT -D xNV_RESTORE -D xZTOOL_P1 -D          #
+#                          xMT_TASK -D xMT_SYS_FUNC -D xMT_SAPI_FUNC -D       #
+#                          xMT_SAPI_CB_FUNC -lC D:\ProgramData\Hardware\zigbe #
+#                          e\Projects\zstack\Samples\SensorSys\CC2530DB\Coord #
+#                          inatorEB\List\ -lA D:\ProgramData\Hardware\zigbee\ #
+#                          Projects\zstack\Samples\SensorSys\CC2530DB\Coordin #
+#                          atorEB\List\ --diag_suppress Pe001,Pa010 -o        #
 #                          D:\ProgramData\Hardware\zigbee\Projects\zstack\Sam #
 #                          ples\SensorSys\CC2530DB\CoordinatorEB\Obj\ -e      #
 #                          --no_code_motion --debug --core=plain --dptr=16,1  #
@@ -121,412 +122,441 @@
 D:\ProgramData\Hardware\zigbee\Components\osal\common\OSAL_Memory.c
       1          /**************************************************************************************************
       2            Filename:       OSAL_Memory.c
-      3            Revised:        $Date: 2009-08-06 14:51:59 -0700 (Thu, 06 Aug 2009) $
-      4            Revision:       $Revision: 20491 $
+      3            Revised:        $Date: 2010-09-20 14:59:43 -0700 (Mon, 20 Sep 2010) $
+      4            Revision:       $Revision: 23848 $
       5          
-      6            Description:    OSAL Heap Memory management functions.
-      7          
-      8          
-      9            Copyright 2004-2009 Texas Instruments Incorporated. All rights reserved.
-     10          
-     11            IMPORTANT: Your use of this Software is limited to those specific rights
-     12            granted under the terms of a software license agreement between the user
-     13            who downloaded the software, his/her employer (which must be your employer)
-     14            and Texas Instruments Incorporated (the "License").  You may not use this
-     15            Software unless you agree to abide by the terms of the License. The License
-     16            limits your use, and you acknowledge, that the Software may not be modified,
-     17            copied or distributed unless embedded on a Texas Instruments microcontroller
-     18            or used solely and exclusively in conjunction with a Texas Instruments radio
-     19            frequency transceiver, which is integrated into your product.  Other than for
-     20            the foregoing purpose, you may not use, reproduce, copy, prepare derivative
-     21            works of, modify, distribute, perform, display or sell this Software and/or
-     22            its documentation for any purpose.
-     23          
-     24            YOU FURTHER ACKNOWLEDGE AND AGREE THAT THE SOFTWARE AND DOCUMENTATION ARE
-     25            PROVIDED “AS IS” WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESS OR IMPLIED,
-     26            INCLUDING WITHOUT LIMITATION, ANY WARRANTY OF MERCHANTABILITY, TITLE,
-     27            NON-INFRINGEMENT AND FITNESS FOR A PARTICULAR PURPOSE. IN NO EVENT SHALL
-     28            TEXAS INSTRUMENTS OR ITS LICENSORS BE LIABLE OR OBLIGATED UNDER CONTRACT,
-     29            NEGLIGENCE, STRICT LIABILITY, CONTRIBUTION, BREACH OF WARRANTY, OR OTHER
-     30            LEGAL EQUITABLE THEORY ANY DIRECT OR INDIRECT DAMAGES OR EXPENSES
-     31            INCLUDING BUT NOT LIMITED TO ANY INCIDENTAL, SPECIAL, INDIRECT, PUNITIVE
-     32            OR CONSEQUENTIAL DAMAGES, LOST PROFITS OR LOST DATA, COST OF PROCUREMENT
-     33            OF SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
-     34            (INCLUDING BUT NOT LIMITED TO ANY DEFENSE THEREOF), OR OTHER SIMILAR COSTS.
-     35          
-     36            Should you have any questions regarding your right to use this Software,
-     37            contact Texas Instruments Incorporated at www.TI.com.
-     38          **************************************************************************************************/
-     39          
-     40          /*********************************************************************
-     41           * INCLUDES
-     42           */
-     43          
-     44          #include "comdef.h"
-     45          #include "OSAL.h"
-     46          #include "OSAL_Memory.h"
-     47          #include "OnBoard.h"
+      6            Description:    OSAL Heap Memory management functions. There is an Application Note that
+      7                            should be read before studying and/or modifying this module:
+      8                            SWRA204 "Heap Memory Management"
+      9          
+     10            Copyright 2004-2010 Texas Instruments Incorporated. All rights reserved.
+     11          
+     12            IMPORTANT: Your use of this Software is limited to those specific rights
+     13            granted under the terms of a software license agreement between the user
+     14            who downloaded the software, his/her employer (which must be your employer)
+     15            and Texas Instruments Incorporated (the "License").  You may not use this
+     16            Software unless you agree to abide by the terms of the License. The License
+     17            limits your use, and you acknowledge, that the Software may not be modified,
+     18            copied or distributed unless embedded on a Texas Instruments microcontroller
+     19            or used solely and exclusively in conjunction with a Texas Instruments radio
+     20            frequency transceiver, which is integrated into your product.  Other than for
+     21            the foregoing purpose, you may not use, reproduce, copy, prepare derivative
+     22            works of, modify, distribute, perform, display or sell this Software and/or
+     23            its documentation for any purpose.
+     24          
+     25            YOU FURTHER ACKNOWLEDGE AND AGREE THAT THE SOFTWARE AND DOCUMENTATION ARE
+     26            PROVIDED “AS IS” WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+     27            INCLUDING WITHOUT LIMITATION, ANY WARRANTY OF MERCHANTABILITY, TITLE,
+     28            NON-INFRINGEMENT AND FITNESS FOR A PARTICULAR PURPOSE. IN NO EVENT SHALL
+     29            TEXAS INSTRUMENTS OR ITS LICENSORS BE LIABLE OR OBLIGATED UNDER CONTRACT,
+     30            NEGLIGENCE, STRICT LIABILITY, CONTRIBUTION, BREACH OF WARRANTY, OR OTHER
+     31            LEGAL EQUITABLE THEORY ANY DIRECT OR INDIRECT DAMAGES OR EXPENSES
+     32            INCLUDING BUT NOT LIMITED TO ANY INCIDENTAL, SPECIAL, INDIRECT, PUNITIVE
+     33            OR CONSEQUENTIAL DAMAGES, LOST PROFITS OR LOST DATA, COST OF PROCUREMENT
+     34            OF SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
+     35            (INCLUDING BUT NOT LIMITED TO ANY DEFENSE THEREOF), OR OTHER SIMILAR COSTS.
+     36          
+     37            Should you have any questions regarding your right to use this Software,
+     38            contact Texas Instruments Incorporated at www.TI.com.
+     39          **************************************************************************************************/
+     40          
+     41          /* ------------------------------------------------------------------------------------------------
+     42           *                                          Includes
+     43           * ------------------------------------------------------------------------------------------------
+     44           */
+     45          
+     46          #include "comdef.h"
+     47          #include "OSAL.h"
+     48          #include "OSAL_Memory.h"
+     49          #include "OnBoard.h"
 
    \                                 In  segment SFR_AN, at 0xa8
    \   union <unnamed> volatile __sfr _A_IEN0
    \                     _A_IEN0:
    \   000000                DS 1
-     48          #include "hal_assert.h"
-     49          
-     50          #if ( MAXMEMHEAP >= 32768 )
-     51            #error MAXMEMHEAP is too big to manage!
-     52          #endif
-     53          
-     54          // Minimum wasted bytes to justify splitting a block before allocation.
-     55          #if !defined ( OSALMEM_MIN_BLKSZ )
-     56            #define OSALMEM_MIN_BLKSZ    4
-     57          #endif
-     58          
-     59          /* Profiling memory allocations showed that a significant % of very high
-     60           * frequency allocations/frees are for block sizes less than or equal to 16.
-     61           */
-     62          #if !defined ( OSALMEM_SMALL_BLKSZ )
-     63            #define OSALMEM_SMALL_BLKSZ  16
-     64          #endif
-     65          
-     66          #if !defined ( OSALMEM_NODEBUG )
-     67            #define OSALMEM_NODEBUG      TRUE
-     68          #endif
-     69          
-     70          #if !defined ( OSALMEM_PROFILER )
-     71            #define OSALMEM_PROFILER     FALSE
-     72          #endif
-     73          
-     74          #if ( OSALMEM_PROFILER )
-     75            #define OSALMEM_INIT   'X'
-     76            #define OSALMEM_ALOC   'A'
-     77            #define OSALMEM_REIN   'F'
-     78          #endif
-     79          
-     80          /*********************************************************************
-     81           * MACROS
-     82           */
-     83          
-     84          /*
-     85           *  The MAC_ASSERT macro is for use during debugging.
-     86           *  The given expression must evaluate as "true" or else fatal error occurs.
-     87           *  At that point, the call stack feature of the debugger can pinpoint where
-     88           *  the problem occurred.
-     89           *
-     90           *  To disable this feature and save code size, the project should define
-     91           *  OSALMEM_NODEBUG to TRUE.
-     92           */
-     93          #if ( OSALMEM_NODEBUG )
-     94            #define OSALMEM_ASSERT( expr )
-     95            #define OSALMEM_DEBUG( statement )
-     96          #else
-     97            #define OSALMEM_ASSERT( expr)        HAL_ASSERT( expr )
-     98            #define OSALMEM_DEBUG( statement)    st( statement )
+     50          #include "hal_assert.h"
+     51          
+     52          /* ------------------------------------------------------------------------------------------------
+     53           *                                           Constants
+     54           * ------------------------------------------------------------------------------------------------
+     55           */
+     56          
+     57          #define OSALMEM_IN_USE             0x8000
+     58          #if (MAXMEMHEAP & OSALMEM_IN_USE)
+     59          #error MAXMEMHEAP is too big to manage!
+     60          #endif
+     61          
+     62          #define OSALMEM_HDRSZ              sizeof(osalMemHdr_t)
+     63          
+     64          // Round a value up to the ceiling of OSALMEM_HDRSZ for critical dependencies on even multiples.
+     65          #define OSALMEM_ROUND(X)       ((((X) + OSALMEM_HDRSZ - 1) / OSALMEM_HDRSZ) * OSALMEM_HDRSZ)
+     66          
+     67          /* Minimum wasted bytes to justify splitting a block before allocation.
+     68           * Adjust accordingly to attempt to balance the tradeoff of wasted space and runtime throughput
+     69           * spent splitting blocks into sizes that may not be practically usable when sandwiched between
+     70           * two blocks in use (and thereby not able to be coalesced.)
+     71           * Ensure that this size is an even multiple of OSALMEM_HDRSZ.
+     72           */
+     73          #if !defined OSALMEM_MIN_BLKSZ
+     74          #define OSALMEM_MIN_BLKSZ         (OSALMEM_ROUND((OSALMEM_HDRSZ * 2)))
+     75          #endif
+     76          
+     77          #if !defined OSALMEM_LL_BLKSZ
+     78          #if defined NONWK
+     79          #define OSALMEM_LL_BLKSZ          (OSALMEM_ROUND(6) + (1 * OSALMEM_HDRSZ))
+     80          #else
+     81          /*
+     82           * Profiling the sample apps with default settings shows the following long-lived allocations
+     83           * which should live at the bottom of the small-block bucket so that they are never iterated over
+     84           * by osal_mem_alloc/free(), nor ever considered for coalescing, etc. This saves significant
+     85           * run-time throughput (on 8051 SOC if not also MSP). This is dynamic "dead space" and is not
+     86           * available to the small-block bucket heap.
+     87           *
+     88           * Adjust this size accordingly to accomodate application-specific changes including changing the
+     89           * size of long-lived objects profiled by sample apps and long-lived objects added by application.
+     90           */
+     91          #if defined ZCL_KEY_ESTABLISH     // Attempt to capture worst-case for SE sample apps.
+     92          #define OSALMEM_LL_BLKSZ          (OSALMEM_ROUND(526) + (32 * OSALMEM_HDRSZ))
+     93          #elif defined TC_LINKKEY_JOIN
+     94          #define OSALMEM_LL_BLKSZ          (OSALMEM_ROUND(454) + (21 * OSALMEM_HDRSZ))
+     95          #elif ((defined SECURE) && (SECURE != 0))
+     96          #define OSALMEM_LL_BLKSZ          (OSALMEM_ROUND(418) + (19 * OSALMEM_HDRSZ))
+     97          #else
+     98          #define OSALMEM_LL_BLKSZ          (OSALMEM_ROUND(417) + (19 * OSALMEM_HDRSZ))
      99          #endif
-    100          
-    101          /*********************************************************************
-    102           * TYPEDEFS
-    103           */
-    104          
-    105          typedef uint16  osalMemHdr_t;
-    106          
-    107          /*********************************************************************
-    108           * CONSTANTS
-    109           */
-    110          
-    111          #define OSALMEM_IN_USE  0x8000
-    112          
-    113          /* This number sets the size of the small-block bucket. Although profiling
-    114           * shows max simultaneous alloc of 16x18, timing without profiling overhead
-    115           * shows that the best worst case is achieved with the following.
-    116           */
-    117          #define SMALLBLKHEAP    232
-    118          
-    119          // To maintain data alignment of the pointer returned, reserve the greater
-    120          // space for the memory block header.
-    121          #define HDRSZ  ( (sizeof ( halDataAlign_t ) > sizeof( osalMemHdr_t )) ? \
-    122                            sizeof ( halDataAlign_t ) : sizeof( osalMemHdr_t ) )
-    123          
-    124          /*********************************************************************
-    125           * GLOBAL VARIABLES
-    126           */
-    127          
-    128          /*********************************************************************
-    129           * EXTERNAL VARIABLES
-    130           */
-    131          
-    132          /*********************************************************************
-    133           * EXTERNAL FUNCTIONS
-    134           */
-    135          
-    136          /*********************************************************************
-    137           * LOCAL VARIABLES
-    138           */
-    139          
+    100          #endif
+    101          #endif
+    102          
+    103          /* Adjust accordingly to attempt to accomodate the block sizes of the vast majority of
+    104           * very high frequency allocations/frees by profiling the system runtime.
+    105           * This default of 16 accomodates the OSAL timers block, osalTimerRec_t, and many others.
+    106           * Ensure that this size is an even multiple of OSALMEM_MIN_BLKSZ for run-time efficiency.
+    107           */
+    108          #if !defined OSALMEM_SMALL_BLKSZ
+    109          #define OSALMEM_SMALL_BLKSZ       (OSALMEM_ROUND(16))
+    110          #endif
+    111          #if !defined OSALMEM_SMALL_BLKCNT
+    112          #define OSALMEM_SMALL_BLKCNT       8
+    113          #endif
+    114          
+    115          /*
+    116           * These numbers setup the size of the small-block bucket which is reserved at the front of the
+    117           * heap for allocations of OSALMEM_SMALL_BLKSZ or smaller.
+    118           */
+    119          
+    120          // Size of the heap bucket reserved for small block-sized allocations.
+    121          // Adjust accordingly to attempt to accomodate the vast majority of very high frequency operations.
+    122          #define OSALMEM_SMALLBLK_BUCKET  ((OSALMEM_SMALL_BLKSZ * OSALMEM_SMALL_BLKCNT) + OSALMEM_LL_BLKSZ)
+    123          // Index of the first available osalMemHdr_t after the small-block heap which will be set in-use in
+    124          // order to prevent the small-block bucket from being coalesced with the wilderness.
+    125          #define OSALMEM_SMALLBLK_HDRCNT   (OSALMEM_SMALLBLK_BUCKET / OSALMEM_HDRSZ)
+    126          // Index of the first available osalMemHdr_t after the small-block heap which will be set in-use in
+    127          #define OSALMEM_BIGBLK_IDX        (OSALMEM_SMALLBLK_HDRCNT + 1)
+    128          // The size of the wilderness after losing the small-block heap, the wasted header to block the
+    129          // small-block heap from being coalesced, and the wasted header to mark the end of the heap.
+    130          #define OSALMEM_BIGBLK_SZ         (MAXMEMHEAP - OSALMEM_SMALLBLK_BUCKET - OSALMEM_HDRSZ*2)
+    131          // Index of the last available osalMemHdr_t at the end of the heap which will be set to zero for
+    132          // fast comparisons with zero to determine the end of the heap.
+    133          #define OSALMEM_LASTBLK_IDX      ((MAXMEMHEAP / OSALMEM_HDRSZ) - 1)
+    134          
+    135          // For information about memory profiling, refer to SWRA204 "Heap Memory Management", section 1.5.
+    136          #if !defined OSALMEM_PROFILER
+    137          #define OSALMEM_PROFILER           FALSE  // Enable/disable the memory usage profiling buckets.
+    138          #endif
+    139          #if !defined OSALMEM_PROFILER_LL
+    140          #define OSALMEM_PROFILER_LL        FALSE  // Special profiling of the Long-Lived bucket.
+    141          #endif
+    142          
+    143          #if OSALMEM_PROFILER
+    144          #define OSALMEM_INIT              'X'
+    145          #define OSALMEM_ALOC              'A'
+    146          #define OSALMEM_REIN              'F'
+    147          #endif
+    148          
+    149          /* ------------------------------------------------------------------------------------------------
+    150           *                                           Typedefs
+    151           * ------------------------------------------------------------------------------------------------
+    152           */
+    153          
+    154          typedef struct {
+    155            // The 15 LSB's of 'val' indicate the total item size, including the header, in 8-bit bytes.
+    156            unsigned len : 15;
+    157            // The 1 MSB of 'val' is used as a boolean to indicate in-use or freed.
+    158            unsigned inUse : 1;
+    159          } osalMemHdrHdr_t;
+    160          
+    161          typedef union {
+    162            /* Dummy variable so compiler forces structure to alignment of largest element while not wasting
+    163             * space on targets when the halDataAlign_t is smaller than a UINT16.
+    164             */
+    165            halDataAlign_t alignDummy;
+    166            uint16 val;
+    167            osalMemHdrHdr_t hdr;
+    168          } osalMemHdr_t;
+    169          
+    170          /* ------------------------------------------------------------------------------------------------
+    171           *                                           Local Variables
+    172           * ------------------------------------------------------------------------------------------------
+    173           */
+    174          
 
-   \                                 In  segment XDATA_Z, align 1, keep-with-next
-    140          static osalMemHdr_t *ff1;  // First free block in the small-block bucket.
+   \                                 In  segment XDATA_N, align 1
+    175          static __no_init osalMemHdr_t theHeap[MAXMEMHEAP / OSALMEM_HDRSZ];
+   \                     theHeap:
+   \   000000                DS 3072
+
+   \                                 In  segment XDATA_N, align 1
+    176          static __no_init osalMemHdr_t *ff1;  // First free block in the small-block bucket.
    \                     ff1:
    \   000000                DS 2
-   \   000002                REQUIRE __INIT_XDATA_Z
+    177          
 
    \                                 In  segment XDATA_Z, align 1, keep-with-next
-    141          static osalMemHdr_t *ff2;  // First free block after the small-block bucket.
-   \                     ff2:
-   \   000000                DS 2
-   \   000002                REQUIRE __INIT_XDATA_Z
-    142          
-    143          #if ( OSALMEM_METRICS )
-    144            static uint16 blkMax;  // Max cnt of all blocks ever seen at once.
-    145            static uint16 blkCnt;  // Current cnt of all blocks.
-    146            static uint16 blkFree; // Current cnt of free blocks.
-    147            static uint16 memAlo;  // Current total memory allocated.
-    148            static uint16 memMax;  // Max total memory ever allocated at once.
-    149          #endif
-    150          
-    151          #if ( OSALMEM_PROFILER )
-    152            #define OSALMEM_PROMAX  8
-    153            /* The profiling buckets must differ by at least OSALMEM_MIN_BLKSZ; the
-    154             * last bucket must equal the max alloc size. Set the bucket sizes to
-    155             * whatever sizes necessary to show how your application is using memory.
-    156             */
-    157            static uint16 proCnt[OSALMEM_PROMAX] = {
-    158              OSALMEM_SMALL_BLKSZ, 48, 112, 176, 192, 224, 256, 65535 };
-    159            static uint16 proCur[OSALMEM_PROMAX] = { 0 };
-    160            static uint16 proMax[OSALMEM_PROMAX] = { 0 };
-    161            static uint16 proTot[OSALMEM_PROMAX] = { 0 };
-    162            static uint16 proSmallBlkMiss;
-    163          #endif
-    164          
-    165          // Memory Allocation Heap.
-    166          #if defined( EXTERNAL_RAM )
-    167            static uint8 *theHeap = (uint8 *)EXT_RAM_BEG;
-    168          #else
-
-   \                                 In  segment XDATA_Z, align 1, keep-with-next
-    169            static halDataAlign_t _theHeap[ MAXMEMHEAP / sizeof( halDataAlign_t ) ];
-   \                     _theHeap:
-   \   000000                DS 3072
-   \   000C00                REQUIRE __INIT_XDATA_Z
-
-   \                                 In  segment XDATA_I, align 1, keep-with-next
-    170            static uint8 *theHeap = (uint8 *)_theHeap;
-   \                     theHeap:
-   \   000000                DS 2
-   \   000002                REQUIRE `?<Initializer for theHeap>`
-   \   000002                REQUIRE __INIT_XDATA_I
-    171          #endif
-    172          
-    173          /*********************************************************************
-    174           * LOCAL FUNCTIONS
-    175           */
-    176          
-    177          /*********************************************************************
-    178           * @fn      osal_mem_init
-    179           *
-    180           * @brief   Initialize the heap memory management system.
-    181           *
-    182           * @param   void
-    183           *
-    184           * @return  void
-    185           */
-
-   \                                 In  segment BANKED_CODE, align 1, keep-with-next
-    186          void osal_mem_init( void )
-   \                     osal_mem_init:
-    187          {
-   \   000000   C082         PUSH    DPL
-   \   000002   C083         PUSH    DPH
-   \   000004                ; Saved register size: 2
-   \   000004                ; Auto size: 0
-    188            osalMemHdr_t *tmp;
-    189          
-    190          #if ( OSALMEM_PROFILER )
-    191            (void)osal_memset( theHeap, OSALMEM_INIT, MAXMEMHEAP );
-    192          #endif
-    193          
-    194            // Setup a NULL block at the end of the heap for fast comparisons with zero.
-    195            tmp = (osalMemHdr_t *)theHeap + (MAXMEMHEAP / HDRSZ) - 1;
-    196            *tmp = 0;
-   \   000004   90....       MOV     DPTR,#theHeap
-   \   000007   E0           MOVX    A,@DPTR
-   \   000008   24FE         ADD     A,#-0x2
-   \   00000A   F8           MOV     R0,A
-   \   00000B   A3           INC     DPTR
-   \   00000C   E0           MOVX    A,@DPTR
-   \   00000D   340B         ADDC    A,#0xb
-   \   00000F   F9           MOV     R1,A
-   \   000010   8882         MOV     DPL,R0
-   \   000012   8983         MOV     DPH,R1
-   \   000014   E4           CLR     A
-   \   000015   F0           MOVX    @DPTR,A
-   \   000016   A3           INC     DPTR
-   \   000017   F0           MOVX    @DPTR,A
-    197          
-    198            // Setup a small-block bucket.
-    199            tmp = (osalMemHdr_t *)theHeap;
-    200            *tmp = SMALLBLKHEAP;
-   \   000018   90....       MOV     DPTR,#theHeap
-   \   00001B   E0           MOVX    A,@DPTR
-   \   00001C   F8           MOV     R0,A
-   \   00001D   A3           INC     DPTR
-   \   00001E   E0           MOVX    A,@DPTR
-   \   00001F   F583         MOV     DPH,A
-   \   000021   8882         MOV     DPL,R0
-   \   000023   74E8         MOV     A,#-0x18
-   \   000025   F0           MOVX    @DPTR,A
-   \   000026   A3           INC     DPTR
-   \   000027   E4           CLR     A
-   \   000028   F0           MOVX    @DPTR,A
+    178          static uint8 osalMemStat;            // Discrete status flags: 0x01 = kicked.
+   \                     osalMemStat:
+   \   000000                DS 1
+   \   000001                REQUIRE __INIT_XDATA_Z
+    179          
+    180          #if OSALMEM_METRICS
+    181          static uint16 blkMax;  // Max cnt of all blocks ever seen at once.
+    182          static uint16 blkCnt;  // Current cnt of all blocks.
+    183          static uint16 blkFree; // Current cnt of free blocks.
+    184          static uint16 memAlo;  // Current total memory allocated.
+    185          static uint16 memMax;  // Max total memory ever allocated at once.
+    186          #endif
+    187          
+    188          #if OSALMEM_PROFILER
+    189          #define OSALMEM_PROMAX  8
+    190          /* The profiling buckets must differ by at least OSALMEM_MIN_BLKSZ; the
+    191           * last bucket must equal the max alloc size. Set the bucket sizes to
+    192           * whatever sizes necessary to show how your application is using memory.
+    193           */
+    194          static uint16 proCnt[OSALMEM_PROMAX] = {
+    195          OSALMEM_SMALL_BLKSZ, 48, 112, 176, 192, 224, 256, 65535 };
+    196          static uint16 proCur[OSALMEM_PROMAX] = { 0 };
+    197          static uint16 proMax[OSALMEM_PROMAX] = { 0 };
+    198          static uint16 proTot[OSALMEM_PROMAX] = { 0 };
+    199          static uint16 proSmallBlkMiss;
+    200          #endif
     201          
-    202            // Setup the wilderness.
-    203            tmp = (osalMemHdr_t *)theHeap + (SMALLBLKHEAP / HDRSZ);
-   \   000029   90....       MOV     DPTR,#theHeap
-   \   00002C   E0           MOVX    A,@DPTR
-   \   00002D   24E8         ADD     A,#-0x18
-   \   00002F   F8           MOV     R0,A
-   \   000030   A3           INC     DPTR
-   \   000031   E0           MOVX    A,@DPTR
-   \   000032   3400         ADDC    A,#0x0
-   \   000034   F9           MOV     R1,A
-    204            *tmp = ((MAXMEMHEAP / HDRSZ) * HDRSZ) - SMALLBLKHEAP - HDRSZ;
-   \   000035   8882         MOV     DPL,R0
-   \   000037   8983         MOV     DPH,R1
-   \   000039   7416         MOV     A,#0x16
-   \   00003B   F0           MOVX    @DPTR,A
-   \   00003C   A3           INC     DPTR
-   \   00003D   740B         MOV     A,#0xb
-   \   00003F   F0           MOVX    @DPTR,A
-    205          
-    206            // Setup a NULL block that is never freed so that the small-block bucket
-    207            // is never coalesced with the wilderness.
-    208            ff1 = tmp;
-   \   000040   90....       MOV     DPTR,#ff1
-   \   000043   E8           MOV     A,R0
-   \   000044   F0           MOVX    @DPTR,A
-   \   000045   A3           INC     DPTR
-   \   000046   E9           MOV     A,R1
-   \   000047   F0           MOVX    @DPTR,A
-    209            ff2 = osal_mem_alloc( 0 );
-   \   000048                ; Setup parameters for call to function osal_mem_alloc
-   \   000048   7A00         MOV     R2,#0x0
-   \   00004A   7B00         MOV     R3,#0x0
-   \   00004C   12....       LCALL   ??osal_mem_alloc?relay
-   \   00004F   90....       MOV     DPTR,#ff2
-   \   000052   EA           MOV     A,R2
-   \   000053   F0           MOVX    @DPTR,A
-   \   000054   A3           INC     DPTR
-   \   000055   EB           MOV     A,R3
-   \   000056   F0           MOVX    @DPTR,A
-    210            ff1 = (osalMemHdr_t *)theHeap;
-   \   000057   90....       MOV     DPTR,#theHeap
-   \   00005A   12....       LCALL   ?Subroutine1 & 0xFFFF
-    211          
-    212          #if ( OSALMEM_METRICS )
-    213            /* Start with the small-block bucket and the wilderness - don't count the
-    214             * end-of-heap NULL block nor the end-of-small-block NULL block.
-    215             */
-    216            blkCnt = blkFree = 2;
-    217          #endif
-    218          }
-   \                     ??CrossCallReturnLabel_0:
-   \   00005D                REQUIRE ?Subroutine0
-   \   00005D                ; // Fall through to label ?Subroutine0
+    202          /* ------------------------------------------------------------------------------------------------
+    203           *                                           Global Variables
+    204           * ------------------------------------------------------------------------------------------------
+    205           */
+    206          
+    207          #ifdef DPRINTF_HEAPTRACE
+    208          extern int dprintf(const char *fmt, ...);
+    209          #endif /* DPRINTF_HEAPTRACE */
+    210          
+    211          /**************************************************************************************************
+    212           * @fn          osal_mem_init
+    213           *
+    214           * @brief       This function is the OSAL heap memory management initialization callback.
+    215           *
+    216           * input parameters
+    217           *
+    218           * None.
+    219           *
+    220           * output parameters
+    221           *
+    222           * None.
+    223           *
+    224           * @return      None.
+    225           */
 
    \                                 In  segment BANKED_CODE, align 1, keep-with-next
-   \                     ?Subroutine0:
-   \   000000   D083         POP     DPH
-   \   000002   D082         POP     DPL
-   \   000004   02....       LJMP    ?BRET
-
-   \                                 In  segment BANKED_CODE, align 1, keep-with-next
-   \                     ?Subroutine1:
-   \   000000   E0           MOVX    A,@DPTR
-   \   000001   F8           MOV     R0,A
-   \   000002   A3           INC     DPTR
-   \   000003   E0           MOVX    A,@DPTR
-   \   000004   F9           MOV     R1,A
-   \   000005   90....       MOV     DPTR,#ff1
-   \   000008   E8           MOV     A,R0
-   \   000009   F0           MOVX    @DPTR,A
-   \   00000A   A3           INC     DPTR
-   \   00000B   E9           MOV     A,R1
-   \   00000C   F0           MOVX    @DPTR,A
-   \   00000D   22           RET
-    219          
-    220          /*********************************************************************
-    221           * @fn      osal_mem_kick
-    222           *
-    223           * @brief   Kick the ff1 pointer out past the long-lived OSAL Task blocks.
-    224           *          Invoke this once after all long-lived blocks have been allocated -
-    225           *          presently at the end of osal_init_system().
-    226           *
-    227           * @param   void
-    228           *
-    229           * @return  void
-    230           */
-
-   \                                 In  segment BANKED_CODE, align 1, keep-with-next
-    231          void osal_mem_kick( void )
-   \                     osal_mem_kick:
-    232          {
+    226          void osal_mem_init(void)
+   \                     osal_mem_init:
+    227          {
    \   000000   C082         PUSH    DPL
    \   000002   C083         PUSH    DPH
    \   000004                ; Saved register size: 2
    \   000004                ; Auto size: 0
-    233            halIntState_t intState;
-    234          
-    235            HAL_ENTER_CRITICAL_SECTION( intState );  // Hold off interrupts.
-   \   000004   E5A8         MOV     A,0xa8
-   \   000006   FA           MOV     R2,A
-   \   000007   C2AF         CLR     0xa8.7
-    236          
-    237            /* Logic in osal_mem_free() will ratchet ff1 back down to the first free
-    238             * block in the small-block bucket.
-    239             */
-    240            ff1 = ff2;
-   \   000009   90....       MOV     DPTR,#ff2
-   \   00000C   12....       LCALL   ?Subroutine1 & 0xFFFF
-    241          
-    242            HAL_EXIT_CRITICAL_SECTION( intState );  // Re-enable interrupts.
-   \                     ??CrossCallReturnLabel_1:
-   \   00000F   EA           MOV     A,R2
-   \   000010   A2E7         MOV     C,0xE0 /* A   */.7
-   \   000012   92AF         MOV     0xa8.7,C
-    243          }
-   \   000014   80..         SJMP    ?Subroutine0
-   \   000016                REQUIRE _A_IEN0
-    244          
-    245          /*********************************************************************
-    246           * @fn      osal_mem_alloc
-    247           *
-    248           * @brief   Implementation of the allocator functionality.
-    249           *
-    250           * @param   size - number of bytes to allocate from the heap.
-    251           *
-    252           * @return  void * - pointer to the heap allocation; NULL if error or failure.
-    253           */
+    228            HAL_ASSERT(((OSALMEM_MIN_BLKSZ % OSALMEM_HDRSZ) == 0));
+    229            HAL_ASSERT(((OSALMEM_LL_BLKSZ % OSALMEM_HDRSZ) == 0));
+    230            HAL_ASSERT(((OSALMEM_SMALL_BLKSZ % OSALMEM_HDRSZ) == 0));
+    231          
+    232          #if OSALMEM_PROFILER
+    233            (void)osal_memset(theHeap, OSALMEM_INIT, MAXMEMHEAP);
+    234          #endif
+    235          
+    236            // Setup a NULL block at the end of the heap for fast comparisons with zero.
+    237            theHeap[OSALMEM_LASTBLK_IDX].val = 0;
+   \   000004   90....       MOV     DPTR,#theHeap + 3070
+   \   000007   E4           CLR     A
+   \   000008   F0           MOVX    @DPTR,A
+   \   000009   A3           INC     DPTR
+   \   00000A   F0           MOVX    @DPTR,A
+    238          
+    239            // Setup the small-block bucket.
+    240            ff1 = theHeap;
+   \   00000B   90....       MOV     DPTR,#ff1
+   \   00000E   74..         MOV     A,#theHeap & 0xff
+   \   000010   F0           MOVX    @DPTR,A
+   \   000011   A3           INC     DPTR
+   \   000012   74..         MOV     A,#(theHeap >> 8) & 0xff
+   \   000014   F0           MOVX    @DPTR,A
+    241            ff1->val = OSALMEM_SMALLBLK_BUCKET;                   // Set 'len' & clear 'inUse' field.
+   \   000015   90....       MOV     DPTR,#theHeap
+   \   000018   7448         MOV     A,#0x48
+   \   00001A   F0           MOVX    @DPTR,A
+   \   00001B   A3           INC     DPTR
+   \   00001C   7402         MOV     A,#0x2
+   \   00001E   F0           MOVX    @DPTR,A
+    242            // Set 'len' & 'inUse' fields - this is a 'zero data bytes' lifetime allocation to block the
+    243            // small-block bucket from ever being coalesced with the wilderness.
+    244            theHeap[OSALMEM_SMALLBLK_HDRCNT].val = (OSALMEM_HDRSZ | OSALMEM_IN_USE);
+   \   00001F   90....       MOV     DPTR,#theHeap + 584
+   \   000022   F0           MOVX    @DPTR,A
+   \   000023   A3           INC     DPTR
+   \   000024   7480         MOV     A,#-0x80
+   \   000026   F0           MOVX    @DPTR,A
+    245          
+    246            // Setup the wilderness.
+    247            theHeap[OSALMEM_BIGBLK_IDX].val = OSALMEM_BIGBLK_SZ;  // Set 'len' & clear 'inUse' field.
+   \   000027   A3           INC     DPTR
+   \   000028   74B4         MOV     A,#-0x4c
+   \   00002A   F0           MOVX    @DPTR,A
+   \   00002B   A3           INC     DPTR
+   \   00002C   7409         MOV     A,#0x9
+   \   00002E   F0           MOVX    @DPTR,A
+    248          
+    249          #if ( OSALMEM_METRICS )
+    250            /* Start with the small-block bucket and the wilderness - don't count the
+    251             * end-of-heap NULL block nor the end-of-small-block NULL block.
+    252             */
+    253            blkCnt = blkFree = 2;
+    254          #endif
+    255          }
+   \   00002F   D083         POP     DPH
+   \   000031   D082         POP     DPL
+   \   000033   02....       LJMP    ?BRET
+    256          
+    257          /**************************************************************************************************
+    258           * @fn          osal_mem_kick
+    259           *
+    260           * @brief       This function is the OSAL task initialization callback.
+    261           * @brief       Kick the ff1 pointer out past the long-lived OSAL Task blocks.
+    262           *              Invoke this once after all long-lived blocks have been allocated -
+    263           *              presently at the end of osal_init_system().
+    264           *
+    265           * input parameters
+    266           *
+    267           * None.
+    268           *
+    269           * output parameters
+    270           *
+    271           * None.
+    272           *
+    273           * @return      None.
+    274           */
 
    \                                 In  segment BANKED_CODE, align 1, keep-with-next
-    254          void *osal_mem_alloc( uint16 size )
+    275          void osal_mem_kick(void)
+   \                     osal_mem_kick:
+    276          {
+   \   000000   74F6         MOV     A,#-0xa
+   \   000002   12....       LCALL   ?BANKED_ENTER_XDATA
+   \   000005                ; Saved register size: 10
+   \   000005                ; Auto size: 0
+    277            halIntState_t intState;
+    278            osalMemHdr_t *tmp = osal_mem_alloc(1);
+   \   000005                ; Setup parameters for call to function osal_mem_alloc
+   \   000005   7A01         MOV     R2,#0x1
+   \   000007   7B00         MOV     R3,#0x0
+   \   000009   12....       LCALL   ??osal_mem_alloc?relay
+   \   00000C   8A..         MOV     ?V0 + 0,R2
+   \   00000E   8B..         MOV     ?V0 + 1,R3
+   \   000010   AE..         MOV     R6,?V0 + 0
+   \   000012   AF..         MOV     R7,?V0 + 1
+    279          
+    280            HAL_ASSERT((tmp != NULL));
+   \   000014   EE           MOV     A,R6
+   \   000015   4F           ORL     A,R7
+   \   000016   7003         JNZ     ??osal_mem_kick_0
+   \   000018                ; Setup parameters for call to function halAssertHandler
+   \   000018   12....       LCALL   ??halAssertHandler?relay
+    281            HAL_ENTER_CRITICAL_SECTION(intState);  // Hold off interrupts.
+   \                     ??osal_mem_kick_0:
+   \   00001B   E5A8         MOV     A,0xa8
+   \   00001D   F5..         MOV     ?V0 + 0,A
+   \   00001F   C2AF         CLR     0xa8.7
+    282          
+    283            /* All long-lived allocations have filled the LL block reserved in the small-block bucket.
+    284             * Set 'osalMemStat' so searching for memory in this bucket from here onward will only be done
+    285             * for sizes meeting the OSALMEM_SMALL_BLKSZ criteria.
+    286             */
+    287            ff1 = tmp - 1;       // Set 'ff1' to point to the first available memory after the LL block.
+   \   000021   EE           MOV     A,R6
+   \   000022   24FE         ADD     A,#-0x2
+   \   000024   F8           MOV     R0,A
+   \   000025   EF           MOV     A,R7
+   \   000026   34FF         ADDC    A,#-0x1
+   \   000028   F9           MOV     R1,A
+   \   000029   90....       MOV     DPTR,#ff1
+   \   00002C   E8           MOV     A,R0
+   \   00002D   F0           MOVX    @DPTR,A
+   \   00002E   A3           INC     DPTR
+   \   00002F   E9           MOV     A,R1
+   \   000030   F0           MOVX    @DPTR,A
+    288            osal_mem_free(tmp);
+   \   000031                ; Setup parameters for call to function osal_mem_free
+   \   000031   EE           MOV     A,R6
+   \   000032   FA           MOV     R2,A
+   \   000033   EF           MOV     A,R7
+   \   000034   FB           MOV     R3,A
+   \   000035   12....       LCALL   ??osal_mem_free?relay
+    289            osalMemStat = 0x01;  // Set 'osalMemStat' after the free because it enables memory profiling.
+   \   000038   90....       MOV     DPTR,#osalMemStat
+   \   00003B   7401         MOV     A,#0x1
+   \   00003D   F0           MOVX    @DPTR,A
+    290          
+    291            HAL_EXIT_CRITICAL_SECTION(intState);  // Re-enable interrupts.
+   \   00003E   E5..         MOV     A,?V0 + 0
+   \   000040   A2E7         MOV     C,0xE0 /* A   */.7
+   \   000042   92AF         MOV     0xa8.7,C
+    292          }
+   \   000044   7F02         MOV     R7,#0x2
+   \   000046   02....       LJMP    ?BANKED_LEAVE_XDATA
+   \   000049                REQUIRE _A_IEN0
+    293          
+    294          /**************************************************************************************************
+    295           * @fn          osal_mem_alloc
+    296           *
+    297           * @brief       This function implements the OSAL dynamic memory allocation functionality.
+    298           *
+    299           * input parameters
+    300           *
+    301           * @param size - the number of bytes to allocate from the HEAP.
+    302           *
+    303           * output parameters
+    304           *
+    305           * None.
+    306           *
+    307           * @return      None.
+    308           */
+    309          #ifdef DPRINTF_OSALHEAPTRACE
+    310          void *osal_mem_alloc_dbg( uint16 size, const char *fname, unsigned lnum )
+    311          #else /* DPRINTF_OSALHEAPTRACE */
+
+   \                                 In  segment BANKED_CODE, align 1, keep-with-next
+    312          void *osal_mem_alloc( uint16 size )
    \                     osal_mem_alloc:
-    255          {
+    313          #endif /* DPRINTF_OSALHEAPTRACE */
+    314          {
    \   000000   74F3         MOV     A,#-0xd
    \   000002   12....       LCALL   ?BANKED_ENTER_XDATA
    \   000005                ; Saved register size: 13
    \   000005                ; Auto size: 0
-    256            osalMemHdr_t *prev = NULL;
+    315            osalMemHdr_t *prev = NULL;
    \   000005   7C00         MOV     R4,#0x0
    \   000007   7D00         MOV     R5,#0x0
-    257            osalMemHdr_t *hdr;
-    258            halIntState_t intState;
-    259            uint16 tmp;
-    260            uint8 coal = 0;
-   \   000009   8C..         MOV     ?V0 + 3,R4
-    261          
-    262            OSALMEM_ASSERT( size );
-    263          
-    264            size += HDRSZ;
+    316            osalMemHdr_t *hdr;
+    317            halIntState_t intState;
+    318            uint8 coal = 0;
+   \   000009   8C..         MOV     ?V0 + 1,R4
+    319          
+    320            size += OSALMEM_HDRSZ;
    \   00000B   EA           MOV     A,R2
    \   00000C   2402         ADD     A,#0x2
    \   00000E   0A           INC     R2
@@ -534,569 +564,554 @@ D:\ProgramData\Hardware\zigbee\Components\osal\common\OSAL_Memory.c
    \   000010   EB           MOV     A,R3
    \   000011   3400         ADDC    A,#0x0
    \   000013   FB           MOV     R3,A
-    265          
-    266            // Calculate required bytes to add to 'size' to align to halDataAlign_t.
-    267            if ( sizeof( halDataAlign_t ) == 2 )
-    268            {
-    269              size += (size & 0x01);
-    270            }
-    271            else if ( sizeof( halDataAlign_t ) != 1 )
-    272            {
-    273              const uint8 mod = size % sizeof( halDataAlign_t );
-    274          
-    275              if ( mod != 0 )
-    276              {
-    277                size += (sizeof( halDataAlign_t ) - mod);
-    278              }
-    279            }
-    280          
-    281            HAL_ENTER_CRITICAL_SECTION( intState );  // Hold off interrupts.
+    321          
+    322            // Calculate required bytes to add to 'size' to align to halDataAlign_t.
+    323            if ( sizeof( halDataAlign_t ) == 2 )
+    324            {
+    325              size += (size & 0x01);
+    326            }
+    327            else if ( sizeof( halDataAlign_t ) != 1 )
+    328            {
+    329              const uint8 mod = size % sizeof( halDataAlign_t );
+    330          
+    331              if ( mod != 0 )
+    332              {
+    333                size += (sizeof( halDataAlign_t ) - mod);
+    334              }
+    335            }
+    336          
+    337            HAL_ENTER_CRITICAL_SECTION( intState );  // Hold off interrupts.
    \   000014   A2AF         MOV     C,0xa8.7
    \   000016   E4           CLR     A
    \   000017   33           RLC     A
-   \   000018   F5..         MOV     ?V0 + 2,A
+   \   000018   F5..         MOV     ?V0 + 0,A
    \   00001A   C2AF         CLR     0xa8.7
-    282          
-    283            // Smaller allocations are first attempted in the small-block bucket.
-    284            if ( size <= OSALMEM_SMALL_BLKSZ )
-   \   00001C   EA           MOV     A,R2
-   \   00001D   9411         SUBB    A,#0x11
-   \   00001F   EB           MOV     A,R3
-   \   000020   9400         SUBB    A,#0x0
-   \   000022   5005         JNC     ??osal_mem_alloc_0
-    285            {
-    286              hdr = ff1;
-   \   000024   90....       MOV     DPTR,#ff1
-   \   000027   8003         SJMP    ??osal_mem_alloc_1
-    287            }
-    288            else
-    289            {
-    290              hdr = ff2;
+    338          
+    339            // Smaller allocations are first attempted in the small-block bucket, and all long-lived
+    340            // allocations are channeled into the LL block reserved within this bucket.
+    341            if ((osalMemStat == 0) || (size <= OSALMEM_SMALL_BLKSZ))
+   \   00001C   90....       MOV     DPTR,#osalMemStat
+   \   00001F   E0           MOVX    A,@DPTR
+   \   000020   6008         JZ      ??osal_mem_alloc_0
+   \   000022   EA           MOV     A,R2
+   \   000023   9411         SUBB    A,#0x11
+   \   000025   EB           MOV     A,R3
+   \   000026   9400         SUBB    A,#0x0
+   \   000028   500A         JNC     ??osal_mem_alloc_1
+    342            {
+    343              hdr = ff1;
    \                     ??osal_mem_alloc_0:
-   \   000029   90....       MOV     DPTR,#ff2
+   \   00002A   90....       MOV     DPTR,#ff1
+   \   00002D   E0           MOVX    A,@DPTR
+   \   00002E   F8           MOV     R0,A
+   \   00002F   A3           INC     DPTR
+   \   000030   E0           MOVX    A,@DPTR
+   \   000031   F9           MOV     R1,A
+   \   000032   8004         SJMP    ??osal_mem_alloc_2
+    344            }
+    345            else
+    346            {
+    347              hdr = (theHeap + OSALMEM_BIGBLK_IDX);
    \                     ??osal_mem_alloc_1:
-   \   00002C   E0           MOVX    A,@DPTR
-   \   00002D   F8           MOV     R0,A
-   \   00002E   A3           INC     DPTR
-   \   00002F   E0           MOVX    A,@DPTR
-   \   000030   F9           MOV     R1,A
-    291            }
-    292            tmp = *hdr;
-   \   000031   8882         MOV     DPL,R0
-   \   000033   8983         MOV     DPH,R1
-   \   000035   E0           MOVX    A,@DPTR
-   \   000036   FE           MOV     R6,A
-   \   000037   A3           INC     DPTR
-   \   000038   E0           MOVX    A,@DPTR
-   \   000039   FF           MOV     R7,A
-    293          
-    294            do
-    295            {
-    296              if ( tmp & OSALMEM_IN_USE )
+   \   000034   78..         MOV     R0,#(theHeap + 74) & 0xff
+   \   000036   79..         MOV     R1,#((theHeap + 586) >> 8) & 0xff
+    348            }
+    349          
+    350            do
+    351            {
+    352              if ( hdr->hdr.inUse )
    \                     ??osal_mem_alloc_2:
-   \   00003A   EF           MOV     A,R7
-   \   00003B   5480         ANL     A,#0x80
-   \   00003D   6009         JZ      ??osal_mem_alloc_3
-    297              {
-    298                tmp ^= OSALMEM_IN_USE;
-   \   00003F   7480         MOV     A,#-0x80
-   \   000041   6F           XRL     A,R7
-   \   000042   FF           MOV     R7,A
-    299                coal = 0;
-   \   000043   75..00       MOV     ?V0 + 3,#0x0
-   \   000046   8074         SJMP    ??osal_mem_alloc_4
-    300              }
-    301              else
-    302              {
-    303                if ( coal != 0 )
+   \   000038   8882         MOV     DPL,R0
+   \   00003A   8983         MOV     DPH,R1
+   \   00003C   A3           INC     DPTR
+   \   00003D   E0           MOVX    A,@DPTR
+   \   00003E   5480         ANL     A,#0x80
+   \   000040   6006         JZ      ??osal_mem_alloc_3
+    353              {
+    354                coal = 0;
+   \   000042   75..00       MOV     ?V0 + 1,#0x0
+   \   000045   02....       LJMP    ??osal_mem_alloc_4 & 0xFFFF
+    355              }
+    356              else
+    357              {
+    358                if ( coal != 0 )
    \                     ??osal_mem_alloc_3:
-   \   000048   E5..         MOV     A,?V0 + 3
+   \   000048   E5..         MOV     A,?V0 + 1
    \   00004A   A2E0         MOV     C,0xE0 /* A   */.0
-   \   00004C   5060         JNC     ??osal_mem_alloc_5
-    304                {
-    305          #if ( OSALMEM_METRICS )
-    306                  blkCnt--;
-    307                  blkFree--;
-    308          #endif
-    309          
-    310                  *prev += *hdr;
-   \   00004E   8882         MOV     DPL,R0
-   \   000050   8983         MOV     DPH,R1
+   \   00004C   5072         JNC     ??osal_mem_alloc_5
+    359                {
+    360          #if ( OSALMEM_METRICS )
+    361                  blkCnt--;
+    362                  blkFree--;
+    363          #endif
+    364          
+    365                  prev->hdr.len += hdr->hdr.len;
+   \   00004E   8C82         MOV     DPL,R4
+   \   000050   8D83         MOV     DPH,R5
    \   000052   E0           MOVX    A,@DPTR
-   \   000053   F5..         MOV     ?V0 + 0,A
-   \   000055   A3           INC     DPTR
-   \   000056   E0           MOVX    A,@DPTR
-   \   000057   F5..         MOV     ?V0 + 1,A
-   \   000059   8C82         MOV     DPL,R4
-   \   00005B   8D83         MOV     DPH,R5
-   \   00005D   E0           MOVX    A,@DPTR
-   \   00005E   25..         ADD     A,?V0 + 0
-   \   000060   F0           MOVX    @DPTR,A
-   \   000061   A3           INC     DPTR
-   \   000062   E0           MOVX    A,@DPTR
-   \   000063   35..         ADDC    A,?V0 + 1
-   \   000065   F0           MOVX    @DPTR,A
-    311          
-    312                  if ( *prev >= size )
-   \   000066   8C82         MOV     DPL,R4
-   \   000068   8D83         MOV     DPH,R5
-   \   00006A   C3           CLR     C
-   \   00006B   E0           MOVX    A,@DPTR
-   \   00006C   9A           SUBB    A,R2
-   \   00006D   A3           INC     DPTR
-   \   00006E   E0           MOVX    A,@DPTR
-   \   00006F   9B           SUBB    A,R3
-   \   000070   404A         JC      ??osal_mem_alloc_4
-    313                  {
-    314                    hdr = prev;
-   \   000072   EC           MOV     A,R4
-   \   000073   F8           MOV     R0,A
-   \   000074   ED           MOV     A,R5
-   \   000075   F9           MOV     R1,A
-    315                    tmp = *hdr;
-   \   000076   8882         MOV     DPL,R0
-   \   000078   8983         MOV     DPH,R1
-   \   00007A   E0           MOVX    A,@DPTR
-   \   00007B   FE           MOV     R6,A
-   \   00007C   A3           INC     DPTR
-   \   00007D   E0           MOVX    A,@DPTR
-   \   00007E   FF           MOV     R7,A
-    316                    break;
-    317                  }
-    318                }
-    319                else
-    320                {
-    321                  if ( tmp >= size )
-    322                  {
-    323                    break;
-    324                  }
-    325          
-    326                  coal = 1;
-    327                  prev = hdr;
-    328                }
-    329              }
-    330          
-    331              hdr = (osalMemHdr_t *)((uint8 *)hdr + tmp);
-    332          
-    333              tmp = *hdr;
-    334              if ( tmp == 0 )
-    335              {
-    336                hdr = NULL;
-    337                break;
-    338              }
-    339          
-    340          
-    341            } while ( 1 );
-    342          
-    343            if ( hdr != NULL )
+   \   000053   FE           MOV     R6,A
+   \   000054   A3           INC     DPTR
+   \   000055   E0           MOVX    A,@DPTR
+   \   000056   FF           MOV     R7,A
+   \   000057   5480         ANL     A,#0x80
+   \   000059   F5..         MOV     ?V0 + 3,A
+   \   00005B   8882         MOV     DPL,R0
+   \   00005D   8983         MOV     DPH,R1
+   \   00005F   E0           MOVX    A,@DPTR
+   \   000060   2E           ADD     A,R6
+   \   000061   FE           MOV     R6,A
+   \   000062   A3           INC     DPTR
+   \   000063   E0           MOVX    A,@DPTR
+   \   000064   3F           ADDC    A,R7
+   \   000065   547F         ANL     A,#0x7f
+   \   000067   FF           MOV     R7,A
+   \   000068   E5..         MOV     A,?V0 + 3
+   \   00006A   4F           ORL     A,R7
+   \   00006B   FF           MOV     R7,A
+   \   00006C   8C82         MOV     DPL,R4
+   \   00006E   8D83         MOV     DPH,R5
+   \   000070   EE           MOV     A,R6
+   \   000071   F0           MOVX    @DPTR,A
+   \   000072   A3           INC     DPTR
+   \   000073   EF           MOV     A,R7
+   \   000074   F0           MOVX    @DPTR,A
+    366          
+    367                  if ( prev->hdr.len >= size )
+   \   000075   547F         ANL     A,#0x7f
+   \   000077   FF           MOV     R7,A
+   \   000078   C3           CLR     C
+   \   000079   EE           MOV     A,R6
+   \   00007A   9A           SUBB    A,R2
+   \   00007B   EF           MOV     A,R7
+   \   00007C   9B           SUBB    A,R3
+   \   00007D   405A         JC      ??osal_mem_alloc_4
+    368                  {
+    369                    hdr = prev;
+   \   00007F   EC           MOV     A,R4
+   \   000080   F8           MOV     R0,A
+   \   000081   ED           MOV     A,R5
+   \   000082   F9           MOV     R1,A
+    370                    break;
+    371                  }
+    372                }
+    373                else
+    374                {
+    375                  if ( hdr->hdr.len >= size )
+    376                  {
+    377                    break;
+    378                  }
+    379          
+    380                  coal = 1;
+    381                  prev = hdr;
+    382                }
+    383              }
+    384          
+    385              hdr = (osalMemHdr_t *)((uint8 *)hdr + hdr->hdr.len);
+    386          
+    387              if ( hdr->val == 0 )
+    388              {
+    389                hdr = NULL;
+    390                break;
+    391              }
+    392            } while (1);
+    393          
+    394            if ( hdr != NULL )
    \                     ??osal_mem_alloc_6:
-   \   00007F   E8           MOV     A,R0
-   \   000080   49           ORL     A,R1
-   \   000081   6067         JZ      ??osal_mem_alloc_7
-    344            {
-    345              tmp -= size;
-   \   000083   C3           CLR     C
-   \   000084   EE           MOV     A,R6
-   \   000085   9A           SUBB    A,R2
-   \   000086   FE           MOV     R6,A
-   \   000087   EF           MOV     A,R7
-   \   000088   9B           SUBB    A,R3
-   \   000089   FF           MOV     R7,A
-    346          
-    347              // Determine whether the threshold for splitting is met.
-    348              if ( tmp >= OSALMEM_MIN_BLKSZ )
-   \   00008A   C3           CLR     C
-   \   00008B   EE           MOV     A,R6
-   \   00008C   9404         SUBB    A,#0x4
-   \   00008E   EF           MOV     A,R7
-   \   00008F   9400         SUBB    A,#0x0
-   \   000091   4045         JC      ??osal_mem_alloc_8
-    349              {
-    350                // Split the block before allocating it.
-    351                osalMemHdr_t *next = (osalMemHdr_t *)((uint8 *)hdr + size);
-    352                *next = tmp;
-   \   000093   E8           MOV     A,R0
-   \   000094   2A           ADD     A,R2
-   \   000095   F582         MOV     DPL,A
-   \   000097   E9           MOV     A,R1
-   \   000098   3B           ADDC    A,R3
-   \   000099   F583         MOV     DPH,A
-   \   00009B   EE           MOV     A,R6
-   \   00009C   F0           MOVX    @DPTR,A
-   \   00009D   A3           INC     DPTR
-   \   00009E   EF           MOV     A,R7
-   \   00009F   F0           MOVX    @DPTR,A
-    353                *hdr = (size | OSALMEM_IN_USE);
-   \   0000A0   EB           MOV     A,R3
-   \   0000A1   4480         ORL     A,#0x80
-   \   0000A3   FB           MOV     R3,A
-   \   0000A4   8882         MOV     DPL,R0
-   \   0000A6   8983         MOV     DPH,R1
-   \   0000A8   EA           MOV     A,R2
-   \   0000A9   F0           MOVX    @DPTR,A
-   \   0000AA   A3           INC     DPTR
-   \   0000AB   EB           MOV     A,R3
-   \   0000AC   8032         SJMP    ??osal_mem_alloc_9
-    354          
-    355          #if ( OSALMEM_METRICS )
-    356                blkCnt++;
-    357                if ( blkMax < blkCnt )
-    358                {
-    359                  blkMax = blkCnt;
-    360                }
-    361                memAlo += size;
-    362          #endif
-    363              }
+   \   000083   E8           MOV     A,R0
+   \   000084   49           ORL     A,R1
+   \   000085   7003         JNZ     $+5
+   \   000087   02....       LJMP    ??osal_mem_alloc_7 & 0xFFFF
+    395            {
+    396              uint16 tmp = hdr->hdr.len - size;
+   \   00008A   8882         MOV     DPL,R0
+   \   00008C   8983         MOV     DPH,R1
+   \   00008E   E0           MOVX    A,@DPTR
+   \   00008F   FC           MOV     R4,A
+   \   000090   A3           INC     DPTR
+   \   000091   E0           MOVX    A,@DPTR
+   \   000092   547F         ANL     A,#0x7f
+   \   000094   FD           MOV     R5,A
+   \   000095   EC           MOV     A,R4
+   \   000096   C3           CLR     C
+   \   000097   9A           SUBB    A,R2
+   \   000098   FC           MOV     R4,A
+   \   000099   ED           MOV     A,R5
+   \   00009A   9B           SUBB    A,R3
+   \   00009B   FD           MOV     R5,A
+    397          
+    398              // Determine whether the threshold for splitting is met.
+    399              if ( tmp >= OSALMEM_MIN_BLKSZ )
+   \   00009C   C3           CLR     C
+   \   00009D   EC           MOV     A,R4
+   \   00009E   9404         SUBB    A,#0x4
+   \   0000A0   ED           MOV     A,R5
+   \   0000A1   9400         SUBB    A,#0x0
+   \   0000A3   405B         JC      ??osal_mem_alloc_8
+    400              {
+    401                // Split the block before allocating it.
+    402                osalMemHdr_t *next = (osalMemHdr_t *)((uint8 *)hdr + size);
+    403                next->val = tmp;                     // Set 'len' & clear 'inUse' field.
+   \   0000A5   E8           MOV     A,R0
+   \   0000A6   2A           ADD     A,R2
+   \   0000A7   F582         MOV     DPL,A
+   \   0000A9   E9           MOV     A,R1
+   \   0000AA   3B           ADDC    A,R3
+   \   0000AB   F583         MOV     DPH,A
+   \   0000AD   EC           MOV     A,R4
+   \   0000AE   F0           MOVX    @DPTR,A
+   \   0000AF   A3           INC     DPTR
+   \   0000B0   ED           MOV     A,R5
+   \   0000B1   F0           MOVX    @DPTR,A
+    404                hdr->val = (size | OSALMEM_IN_USE);  // Set 'len' & 'inUse' field.
+   \   0000B2   EB           MOV     A,R3
+   \   0000B3   4480         ORL     A,#0x80
+   \   0000B5   FB           MOV     R3,A
+   \   0000B6   8882         MOV     DPL,R0
+   \   0000B8   8983         MOV     DPH,R1
+   \   0000BA   EA           MOV     A,R2
+   \   0000BB   F0           MOVX    @DPTR,A
+   \   0000BC   A3           INC     DPTR
+   \   0000BD   EB           MOV     A,R3
+   \   0000BE   8048         SJMP    ??osal_mem_alloc_9
+    405          
+    406          #if ( OSALMEM_METRICS )
+    407                blkCnt++;
+    408                if ( blkMax < blkCnt )
+    409                {
+    410                  blkMax = blkCnt;
+    411                }
+    412                memAlo += size;
+    413          #endif
+    414              }
    \                     ??osal_mem_alloc_5:
-   \   0000AE   C3           CLR     C
-   \   0000AF   EE           MOV     A,R6
-   \   0000B0   9A           SUBB    A,R2
-   \   0000B1   EF           MOV     A,R7
-   \   0000B2   9B           SUBB    A,R3
-   \   0000B3   50CA         JNC     ??osal_mem_alloc_6
-   \   0000B5   75..01       MOV     ?V0 + 3,#0x1
-   \   0000B8   E8           MOV     A,R0
-   \   0000B9   FC           MOV     R4,A
-   \   0000BA   E9           MOV     A,R1
-   \   0000BB   FD           MOV     R5,A
+   \   0000C0   8882         MOV     DPL,R0
+   \   0000C2   8983         MOV     DPH,R1
+   \   0000C4   E0           MOVX    A,@DPTR
+   \   0000C5   FC           MOV     R4,A
+   \   0000C6   A3           INC     DPTR
+   \   0000C7   E0           MOVX    A,@DPTR
+   \   0000C8   547F         ANL     A,#0x7f
+   \   0000CA   FD           MOV     R5,A
+   \   0000CB   C3           CLR     C
+   \   0000CC   EC           MOV     A,R4
+   \   0000CD   9A           SUBB    A,R2
+   \   0000CE   ED           MOV     A,R5
+   \   0000CF   9B           SUBB    A,R3
+   \   0000D0   50B1         JNC     ??osal_mem_alloc_6
+   \   0000D2   75..01       MOV     ?V0 + 1,#0x1
+   \   0000D5   E8           MOV     A,R0
+   \   0000D6   FC           MOV     R4,A
+   \   0000D7   E9           MOV     A,R1
+   \   0000D8   FD           MOV     R5,A
    \                     ??osal_mem_alloc_4:
-   \   0000BC   E8           MOV     A,R0
-   \   0000BD   2E           ADD     A,R6
-   \   0000BE   F8           MOV     R0,A
-   \   0000BF   E9           MOV     A,R1
-   \   0000C0   3F           ADDC    A,R7
-   \   0000C1   F9           MOV     R1,A
-   \   0000C2   8882         MOV     DPL,R0
-   \   0000C4   8983         MOV     DPH,R1
-   \   0000C6   E0           MOVX    A,@DPTR
-   \   0000C7   FE           MOV     R6,A
-   \   0000C8   A3           INC     DPTR
-   \   0000C9   E0           MOVX    A,@DPTR
-   \   0000CA   FF           MOV     R7,A
-   \   0000CB   EE           MOV     A,R6
-   \   0000CC   4F           ORL     A,R7
-   \   0000CD   6003         JZ      $+5
-   \   0000CF   02....       LJMP    ??osal_mem_alloc_2 & 0xFFFF
-   \   0000D2   7800         MOV     R0,#0x0
-   \   0000D4   7900         MOV     R1,#0x0
-   \   0000D6   8012         SJMP    ??osal_mem_alloc_7
-    364              else
-    365              {
-    366          #if ( OSALMEM_METRICS )
-    367                memAlo += *hdr;
-    368                blkFree--;
-    369          #endif
-    370          
-    371                *hdr |= OSALMEM_IN_USE;
-   \                     ??osal_mem_alloc_8:
-   \   0000D8   8882         MOV     DPL,R0
-   \   0000DA   8983         MOV     DPH,R1
-   \   0000DC   A3           INC     DPTR
+   \   0000D9   8882         MOV     DPL,R0
+   \   0000DB   8983         MOV     DPH,R1
    \   0000DD   E0           MOVX    A,@DPTR
-   \   0000DE   4480         ORL     A,#0x80
-   \                     ??osal_mem_alloc_9:
-   \   0000E0   F0           MOVX    @DPTR,A
-    372              }
-    373          
-    374          #if ( OSALMEM_METRICS )
-    375              if ( memMax < memAlo )
-    376              {
-    377                memMax = memAlo;
-    378              }
-    379          #endif
-    380          
-    381          #if ( OSALMEM_PROFILER )
-    382            {
-    383              uint8 idx;
-    384              size = *hdr ^ OSALMEM_IN_USE;
-    385          
-    386              for ( idx = 0; idx < OSALMEM_PROMAX; idx++ )
-    387              {
-    388                if ( size <= proCnt[idx] )
-    389                {
-    390                  break;
-    391                }
-    392              }
-    393              proCur[idx]++;
-    394              if ( proMax[idx] < proCur[idx] )
-    395              {
-    396                proMax[idx] = proCur[idx];
-    397              }
-    398              proTot[idx]++;
-    399            }
-    400          #endif
-    401          
-    402              hdr++;
-   \   0000E1   E8           MOV     A,R0
-   \   0000E2   2402         ADD     A,#0x2
-   \   0000E4   08           INC     R0
-   \   0000E5   08           INC     R0
-   \   0000E6   E9           MOV     A,R1
-   \   0000E7   3400         ADDC    A,#0x0
+   \   0000DE   FE           MOV     R6,A
+   \   0000DF   A3           INC     DPTR
+   \   0000E0   E0           MOVX    A,@DPTR
+   \   0000E1   547F         ANL     A,#0x7f
+   \   0000E3   FF           MOV     R7,A
+   \   0000E4   E8           MOV     A,R0
+   \   0000E5   2E           ADD     A,R6
+   \   0000E6   F8           MOV     R0,A
+   \   0000E7   E9           MOV     A,R1
+   \   0000E8   3F           ADDC    A,R7
    \   0000E9   F9           MOV     R1,A
-    403          
-    404          #if ( OSALMEM_PROFILER )
-    405              (void)osal_memset( (uint8 *)hdr, OSALMEM_ALOC, (size - HDRSZ) );
-    406          
-    407              /* A small-block could not be allocated in the small-block bucket.
-    408               * When this occurs significantly frequently, increase the size of the
-    409               * bucket in order to restore better worst case run times. Set the first
-    410               * profiling bucket size in proCnt[] to the small-block bucket size and
-    411               * divide proSmallBlkMiss by the corresponding proTot[] size to get % miss.
-    412               * Best worst case time on TrasmitApp was achieved at a 0-15% miss rate
-    413               * during steady state Tx load, 0% during idle and steady state Rx load.
-    414               */
-    415              if ( (size <= OSALMEM_SMALL_BLKSZ) && (hdr > ff2) )
+   \   0000EA   8882         MOV     DPL,R0
+   \   0000EC   8983         MOV     DPH,R1
+   \   0000EE   E0           MOVX    A,@DPTR
+   \   0000EF   FE           MOV     R6,A
+   \   0000F0   A3           INC     DPTR
+   \   0000F1   E0           MOVX    A,@DPTR
+   \   0000F2   FF           MOV     R7,A
+   \   0000F3   EE           MOV     A,R6
+   \   0000F4   4F           ORL     A,R7
+   \   0000F5   6003         JZ      $+5
+   \   0000F7   02....       LJMP    ??osal_mem_alloc_2 & 0xFFFF
+   \   0000FA   7800         MOV     R0,#0x0
+   \   0000FC   7900         MOV     R1,#0x0
+   \   0000FE   8041         SJMP    ??osal_mem_alloc_7
+    415              else
     416              {
-    417                proSmallBlkMiss++;
-    418              }
-    419          #endif
-    420            }
+    417          #if ( OSALMEM_METRICS )
+    418                memAlo += hdr->hdr.len;
+    419                blkFree--;
+    420          #endif
     421          
-    422            HAL_EXIT_CRITICAL_SECTION( intState );  // Re-enable interrupts.
+    422                hdr->hdr.inUse = TRUE;
+   \                     ??osal_mem_alloc_8:
+   \   000100   8882         MOV     DPL,R0
+   \   000102   8983         MOV     DPH,R1
+   \   000104   A3           INC     DPTR
+   \   000105   E0           MOVX    A,@DPTR
+   \   000106   4480         ORL     A,#0x80
+   \                     ??osal_mem_alloc_9:
+   \   000108   F0           MOVX    @DPTR,A
+    423              }
+    424          
+    425          #if ( OSALMEM_METRICS )
+    426              if ( memMax < memAlo )
+    427              {
+    428                memMax = memAlo;
+    429              }
+    430          #endif
+    431          
+    432          #if ( OSALMEM_PROFILER )
+    433          #if !OSALMEM_PROFILER_LL
+    434              if (osalMemStat != 0)  // Don't profile until after the LL block is filled.
+    435          #endif
+    436              {
+    437                uint8 idx;
+    438          
+    439                for ( idx = 0; idx < OSALMEM_PROMAX; idx++ )
+    440                {
+    441                  if ( hdr->hdr.len <= proCnt[idx] )
+    442                  {
+    443                    break;
+    444                  }
+    445                }
+    446                proCur[idx]++;
+    447                if ( proMax[idx] < proCur[idx] )
+    448                {
+    449                  proMax[idx] = proCur[idx];
+    450                }
+    451                proTot[idx]++;
+    452          
+    453                /* A small-block could not be allocated in the small-block bucket.
+    454                 * When this occurs significantly frequently, increase the size of the
+    455                 * bucket in order to restore better worst case run times. Set the first
+    456                 * profiling bucket size in proCnt[] to the small-block bucket size and
+    457                 * divide proSmallBlkMiss by the corresponding proTot[] size to get % miss.
+    458                 * Best worst case time on TrasmitApp was achieved at a 0-15% miss rate
+    459                 * during steady state Tx load, 0% during idle and steady state Rx load.
+    460                 */
+    461                if ((hdr->hdr.len <= OSALMEM_SMALL_BLKSZ) && (hdr >= (theHeap + OSALMEM_BIGBLK_IDX)))
+    462                {
+    463                  proSmallBlkMiss++;
+    464                }
+    465              }
+    466          
+    467              (void)osal_memset((uint8 *)(hdr+1), OSALMEM_ALOC, (hdr->hdr.len - OSALMEM_HDRSZ));
+    468          #endif
+    469          
+    470              if ((osalMemStat != 0) && (ff1 == hdr))
+   \   000109   90....       MOV     DPTR,#osalMemStat
+   \   00010C   E0           MOVX    A,@DPTR
+   \   00010D   6029         JZ      ??osal_mem_alloc_10
+   \   00010F   90....       MOV     DPTR,#ff1
+   \   000112   E0           MOVX    A,@DPTR
+   \   000113   FA           MOV     R2,A
+   \   000114   A3           INC     DPTR
+   \   000115   E0           MOVX    A,@DPTR
+   \   000116   FB           MOV     R3,A
+   \   000117   E8           MOV     A,R0
+   \   000118   6A           XRL     A,R2
+   \   000119   7002         JNZ     ??osal_mem_alloc_11
+   \   00011B   E9           MOV     A,R1
+   \   00011C   6B           XRL     A,R3
+   \                     ??osal_mem_alloc_11:
+   \   00011D   7019         JNZ     ??osal_mem_alloc_10
+    471              {
+    472                ff1 = (osalMemHdr_t *)((uint8 *)hdr + hdr->hdr.len);
+   \   00011F   8882         MOV     DPL,R0
+   \   000121   8983         MOV     DPH,R1
+   \   000123   E0           MOVX    A,@DPTR
+   \   000124   FA           MOV     R2,A
+   \   000125   A3           INC     DPTR
+   \   000126   E0           MOVX    A,@DPTR
+   \   000127   547F         ANL     A,#0x7f
+   \   000129   FB           MOV     R3,A
+   \   00012A   E8           MOV     A,R0
+   \   00012B   2A           ADD     A,R2
+   \   00012C   FA           MOV     R2,A
+   \   00012D   E9           MOV     A,R1
+   \   00012E   3B           ADDC    A,R3
+   \   00012F   FB           MOV     R3,A
+   \   000130   90....       MOV     DPTR,#ff1
+   \   000133   EA           MOV     A,R2
+   \   000134   F0           MOVX    @DPTR,A
+   \   000135   A3           INC     DPTR
+   \   000136   EB           MOV     A,R3
+   \   000137   F0           MOVX    @DPTR,A
+    473              }
+    474          
+    475              hdr++;
+   \                     ??osal_mem_alloc_10:
+   \   000138   E8           MOV     A,R0
+   \   000139   2402         ADD     A,#0x2
+   \   00013B   08           INC     R0
+   \   00013C   08           INC     R0
+   \   00013D   E9           MOV     A,R1
+   \   00013E   3400         ADDC    A,#0x0
+   \   000140   F9           MOV     R1,A
+    476            }
+    477          
+    478            HAL_EXIT_CRITICAL_SECTION( intState );  // Re-enable interrupts.
    \                     ??osal_mem_alloc_7:
-   \   0000EA   E5..         MOV     A,?V0 + 2
-   \   0000EC   A2E0         MOV     C,0xE0 /* A   */.0
-   \   0000EE   92AF         MOV     0xa8.7,C
-    423          
-    424            return (void *)hdr;
-   \   0000F0   E8           MOV     A,R0
-   \   0000F1   FA           MOV     R2,A
-   \   0000F2   E9           MOV     A,R1
-   \   0000F3   FB           MOV     R3,A
-   \   0000F4   7F05         MOV     R7,#0x5
-   \   0000F6   02....       LJMP    ?BANKED_LEAVE_XDATA
-   \   0000F9                REQUIRE _A_IEN0
-    425          }
-    426          
-    427          /*********************************************************************
-    428           * @fn      osal_mem_free
-    429           *
-    430           * @brief   Implementation of the de-allocator functionality.
-    431           *
-    432           * @param   ptr - pointer to the memory to free.
-    433           *
-    434           * @return  void
-    435           */
+   \   000141   E5..         MOV     A,?V0 + 0
+   \   000143   A2E0         MOV     C,0xE0 /* A   */.0
+   \   000145   92AF         MOV     0xa8.7,C
+    479          #pragma diag_suppress=Pe767
+    480            HAL_ASSERT(((halDataAlign_t)hdr % sizeof(halDataAlign_t)) == 0);
+    481          #pragma diag_default=Pe767
+    482          
+    483          #ifdef DPRINTF_OSALHEAPTRACE
+    484            dprintf("osal_mem_alloc(%u)->%lx:%s:%u\n", size, (unsigned) hdr, fname, lnum);
+    485          #endif /* DPRINTF_OSALHEAPTRACE */
+    486            return (void *)hdr;
+   \   000147   E8           MOV     A,R0
+   \   000148   FA           MOV     R2,A
+   \   000149   E9           MOV     A,R1
+   \   00014A   FB           MOV     R3,A
+   \   00014B   7F05         MOV     R7,#0x5
+   \   00014D   02....       LJMP    ?BANKED_LEAVE_XDATA
+   \   000150                REQUIRE _A_IEN0
+    487          }
+    488          
+    489          /**************************************************************************************************
+    490           * @fn          osal_mem_free
+    491           *
+    492           * @brief       This function implements the OSAL dynamic memory de-allocation functionality.
+    493           *
+    494           * input parameters
+    495           *
+    496           * @param ptr - A valid pointer (i.e. a pointer returned by osal_mem_alloc()) to the memory to free.
+    497           *
+    498           * output parameters
+    499           *
+    500           * None.
+    501           *
+    502           * @return      None.
+    503           */
+    504          #ifdef DPRINTF_OSALHEAPTRACE
+    505          void osal_mem_free_dbg(void *ptr, const char *fname, unsigned lnum)
+    506          #else /* DPRINTF_OSALHEAPTRACE */
 
    \                                 In  segment BANKED_CODE, align 1, keep-with-next
-    436          void osal_mem_free( void *ptr )
+    507          void osal_mem_free(void *ptr)
    \                     osal_mem_free:
-    437          {
+    508          #endif /* DPRINTF_OSALHEAPTRACE */
+    509          {
    \   000000   74F7         MOV     A,#-0x9
    \   000002   12....       LCALL   ?BANKED_ENTER_XDATA
    \   000005                ; Saved register size: 9
    \   000005                ; Auto size: 0
+    510            osalMemHdr_t *hdr = (osalMemHdr_t *)ptr - 1;
    \   000005   EA           MOV     A,R2
-   \   000006   FE           MOV     R6,A
-   \   000007   EB           MOV     A,R3
-   \   000008   FF           MOV     R7,A
-    438            osalMemHdr_t *currHdr;
-    439            halIntState_t intState;
-    440          
-    441            HAL_ENTER_CRITICAL_SECTION( intState );  // Hold off interrupts.
-   \   000009   A2AF         MOV     C,0xa8.7
-   \   00000B   E4           CLR     A
-   \   00000C   33           RLC     A
-   \   00000D   F5..         MOV     ?V0 + 0,A
-   \   00000F   C2AF         CLR     0xa8.7
-    442          
-    443            HAL_ASSERT(((uint8 *)ptr >= (uint8 *)_theHeap) && ((uint8 *)ptr < (uint8 *)_theHeap+MAXMEMHEAP));
-   \   000011   EE           MOV     A,R6
-   \   000012   94..         SUBB    A,#_theHeap & 0xff
-   \   000014   EF           MOV     A,R7
-   \   000015   94..         SUBB    A,#(_theHeap >> 8) & 0xff
-   \   000017   4009         JC      ??osal_mem_free_0
-   \   000019   C3           CLR     C
-   \   00001A   EE           MOV     A,R6
-   \   00001B   94..         SUBB    A,#_theHeap & 0xff
-   \   00001D   EF           MOV     A,R7
-   \   00001E   94..         SUBB    A,#((_theHeap + 3072) >> 8) & 0xff
-   \   000020   4003         JC      ??osal_mem_free_1
+   \   000006   24FE         ADD     A,#-0x2
+   \   000008   FE           MOV     R6,A
+   \   000009   EB           MOV     A,R3
+   \   00000A   34FF         ADDC    A,#-0x1
+   \   00000C   FF           MOV     R7,A
+    511            halIntState_t intState;
+    512          
+    513          #ifdef DPRINTF_OSALHEAPTRACE
+    514            dprintf("osal_mem_free(%lx):%s:%u\n", (unsigned) ptr, fname, lnum);
+    515          #endif /* DPRINTF_OSALHEAPTRACE */
+    516          
+    517            HAL_ASSERT(((uint8 *)ptr >= (uint8 *)theHeap) && ((uint8 *)ptr < (uint8 *)theHeap+MAXMEMHEAP));
+   \   00000D   C3           CLR     C
+   \   00000E   EA           MOV     A,R2
+   \   00000F   94..         SUBB    A,#theHeap & 0xff
+   \   000011   EB           MOV     A,R3
+   \   000012   94..         SUBB    A,#(theHeap >> 8) & 0xff
+   \   000014   4009         JC      ??osal_mem_free_0
+   \   000016   C3           CLR     C
+   \   000017   EA           MOV     A,R2
+   \   000018   94..         SUBB    A,#theHeap & 0xff
+   \   00001A   EB           MOV     A,R3
+   \   00001B   94..         SUBB    A,#((theHeap + 3072) >> 8) & 0xff
+   \   00001D   4003         JC      ??osal_mem_free_1
    \                     ??osal_mem_free_0:
-   \   000022                ; Setup parameters for call to function halAssertHandler
-   \   000022   12....       LCALL   ??halAssertHandler?relay
-    444          
-    445            currHdr = (osalMemHdr_t *)ptr - 1;
+   \   00001F                ; Setup parameters for call to function halAssertHandler
+   \   00001F   12....       LCALL   ??halAssertHandler?relay
+    518            HAL_ASSERT(hdr->hdr.inUse);
    \                     ??osal_mem_free_1:
-   \   000025   EE           MOV     A,R6
-   \   000026   24FE         ADD     A,#-0x2
-   \   000028   1E           DEC     R6
-   \   000029   1E           DEC     R6
-   \   00002A   EF           MOV     A,R7
-   \   00002B   34FF         ADDC    A,#-0x1
-   \   00002D   FF           MOV     R7,A
-    446          
-    447            HAL_ASSERT(*currHdr & OSALMEM_IN_USE);
-   \   00002E   8E82         MOV     DPL,R6
-   \   000030   8F83         MOV     DPH,R7
-   \   000032   A3           INC     DPTR
-   \   000033   E0           MOVX    A,@DPTR
-   \   000034   5480         ANL     A,#0x80
-   \   000036   7003         JNZ     ??osal_mem_free_2
-   \   000038                ; Setup parameters for call to function halAssertHandler
-   \   000038   12....       LCALL   ??halAssertHandler?relay
-    448          
-    449            *currHdr &= ~OSALMEM_IN_USE;
+   \   000022   8E82         MOV     DPL,R6
+   \   000024   8F83         MOV     DPH,R7
+   \   000026   A3           INC     DPTR
+   \   000027   E0           MOVX    A,@DPTR
+   \   000028   5480         ANL     A,#0x80
+   \   00002A   7003         JNZ     ??osal_mem_free_2
+   \   00002C                ; Setup parameters for call to function halAssertHandler
+   \   00002C   12....       LCALL   ??halAssertHandler?relay
+    519          
+    520            HAL_ENTER_CRITICAL_SECTION( intState );  // Hold off interrupts.
    \                     ??osal_mem_free_2:
-   \   00003B   8E82         MOV     DPL,R6
-   \   00003D   8F83         MOV     DPH,R7
-   \   00003F   A3           INC     DPTR
-   \   000040   E0           MOVX    A,@DPTR
-   \   000041   547F         ANL     A,#0x7f
-   \   000043   F0           MOVX    @DPTR,A
-    450          
-    451          #if ( OSALMEM_PROFILER )
-    452            {
-    453              uint16 size = *currHdr;
-    454              uint8 idx;
-    455          
-    456              for ( idx = 0; idx < OSALMEM_PROMAX; idx++ )
-    457              {
-    458                if ( size <= proCnt[idx] )
-    459                {
-    460                  break;
-    461                }
-    462              }
-    463          
-    464              proCur[idx]--;
-    465            }
-    466          #endif
-    467          
-    468          #if ( OSALMEM_METRICS )
-    469            memAlo -= *currHdr;
-    470            blkFree++;
-    471          #endif
-    472          
-    473            if ( ff1 > currHdr )
-   \   000044   90....       MOV     DPTR,#ff1
-   \   000047   E0           MOVX    A,@DPTR
-   \   000048   F8           MOV     R0,A
-   \   000049   A3           INC     DPTR
-   \   00004A   E0           MOVX    A,@DPTR
-   \   00004B   F9           MOV     R1,A
-   \   00004C   C3           CLR     C
+   \   00002F   A2AF         MOV     C,0xa8.7
+   \   000031   E4           CLR     A
+   \   000032   33           RLC     A
+   \   000033   FA           MOV     R2,A
+   \   000034   C2AF         CLR     0xa8.7
+    521            hdr->hdr.inUse = FALSE;
+   \   000036   8E82         MOV     DPL,R6
+   \   000038   8F83         MOV     DPH,R7
+   \   00003A   A3           INC     DPTR
+   \   00003B   E0           MOVX    A,@DPTR
+   \   00003C   547F         ANL     A,#0x7f
+   \   00003E   F0           MOVX    @DPTR,A
+    522          
+    523            if (ff1 > hdr)
+   \   00003F   90....       MOV     DPTR,#ff1
+   \   000042   E0           MOVX    A,@DPTR
+   \   000043   F8           MOV     R0,A
+   \   000044   A3           INC     DPTR
+   \   000045   E0           MOVX    A,@DPTR
+   \   000046   F9           MOV     R1,A
+   \   000047   EE           MOV     A,R6
+   \   000048   98           SUBB    A,R0
+   \   000049   EF           MOV     A,R7
+   \   00004A   99           SUBB    A,R1
+   \   00004B   500C         JNC     ??osal_mem_free_3
+    524            {
+    525              ff1 = hdr;
    \   00004D   EE           MOV     A,R6
-   \   00004E   98           SUBB    A,R0
+   \   00004E   F8           MOV     R0,A
    \   00004F   EF           MOV     A,R7
-   \   000050   99           SUBB    A,R1
-   \   000051   500C         JNC     ??osal_mem_free_3
-    474            {
-    475              ff1 = currHdr;
-   \   000053   EE           MOV     A,R6
-   \   000054   F8           MOV     R0,A
-   \   000055   EF           MOV     A,R7
-   \   000056   F9           MOV     R1,A
-   \   000057   90....       MOV     DPTR,#ff1
-   \   00005A   E8           MOV     A,R0
-   \   00005B   F0           MOVX    @DPTR,A
-   \   00005C   A3           INC     DPTR
-   \   00005D   E9           MOV     A,R1
-   \   00005E   F0           MOVX    @DPTR,A
-    476            }
-    477          
-    478          #if ( OSALMEM_PROFILER )
-    479            (void)osal_memset( (uint8 *)currHdr+HDRSZ, OSALMEM_REIN, (*currHdr - HDRSZ) );
-    480          #endif
-    481          
-    482            HAL_EXIT_CRITICAL_SECTION( intState );  // Re-enable interrupts.
-   \                     ??osal_mem_free_3:
-   \   00005F   E5..         MOV     A,?V0 + 0
-   \   000061   A2E0         MOV     C,0xE0 /* A   */.0
-   \   000063   92AF         MOV     0xa8.7,C
-    483          }
-   \   000065   7F01         MOV     R7,#0x1
-   \   000067   02....       LJMP    ?BANKED_LEAVE_XDATA
-   \   00006A                REQUIRE _A_IEN0
-    484          
-    485          #if ( OSALMEM_METRICS )
-    486          /*********************************************************************
-    487           * @fn      osal_heap_block_max
-    488           *
-    489           * @brief   Return the maximum number of blocks ever allocated at once.
-    490           *
-    491           * @param   none
-    492           *
-    493           * @return  Maximum number of blocks ever allocated at once.
-    494           */
-    495          uint16 osal_heap_block_max( void )
-    496          {
-    497            return blkMax;
-    498          }
-    499          
-    500          /*********************************************************************
-    501           * @fn      osal_heap_block_cnt
-    502           *
-    503           * @brief   Return the current number of blocks now allocated.
-    504           *
-    505           * @param   none
-    506           *
-    507           * @return  Current number of blocks now allocated.
-    508           */
-    509          uint16 osal_heap_block_cnt( void )
-    510          {
-    511            return blkCnt;
-    512          }
-    513          
-    514          /*********************************************************************
-    515           * @fn      osal_heap_block_free
-    516           *
-    517           * @brief   Return the current number of free blocks.
-    518           *
-    519           * @param   none
-    520           *
-    521           * @return  Current number of free blocks.
-    522           */
-    523          uint16 osal_heap_block_free( void )
-    524          {
-    525            return blkFree;
-    526          }
+   \   000050   F9           MOV     R1,A
+   \   000051   90....       MOV     DPTR,#ff1
+   \   000054   E8           MOV     A,R0
+   \   000055   F0           MOVX    @DPTR,A
+   \   000056   A3           INC     DPTR
+   \   000057   E9           MOV     A,R1
+   \   000058   F0           MOVX    @DPTR,A
+    526            }
     527          
-    528          /*********************************************************************
-    529           * @fn      osal_heap_mem_used
-    530           *
-    531           * @brief   Return the current number of bytes allocated.
-    532           *
-    533           * @param   none
-    534           *
-    535           * @return  Current number of bytes allocated.
-    536           */
-    537          uint16 osal_heap_mem_used( void )
-    538          {
-    539            return memAlo;
-    540          }
-    541          #endif
+    528          #if OSALMEM_PROFILER
+    529          #if !OSALMEM_PROFILER_LL
+    530            if (osalMemStat != 0)  // Don't profile until after the LL block is filled.
+    531          #endif
+    532            {
+    533              uint8 idx;
+    534          
+    535              for (idx = 0; idx < OSALMEM_PROMAX; idx++)
+    536              {
+    537                if (hdr->hdr.len <= proCnt[idx])
+    538                {
+    539                  break;
+    540                }
+    541              }
     542          
-    543          #if defined (ZTOOL_P1) || defined (ZTOOL_P2)
-    544          /*********************************************************************
-    545           * @fn      osal_heap_high_water
-    546           *
-    547           * @brief   Return the highest byte ever allocated in the heap.
-    548           *
-    549           * @param   none
-    550           *
-    551           * @return  Highest number of bytes ever used by the stack.
-    552           */
-
-   \                                 In  segment BANKED_CODE, align 1, keep-with-next
-    553          uint16 osal_heap_high_water( void )
-   \                     osal_heap_high_water:
-    554          {
-   \   000000                ; Saved register size: 0
-   \   000000                ; Auto size: 0
-    555          #if ( OSALMEM_METRICS )
-    556            return memMax;
-    557          #else
-    558            return MAXMEMHEAP;
-   \   000000   7A00         MOV     R2,#0x0
-   \   000002   7B0C         MOV     R3,#0xc
-   \   000004   02....       LJMP    ?BRET
-    559          #endif
-    560          }
-
-   \                                 In  segment XDATA_ID, align 1, keep-with-next
-   \                     `?<Initializer for theHeap>`:
-   \   000000   ....         DW _theHeap
+    543              proCur[idx]--;
+    544            }
+    545          
+    546            (void)osal_memset((uint8 *)(hdr+1), OSALMEM_REIN, (hdr->hdr.len - OSALMEM_HDRSZ) );
+    547          #endif
+    548          #if OSALMEM_METRICS
+    549            memAlo -= hdr->hdr.len;
+    550            blkFree++;
+    551          #endif
+    552          
+    553            HAL_EXIT_CRITICAL_SECTION( intState );  // Re-enable interrupts.
+   \                     ??osal_mem_free_3:
+   \   000059   EA           MOV     A,R2
+   \   00005A   A2E0         MOV     C,0xE0 /* A   */.0
+   \   00005C   92AF         MOV     0xa8.7,C
+    554          }
+   \   00005E   7F01         MOV     R7,#0x1
+   \   000060   02....       LJMP    ?BANKED_LEAVE_XDATA
+   \   000063                REQUIRE _A_IEN0
 
    \                                 In  segment BANK_RELAYS, align 1
    \                     ??osal_mem_init?relay:
@@ -1117,64 +1132,130 @@ D:\ProgramData\Hardware\zigbee\Components\osal\common\OSAL_Memory.c
    \                     ??osal_mem_free?relay:
    \   000000   12....       LCALL   ?BDISPATCH
    \   000003   ......       DC24    osal_mem_free
-
-   \                                 In  segment BANK_RELAYS, align 1
-   \                     ??osal_heap_high_water?relay:
-   \   000000   12....       LCALL   ?BDISPATCH
-   \   000003   ......       DC24    osal_heap_high_water
-    561          #endif
-    562          
-    563          /*********************************************************************
-    564          *********************************************************************/
+    555          
+    556          #if OSALMEM_METRICS
+    557          /*********************************************************************
+    558           * @fn      osal_heap_block_max
+    559           *
+    560           * @brief   Return the maximum number of blocks ever allocated at once.
+    561           *
+    562           * @param   none
+    563           *
+    564           * @return  Maximum number of blocks ever allocated at once.
+    565           */
+    566          uint16 osal_heap_block_max( void )
+    567          {
+    568            return blkMax;
+    569          }
+    570          
+    571          /*********************************************************************
+    572           * @fn      osal_heap_block_cnt
+    573           *
+    574           * @brief   Return the current number of blocks now allocated.
+    575           *
+    576           * @param   none
+    577           *
+    578           * @return  Current number of blocks now allocated.
+    579           */
+    580          uint16 osal_heap_block_cnt( void )
+    581          {
+    582            return blkCnt;
+    583          }
+    584          
+    585          /*********************************************************************
+    586           * @fn      osal_heap_block_free
+    587           *
+    588           * @brief   Return the current number of free blocks.
+    589           *
+    590           * @param   none
+    591           *
+    592           * @return  Current number of free blocks.
+    593           */
+    594          uint16 osal_heap_block_free( void )
+    595          {
+    596            return blkFree;
+    597          }
+    598          
+    599          /*********************************************************************
+    600           * @fn      osal_heap_mem_used
+    601           *
+    602           * @brief   Return the current number of bytes allocated.
+    603           *
+    604           * @param   none
+    605           *
+    606           * @return  Current number of bytes allocated.
+    607           */
+    608          uint16 osal_heap_mem_used( void )
+    609          {
+    610            return memAlo;
+    611          }
+    612          #endif
+    613          
+    614          #if defined (ZTOOL_P1) || defined (ZTOOL_P2)
+    615          /*********************************************************************
+    616           * @fn      osal_heap_high_water
+    617           *
+    618           * @brief   Return the highest byte ever allocated in the heap.
+    619           *
+    620           * @param   none
+    621           *
+    622           * @return  Highest number of bytes ever used by the stack.
+    623           */
+    624          uint16 osal_heap_high_water( void )
+    625          {
+    626          #if ( OSALMEM_METRICS )
+    627            return memMax;
+    628          #else
+    629            return MAXMEMHEAP;
+    630          #endif
+    631          }
+    632          #endif
+    633          
+    634          /**************************************************************************************************
+    635          */
 
    Maximum stack usage in bytes:
 
      Function              ISTACK PSTACK XSTACK
      --------              ------ ------ ------
-     osal_heap_high_water      0      0      0
-     osal_mem_alloc            0      0     13
-     osal_mem_free             0      0      9
+     osal_mem_alloc            0      0     23
+     osal_mem_free             0      0     19
        -> halAssertHandler     0      0     18
        -> halAssertHandler     0      0     18
      osal_mem_init             2      0      0
-       -> osal_mem_alloc       4      0      0
-     osal_mem_kick             2      0      0
+     osal_mem_kick             0      0     10
+       -> osal_mem_alloc       0      0     20
+       -> halAssertHandler     0      0     20
+       -> osal_mem_free        0      0     20
 
 
    Segment part sizes:
 
-     Function/Label               Bytes
-     --------------               -----
-     _A_IEN0                         1
-     ff1                             2
-     ff2                             2
-     _theHeap                     3072
-     theHeap                         2
-     osal_mem_init                  93
-     ?Subroutine0                    7
-     ?Subroutine1                   14
-     osal_mem_kick                  22
-     osal_mem_alloc                249
-     osal_mem_free                 106
-     osal_heap_high_water            7
-     ?<Initializer for theHeap>      2
-     ??osal_mem_init?relay           6
-     ??osal_mem_kick?relay           6
-     ??osal_mem_alloc?relay          6
-     ??osal_mem_free?relay           6
-     ??osal_heap_high_water?relay    6
+     Function/Label         Bytes
+     --------------         -----
+     _A_IEN0                   1
+     theHeap                3072
+     ff1                       2
+     osalMemStat               1
+     osal_mem_init            54
+     osal_mem_kick            73
+     osal_mem_alloc          336
+     osal_mem_free            99
+     ??osal_mem_init?relay     6
+     ??osal_mem_kick?relay     6
+     ??osal_mem_alloc?relay    6
+     ??osal_mem_free?relay     6
 
  
-   498 bytes in segment BANKED_CODE
-    30 bytes in segment BANK_RELAYS
+   562 bytes in segment BANKED_CODE
+    24 bytes in segment BANK_RELAYS
      1 byte  in segment SFR_AN
-     2 bytes in segment XDATA_I
-     2 bytes in segment XDATA_ID
- 3 076 bytes in segment XDATA_Z
+ 3 074 bytes in segment XDATA_N
+     1 byte  in segment XDATA_Z
  
-   530 bytes of CODE  memory
+   586 bytes of CODE  memory
      0 bytes of DATA  memory (+ 1 byte shared)
- 3 078 bytes of XDATA memory
+ 3 075 bytes of XDATA memory
 
 Errors: none
 Warnings: none

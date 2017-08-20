@@ -62,8 +62,10 @@ extern "C"
 // device's needs
 
 #define SYS_ENDPOINT           2
+#define ZB_ENDPOINT          3
 #define BUTTON_ENDPOINT        10
 
+  
 #define SYS_PROFID             0x0F04
 #define SYS_DEVICEID           0x0001
 #define SYS_DEVICE_VERSION     0
@@ -79,10 +81,12 @@ extern "C"
   
 // Cluster IDs
 #define SYS_MAX_CLUSTERS       1
-#define BUTTON_MAX_CLUSTERS       2
+#define BUTTON_MAX_CLUSTERS    2
+#define ZB_MAX_CLUSTERS      4
   
 #define SYS_CLUSTERID          0x0001
-#define BUTTON_CLUSTERID       0x0002
+#define ZB_CLUSTERID         0x0002
+#define BUTTON_CLUSTERID       0x0003
   
 // Define the Command ID's used in this application
 #define BUTTON_CMD_ID          1
@@ -108,8 +112,7 @@ extern void Button_Init( byte task_id );
 /*
  * Task Event Processor for the Generic Application
  */
-extern UINT16 SensorSys_ProcessEvent( byte task_id, UINT16 events );
-
+extern UINT16 Sys_ProcessEvent( byte task_id, UINT16 events );
 /*********************************************************************
 *********************************************************************/
 

@@ -1,6 +1,6 @@
 ###############################################################################
 #                                                                             #
-# IAR C/C++ Compiler V8.10.3.10338/W32 for 8051         15/Aug/2017  23:22:53 #
+# IAR C/C++ Compiler V8.10.3.10338/W32 for 8051         20/Aug/2017  22:11:42 #
 # Copyright 2004-2011 IAR Systems AB.                                         #
 #                                                                             #
 #    Core               =  plain                                              #
@@ -44,13 +44,14 @@
 #                          -DQUEUED_POLL_RATE=100 -DRESPONSE_POLL_RATE=100)   #
 #                          -DREJOIN_POLL_RATE=440 D:\ProgramData\Hardware\zig #
 #                          bee\Components\mac\low_level\srf04\mac_autopend.c  #
-#                          -D ZTOOL_P1 -D MT_TASK -D MT_SYS_FUNC -D           #
-#                          MT_ZDO_FUNC -D LCD_SUPPORTED=DEBUG -lC             #
-#                          D:\ProgramData\Hardware\zigbee\Projects\zstack\Sam #
-#                          ples\SensorSys\CC2530DB\CoordinatorEB\List\ -lA    #
-#                          D:\ProgramData\Hardware\zigbee\Projects\zstack\Sam #
-#                          ples\SensorSys\CC2530DB\CoordinatorEB\List\        #
-#                          --diag_suppress Pe001,Pa010 -o                     #
+#                          -D HOLD_AUTO_START -D BUILD_ALL_DEVICES -D         #
+#                          REFLECTOR -D NV_INIT -D xNV_RESTORE -D xZTOOL_P1   #
+#                          -D xMT_TASK -D xMT_SYS_FUNC -D xMT_SAPI_FUNC -D    #
+#                          xMT_SAPI_CB_FUNC -lC D:\ProgramData\Hardware\zigbe #
+#                          e\Projects\zstack\Samples\SensorSys\CC2530DB\Coord #
+#                          inatorEB\List\ -lA D:\ProgramData\Hardware\zigbee\ #
+#                          Projects\zstack\Samples\SensorSys\CC2530DB\Coordin #
+#                          atorEB\List\ --diag_suppress Pe001,Pa010 -o        #
 #                          D:\ProgramData\Hardware\zigbee\Projects\zstack\Sam #
 #                          ples\SensorSys\CC2530DB\CoordinatorEB\Obj\ -e      #
 #                          --no_code_motion --debug --core=plain --dptr=16,1  #
@@ -275,7 +276,7 @@ D:\ProgramData\Hardware\zigbee\Components\mac\low_level\srf04\mac_autopend.c
     118            {
     119              return MAC_INVALID_PARAMETER;
    \   000010   79E8         MOV     R1,#-0x18
-   \   000012   803C         SJMP    ??MAC_SrcMatchEnable_2
+   \   000012   803E         SJMP    ??MAC_SrcMatchEnable_2
     120            }
    \                     ??MAC_SrcMatchEnable_0:
    \   000014   7B18         MOV     R3,#0x18
@@ -311,47 +312,49 @@ D:\ProgramData\Hardware\zigbee\Components\mac\low_level\srf04\mac_autopend.c
     136            MAC_RADIO_TURN_ON_RX_FRAME_FILTERING();
    \                     ??MAC_SrcMatchEnable_5:
    \   000027   906180       MOV     DPTR,#0x6180
-   \   00002A   E0           MOVX    A,@DPTR
-   \   00002B   D2E0         SETB    0xE0 /* A   */.0
-   \   00002D   F0           MOVX    @DPTR,A
+   \   00002A   E4           CLR     A
+   \   00002B   F0           MOVX    @DPTR,A
+   \   00002C   E0           MOVX    A,@DPTR
+   \   00002D   4405         ORL     A,#0x5
+   \   00002F   F0           MOVX    @DPTR,A
     137            
     138            /* Turn on Auto ACK (TIMAC turn on Auto ACK by default), TBD */
     139            MAC_RADIO_TURN_ON_AUTO_ACK();
-   \   00002E   906189       MOV     DPTR,#0x6189
-   \   000031   E0           MOVX    A,@DPTR
-   \   000032   D2E5         SETB    0xE0 /* A   */.5
-   \   000034   F0           MOVX    @DPTR,A
+   \   000030   906189       MOV     DPTR,#0x6189
+   \   000033   E0           MOVX    A,@DPTR
+   \   000034   D2E5         SETB    0xE0 /* A   */.5
+   \   000036   F0           MOVX    @DPTR,A
     140            
     141            /* Turn on Autopend: set SRCMATCH.AUTOPEND and SRCMATCH.SRC_MATCH_EN */
     142            MAC_RADIO_TURN_ON_SRC_MATCH();
-   \   000035   906182       MOV     DPTR,#0x6182
-   \   000038   E0           MOVX    A,@DPTR
-   \   000039   D2E0         SETB    0xE0 /* A   */.0
-   \   00003B   F0           MOVX    @DPTR,A
+   \   000037   906182       MOV     DPTR,#0x6182
+   \   00003A   E0           MOVX    A,@DPTR
+   \   00003B   D2E0         SETB    0xE0 /* A   */.0
+   \   00003D   F0           MOVX    @DPTR,A
     143           
     144            /* Set SRCMATCH.AUTOPEND */
     145            MAC_RADIO_TURN_ON_AUTOPEND();
-   \   00003C   E0           MOVX    A,@DPTR
-   \   00003D   D2E1         SETB    0xE0 /* A   */.1
-   \   00003F   F0           MOVX    @DPTR,A
+   \   00003E   E0           MOVX    A,@DPTR
+   \   00003F   D2E1         SETB    0xE0 /* A   */.1
+   \   000041   F0           MOVX    @DPTR,A
     146            
     147            /* Configure all the globals */
     148            macSrcMatchIsEnabled = TRUE;
-   \   000040   90....       MOV     DPTR,#macSrcMatchIsEnabled
-   \   000043   7401         MOV     A,#0x1
-   \   000045   F0           MOVX    @DPTR,A
+   \   000042   90....       MOV     DPTR,#macSrcMatchIsEnabled
+   \   000045   7401         MOV     A,#0x1
+   \   000047   F0           MOVX    @DPTR,A
     149            macSrcMatchMaxNumEntries = num;
-   \   000046   EA           MOV     A,R2
-   \   000047   90....       MOV     DPTR,#macSrcMatchMaxNumEntries
-   \   00004A   F0           MOVX    @DPTR,A
+   \   000048   EA           MOV     A,R2
+   \   000049   90....       MOV     DPTR,#macSrcMatchMaxNumEntries
+   \   00004C   F0           MOVX    @DPTR,A
     150            macSrcMatchAddrMode = addrType;           
-   \   00004B   E8           MOV     A,R0
-   \   00004C   90....       MOV     DPTR,#macSrcMatchAddrMode
-   \   00004F   F0           MOVX    @DPTR,A
+   \   00004D   E8           MOV     A,R0
+   \   00004E   90....       MOV     DPTR,#macSrcMatchAddrMode
+   \   000051   F0           MOVX    @DPTR,A
     151          
     152            return rtn;
    \                     ??MAC_SrcMatchEnable_2:
-   \   000050   02....       LJMP    ?Subroutine0 & 0xFFFF
+   \   000052   02....       LJMP    ?Subroutine0 & 0xFFFF
     153          }
 
    \                                 In  segment BANKED_CODE, align 1, keep-with-next
@@ -1560,7 +1563,7 @@ D:\ProgramData\Hardware\zigbee\Components\mac\low_level\srf04\mac_autopend.c
      macSrcMatchMaxNumEntries                  1
      macSrcMatchAddrMode                       1
      macSrcMatchIsAckAllPending                1
-     MAC_SrcMatchEnable                       83
+     MAC_SrcMatchEnable                       85
      ?Subroutine0                              7
      MAC_SrcMatchAddEntry                    508
      MAC_SrcMatchDeleteEntry                  50
@@ -1583,13 +1586,13 @@ D:\ProgramData\Hardware\zigbee\Components\mac\low_level\srf04\mac_autopend.c
      ??macSrcMatchGetEnableBit?relay           6
 
  
- 1 209 bytes in segment BANKED_CODE
+ 1 211 bytes in segment BANKED_CODE
     54 bytes in segment BANK_RELAYS
      1 byte  in segment XDATA_I
      1 byte  in segment XDATA_ID
      3 bytes in segment XDATA_Z
  
- 1 264 bytes of CODE  memory
+ 1 266 bytes of CODE  memory
      4 bytes of XDATA memory
 
 Errors: none
