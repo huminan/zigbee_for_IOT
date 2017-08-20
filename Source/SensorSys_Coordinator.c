@@ -66,7 +66,7 @@
 #include "ZDObject.h"
 #include "ZDProfile.h"
 
-#include "Sys.h"
+#include "SensorSys.h"
 #include "DebugTrace.h"
 
 #if !defined( WIN32 )
@@ -95,25 +95,46 @@
  */
 uint8 AppTitle[]="SensorAPP"; //应用程序名称
 
+// Sys 端点的簇ID
+// This list should be filled with Application specific Cluster IDs.
+const cId_t Sys_ClusterList[SYS_MAX_CLUSTERS] =
+{
+  SYS_CLUSTERID
+};
+
 // Button 端点的簇ID
 // This list should be filled with Application specific Cluster IDs.
-const cId_t Button_ClusterList[SYS_MAX_CLUSTERS] =
+const cId_t Button_ClusterList[BUTTON_MAX_CLUSTERS] =
 {
-  Button_CLUSTERID
+  BUTTON_CLUSTERID
+};
+
+// Sys 端点简单描述符
+const SimpleDescriptionFormat_t Sys_SimpleDesc =
+{
+	SYS_ENDPOINT,           //  int Endpoint;
+	SYS_PROFID,                //  uint16 AppProfId[2];
+	SYS_DEVICEID,              //  uint16 AppDeviceId[2];
+	SYS_DEVICE_VERSION,        //  int   AppDevVer:4;
+	SYS_FLAGS,                 //  int   AppFlags:4;
+	SYS_MAX_CLUSTERS,          //  byte  AppNumInClusters;
+	(cId_t *)Sys_ClusterList,  //  byte *pAppInClusterList;
+	SYS_MAX_CLUSTERS,          //  byte  AppNumInClusters;
+	(cId_t *)Sys_ClusterList   //  byte *pAppInClusterList;
 };
 
 // Button 端点简单描述符
 const SimpleDescriptionFormat_t Button_SimpleDesc =
 {
-  BUTTON_ENDPOINT,              //  int Endpoint;
-  SYS_PROFID,                //  uint16 AppProfId[2];
-  SYS_DEVICEID,              //  uint16 AppDeviceId[2];
-  SYS_DEVICE_VERSION,        //  int   AppDevVer:4;
-  SYS_FLAGS,                 //  int   AppFlags:4;
-  SYS_MAX_CLUSTERS,          //  byte  AppNumInClusters;
-  (cId_t *)Button_ClusterList,  //  byte *pAppInClusterList;
-  SYS_MAX_CLUSTERS,          //  byte  AppNumInClusters;
-  (cId_t *)Button_ClusterList   //  byte *pAppInClusterList;
+	BUTTON_ENDPOINT,           //  int Endpoint;
+	SYS_PROFID,                //  uint16 AppProfId[2];
+	SYS_DEVICEID,              //  uint16 AppDeviceId[2];
+	SYS_DEVICE_VERSION,        //  int   AppDevVer:4;
+	SYS_FLAGS,                 //  int   AppFlags:4;
+	BUTTON_MAX_CLUSTERS,          //  byte  AppNumInClusters;
+	(cId_t *)Button_ClusterList,  //  byte *pAppInClusterList;
+	BUTTON_MAX_CLUSTERS,          //  byte  AppNumInClusters;
+	(cId_t *)Button_ClusterList   //  byte *pAppInClusterList;
 };
 
 
@@ -121,7 +142,7 @@ const SimpleDescriptionFormat_t Button_SimpleDesc =
 // filled-in in Button_Init().  Another way to go would be to fill
 // in the structure here and make it a "const" (in code space).  The
 // way it's defined in this sample app it is define in RAM.
-endPointDesc_t Sensor_epDesc;
+endPointDesc_t Sys_epDesc;
 endPointDesc_t Button_epDesc;
 
 /*********************************************************************
@@ -158,6 +179,7 @@ static uint8 sysSeqNumber = 0;    // 在端点间数据交流时被使用zb_SendDataRequest
 void Sys_Init( byte task_id );
 void Button_Init( byte task_id );
 
+UINT16 Sys_ProcessEvent( byte task_id, UINT16 events );
 void Sys_ProcessZDOMsgs( zdoIncomingMsg_t *inMsg, byte task_id );
 void Button_HandleKeys( byte shift, byte keys );
 void Sys_MessageMSGCB( afIncomingMSGPacket_t *pckt, byte task_id );
@@ -384,7 +406,7 @@ UINT16 Sys_ProcessEvent( byte task_id, UINT16 events )
  *
  * @return  none
  */
-void Sys_ProcessZDOMsgs( zdoIncomingMsg_t *inMsg )
+void Sys_ProcessZDOMsgs( zdoIncomingMsg_t *inMsg , byte task_id )
 {
   switch ( inMsg->clusterID )
   {
@@ -523,7 +545,7 @@ void Sys_MessageMSGCB( afIncomingMSGPacket_t *pkt, byte task_id )
 {
   switch ( pkt->clusterId )
   {
-    case Button_CLUSTERID:
+    case BUTTON_CLUSTERID:
       // "the" message
 #if defined( WIN32 )
       WPRINTSTR( pkt->cmd.Data );
@@ -546,7 +568,7 @@ void Sys_SendPreBindMessage( byte type_id )
   char theMessageData[5] = "bind";
   theMessageData[4] = type_id;
 
-  if ( AF_DataRequest( &Boardcast_DstAddr, &Sensor_epDesc,
+  if ( AF_DataRequest( &Boardcast_DstAddr, &Sys_epDesc,
                        SYS_CLUSTERID,
                        (byte)osal_strlen( theMessageData ) + 1,
                        (byte *)&theMessageData,

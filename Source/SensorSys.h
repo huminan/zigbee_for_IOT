@@ -69,9 +69,6 @@ extern "C"
 #define SYS_DEVICE_VERSION     0
 #define SYS_FLAGS              0
 
-#define SYS_MAX_CLUSTERS       1
-#define SYS_CLUSTERID          1
-
 // Send Message Timeout
 #define SYS_SEND_MSG_TIMEOUT   5000     // Every 5 seconds
 
@@ -81,8 +78,12 @@ extern "C"
 #define CLOSE_BIND_EVT         0x0003
   
 // Cluster IDs
+#define SYS_MAX_CLUSTERS       1
+#define BUTTON_MAX_CLUSTERS       2
+  
 #define SYS_CLUSTERID          0x0001
-
+#define BUTTON_CLUSTERID       0x0002
+  
 // Define the Command ID's used in this application
 #define BUTTON_CMD_ID          1
 

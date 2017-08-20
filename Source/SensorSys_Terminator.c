@@ -97,22 +97,45 @@
  */
 uint8 AppTitle[]="SensorAPP"; //应用程序名称
 
+// Sys 端点的簇ID
 // This list should be filled with Application specific Cluster IDs.
-const cId_t Button_ClusterList[SENSORSYS_MAX_CLUSTERS] =
+const cId_t Sys_ClusterList[SYS_MAX_CLUSTERS] =
 {
-	Button_CLUSTERID
+  SYS_CLUSTERID
 };
 
+// Button 端点的簇ID
+// This list should be filled with Application specific Cluster IDs.
+const cId_t Button_ClusterList[BUTTON_MAX_CLUSTERS] =
+{
+	BUTTON_CLUSTERID
+};
+
+// Sys 端点简单描述符
 const SimpleDescriptionFormat_t Button_SimpleDesc =
 {
-	BUTTON_ENDPOINT,              //  int Endpoint;
-	SENSORSYS_PROFID,                //  uint16 AppProfId[2];
-	SENSORSYS_DEVICEID,              //  uint16 AppDeviceId[2];
-	SENSORSYS_DEVICE_VERSION,        //  int   AppDevVer:4;
-	SENSORSYS_FLAGS,                 //  int   AppFlags:4;
-	SENSORSYS_MAX_CLUSTERS,          //  byte  AppNumInClusters;
+	SYS_ENDPOINT,           //  int Endpoint;
+	SYS_PROFID,                //  uint16 AppProfId[2];
+	SYS_DEVICEID,              //  uint16 AppDeviceId[2];
+	SYS_DEVICE_VERSION,        //  int   AppDevVer:4;
+	SYS_FLAGS,                 //  int   AppFlags:4;
+	SYS_MAX_CLUSTERS,          //  byte  AppNumInClusters;
+	(cId_t *)Sys_ClusterList,  //  byte *pAppInClusterList;
+	SYS_MAX_CLUSTERS,          //  byte  AppNumInClusters;
+	(cId_t *)Sys_ClusterList   //  byte *pAppInClusterList;
+};
+
+// Button 端点简单描述符
+const SimpleDescriptionFormat_t Button_SimpleDesc =
+{
+	BUTTON_ENDPOINT,           //  int Endpoint;
+	SYS_PROFID,                //  uint16 AppProfId[2];
+	SYS_DEVICEID,              //  uint16 AppDeviceId[2];
+	SYS_DEVICE_VERSION,        //  int   AppDevVer:4;
+	SYS_FLAGS,                 //  int   AppFlags:4;
+	BUTTON_MAX_CLUSTERS,          //  byte  AppNumInClusters;
 	(cId_t *)Button_ClusterList,  //  byte *pAppInClusterList;
-	SENSORSYS_MAX_CLUSTERS,          //  byte  AppNumInClusters;
+	BUTTON_MAX_CLUSTERS,          //  byte  AppNumInClusters;
 	(cId_t *)Button_ClusterList   //  byte *pAppInClusterList;
 };
 
@@ -157,6 +180,7 @@ afAddrType_t Button_DstAddr;
 void Sys_Init( byte task_id );
 void Button_Init( byte task_id );
 void Button_HandleKeys( byte keys );
+UINT16 SensorSys_ProcessEvent( byte task_id, UINT16 events );
 void SensorSys_MessageMSGCB( afIncomingMSGPacket_t *pckt, byte task_id );
 // void SensorSys_SendMessage( byte task_id );
 void zb_ReceiveDataIndication( uint16 source, uint16 command, uint16 len, uint8 *pData  );
