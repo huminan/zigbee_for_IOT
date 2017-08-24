@@ -104,6 +104,11 @@ extern "C"
  * FUNCTIONS
  */
 
+
+
+extern uint8 ZDAppTaskID;
+
+
 /*
  * Task Initialization for the Generic Application
  */

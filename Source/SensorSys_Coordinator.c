@@ -125,8 +125,8 @@ const SimpleDescriptionFormat_t Sys_SimpleDesc =
 	SYS_FLAGS,                 //  int   AppFlags:4;
 	SYS_MAX_CLUSTERS,          //  byte  AppNumInClusters;
 	(cId_t *)Sys_ClusterList,  //  byte *pAppInClusterList;
-	SYS_MAX_CLUSTERS,          //  byte  AppNumInClusters;
-	(cId_t *)Sys_ClusterList   //  byte *pAppInClusterList;
+	0,                         //  byte  AppNumInClusters;
+	NULL   //  byte *pAppInClusterList;
 };
 
 // Button 端点简单描述符
@@ -428,6 +428,7 @@ UINT16 Sys_ProcessEvent( byte task_id, UINT16 events )
  */
 void Sys_ProcessZDOMsgs( zdoIncomingMsg_t *inMsg , byte task_id )
 {
+
   switch ( inMsg->clusterID )
   {
     case End_Device_Bind_rsp:
@@ -447,6 +448,7 @@ void Sys_ProcessZDOMsgs( zdoIncomingMsg_t *inMsg , byte task_id )
 
     case Match_Desc_rsp:
       {
+        zAddrType_t dstAddr;
         ZDO_ActiveEndpointRsp_t *pRsp = ZDO_ParseEPListRsp( inMsg );
         if ( pRsp )
         {
@@ -456,11 +458,25 @@ void Sys_ProcessZDOMsgs( zdoIncomingMsg_t *inMsg , byte task_id )
             {
               case BUTTON_TYPE_ID:
               {
-                Button_DstAddr.addrMode = (afAddrMode_t)Addr16Bit;
-                Button_DstAddr.addr.shortAddr = pRsp->nwkAddr;
-                // Take the first endpoint, Can be changed to search through endpoints
-                Button_DstAddr.endPoint = pRsp->epList[0];
+                for(int i=0; pRsp->cnt<i; i++)
+                {
+                  dstAddr.addrMode = (afAddrMode_t)Addr16Bit;
+                  dstAddr.addr.shortAddr = pRsp->nwkAddr;
 
+                  if ( APSME_BindRequest( Button_epDesc.simpleDesc->EndPoint,
+                        BUTTON_CLUSTERID, &dstAddr, pRsp->epList[i] ) == ZSuccess )
+                  {
+                    //Bind Success
+                    osal_start_timerEx( ZDAppTaskID, ZDO_NWK_UPDATE_NV,250);
+                    // 获取目的设备的短地址---干什么的？
+                    ZDP_IEEEAddrReq(pRsp->nwkAddr, ZDP_ADDR_REQTYPE_SINGLE, 0, 0);
+
+                    zb_BindConfirm(BUTTON_CLUSTERID, ZB_SUCCESS);
+                  }
+
+                  // Take the first endpoint, Can be changed to search through endpoints
+                  Button_DstAddr.endPoint = pRsp->epList[i];
+                }
                 HalLedSet( HAL_LED_4, HAL_LED_MODE_ON );
               }
 

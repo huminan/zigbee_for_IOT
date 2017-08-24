@@ -138,8 +138,8 @@ const SimpleDescriptionFormat_t Button_SimpleDesc =
 	SYS_DEVICEID,              //  uint16 AppDeviceId[2];
 	SYS_DEVICE_VERSION,        //  int   AppDevVer:4;
 	SYS_FLAGS,                 //  int   AppFlags:4;
-	BUTTON_MAX_CLUSTERS,          //  byte  AppNumInClusters;
-	(cId_t *)Button_ClusterList,  //  byte *pAppInClusterList;
+	0,          			   //  byte  AppNumInClusters;
+	NULL,  					   //  byte *pAppInClusterList;
 	BUTTON_MAX_CLUSTERS,          //  byte  AppNumInClusters;
 	(cId_t *)Button_ClusterList   //  byte *pAppInClusterList;
 };
