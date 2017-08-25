@@ -359,7 +359,14 @@ UINT16 Sys_ProcessEvent( byte task_id, UINT16 events )
             Sys_NwkState = (devStates_t)(MSGpkt->hdr.status);
             if ( (Sys_NwkState == DEV_ZB_COORD) )
             {
-              ;
+	          	;
+            }
+            if( myAppState = APP_INIT)
+            {
+            	HalLedSet(HAL_LED_1, HAL_LED_MODE_OFF);
+              HalLedSet(HAL_LED_2, HAL_LED_MODE_OFF);
+              HalLedSet(HAL_LED_3, HAL_LED_MODE_OFF);
+              HalLedSet(HAL_LED_4, HAL_LED_MODE_OFF);
             }
             break;
 
