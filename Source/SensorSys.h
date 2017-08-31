@@ -78,7 +78,9 @@ extern "C"
 #define SYS_SEND_MSG_EVT       0x0001
 #define MATCH_BIND_EVT         0x0002
 #define CLOSE_BIND_EVT         0x0003
-  
+#define CLOSE_LIGHT_EVT        0x0005
+#define CONFIG_OPTION_EVT      0x0004
+
 // Cluster IDs
 #define SYS_MAX_CLUSTERS       1
 #define BUTTON_MAX_CLUSTERS    2

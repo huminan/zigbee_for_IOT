@@ -229,25 +229,6 @@ void Sys_SendPreBindMessage( byte type_id );
  */
 void Sys_Init( byte task_id )
 {
-  uint8 startOptions;
-  uint8 logicalType;
-  if ( myAppState == APP_INIT  )
-  {
-    zb_ReadConfiguration( ZCD_NV_LOGICAL_TYPE, sizeof(uint8), &logicalType );
-    if ( logicalType != ZG_DEVICETYPE_ENDDEVICE )
-    {
-      logicalType = ZG_DEVICETYPE_COORDINATOR;
-      zb_WriteConfiguration(ZCD_NV_LOGICAL_TYPE, sizeof(uint8), &logicalType);
-    }
-      // Do more configuration if necessary and then restart device with auto-start bit set
-      // write endpoint to simple desc...dont pass it in start req..then reset
-
-      zb_ReadConfiguration( ZCD_NV_STARTUP_OPTION, sizeof(uint8), &startOptions );
-      startOptions = ZCD_STARTOPT_AUTO_START;
-      zb_WriteConfiguration( ZCD_NV_STARTUP_OPTION, sizeof(uint8), &startOptions );
-      zb_SystemReset();
-  }
-
   Sys_TaskID = task_id;
 
   // Device hardware initialization can be added here or in main() (Zmain.c).
@@ -272,9 +253,12 @@ void Sys_Init( byte task_id )
   HalLedSet ( HAL_LED_1, HAL_LED_MODE_ON );
   HalLedSet ( HAL_LED_2, HAL_LED_MODE_ON );
   HalLedSet ( HAL_LED_3, HAL_LED_MODE_ON );
-  HalLedSet ( HAL_LED_4, HAL_LED_MODE_ON );
 
-  // To Update the display...
+  // Set device as Coordinator
+  zgDeviceLogicalType = ZG_DEVICETYPE_COORDINATOR;
+
+  // To Initiallize
+  // osal_start_timerEx(task_id, CONFIG_OPTION_EVT, 5000);
 }
 
 /*********************************************************************
@@ -401,16 +385,37 @@ UINT16 Sys_ProcessEvent( byte task_id, UINT16 events )
     return (events ^ SYS_EVENT_MSG);
   }
 
-   if( events & MATCH_BIND_EVT ) // 广播 match 绑定
-   {
+  if( events & MATCH_BIND_EVT ) // 广播 match 绑定
+  {
       if(task_id == Button_TaskID)
       {
          zb_BindDevice(TRUE, BUTTON_CMD_ID, NULL);
-         HalLedSet(HAL_LED_2, HAL_LED_MODE_ON); // 亮绿灯
+         // HalLedSet(HAL_LED_2, HAL_LED_MODE_OFF); // 亮D2
       }
       return (events ^ MATCH_BIND_EVT);
-   }
+  }
 
+  if( events & CONFIG_OPTION_EVT )
+  {
+    uint8 logicalType;
+    uint8 startOptions;
+    if ( myAppState == APP_INIT  )
+    {
+      zb_ReadConfiguration( ZCD_NV_LOGICAL_TYPE, sizeof(uint8), &logicalType );
+      if ( logicalType != ZG_DEVICETYPE_ENDDEVICE )
+      {
+        logicalType = ZG_DEVICETYPE_COORDINATOR;
+        zb_WriteConfiguration(ZCD_NV_LOGICAL_TYPE, sizeof(uint8), &logicalType);
+      }
+      // Do more configuration if necessary and then restart device with auto-start bit set
+      // write endpoint to simple desc...dont pass it in start req..then reset
+
+      zb_ReadConfiguration( ZCD_NV_STARTUP_OPTION, sizeof(uint8), &startOptions );
+      startOptions = ZCD_STARTOPT_AUTO_START;
+      zb_WriteConfiguration( ZCD_NV_STARTUP_OPTION, sizeof(uint8), &startOptions );
+      zb_SystemReset();
+    }
+  }
 
   // Discard unknown events
   return 0;
@@ -642,7 +647,7 @@ void Sys_SendPreBindMessage( byte type_id )
   {
     // Successfully requested to be sent.
     // 闪5s灯
-    HalLedBlink (HAL_LED_1, 1, HAL_LED_DEFAULT_DUTY_CYCLE, 5);
+    HalLedBlink (HAL_LED_1, 1, 50, 5000);
    //if(想要绑定什么就对应的 TypeID)
 
     type_join = type_id;
@@ -713,6 +718,18 @@ void zb_SendDataConfirm( uint8 handle, uint8 status )
  */
 void zb_BindConfirm( uint16 commandId, uint8 status )
 {
+  if( status == ZB_SUCCESS)
+  {
+    // Light D2 for 3s
+    HalLedBlink(HAL_LED_2, 1, 50, 2000);  // 闪烁2s
+
+  }
+  else
+  {
+    // Light D3 for 3s
+    HalLedBlink(HAL_LED_3, 1, 50, 2000);  // 闪烁2s
+
+  }
 }
 /******************************************************************************
  * @fn          zb_AllowBindConfirm

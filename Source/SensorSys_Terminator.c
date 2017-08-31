@@ -226,24 +226,6 @@ void zb_ReceiveDataIndication( uint16 source, uint16 command, uint16 len, uint8 
  */
 void Sys_Init( byte task_id )
 {
-	if ( myAppState == APP_INIT )
-  {
-  	uint8 startOptions;
- 		uint8 logicalType;
-    // In the init state, keys are used to indicate the logical mode.
-    // The Switch device is always an end-device
-    logicalType = ZG_DEVICETYPE_ENDDEVICE;
-    zb_WriteConfiguration(ZCD_NV_LOGICAL_TYPE, sizeof(uint8), &logicalType);
-
-    // Do more configuration if necessary and then restart device with auto-start bit set
-
-    zb_ReadConfiguration( ZCD_NV_STARTUP_OPTION, sizeof(uint8), &startOptions );
-    startOptions = ZCD_STARTOPT_AUTO_START;
-    zb_WriteConfiguration( ZCD_NV_STARTUP_OPTION, sizeof(uint8), &startOptions );
-    zb_SystemReset();
-  }
-
-
   Sys_TaskID = task_id;
 
   // Device hardware initialization can be added here or in main() (Zmain.c).
@@ -267,7 +249,9 @@ void Sys_Init( byte task_id )
   HalLedSet ( HAL_LED_1, HAL_LED_MODE_ON );
   HalLedSet ( HAL_LED_2, HAL_LED_MODE_ON );
   HalLedSet ( HAL_LED_3, HAL_LED_MODE_ON );
-  HalLedSet ( HAL_LED_4, HAL_LED_MODE_ON );
+
+  // Set device as Enddevice
+  zgDeviceLogicalType = ZG_DEVICETYPE_ENDDEVICE;
 
   // To Update the display...
 }
@@ -372,16 +356,11 @@ UINT16 Sys_ProcessEvent( byte task_id, UINT16 events )
 					break;
 
 				case ZDO_STATE_CHANGE:      // 设备网络状态改变
-					if(myAppState == APP_INIT) {
-						myAppState = APP_START;
-					}
-
 					SensorSys_NwkState = (devStates_t)(MSGpkt->hdr.status);
-					if ( (SensorSys_NwkState == DEV_ZB_COORD)
-							|| (SensorSys_NwkState == DEV_ROUTER)
+					if ( (SensorSys_NwkState == DEV_ROUTER)
 							|| (SensorSys_NwkState == DEV_END_DEVICE) )
 					{
-						;
+						osal_start_timerEx( task_id, CLOSE_LIGHT_EVT, 1000);	// 1s 后关了所有的灯
 					}
 
 					break;
@@ -402,8 +381,15 @@ UINT16 Sys_ProcessEvent( byte task_id, UINT16 events )
 
 	if(events & CLOSE_BIND_EVT)
 	{
-		HalLedSet(HAL_LED_1, HAL_LED_MODE_OFF);
+		HalLedSet(HAL_LED_1, HAL_LED_MODE_ON);
 		return (events ^ CLOSE_BIND_EVT);
+	}
+
+	if(events & CLOSE_LIGHT_EVT)
+	{
+		HalLedSet(HAL_LED_ALL, HAL_LED_MODE_ON);
+		HalLedBlink(HAL_LED_1, 1, 10, 2000);	// D1闪烁2s 表示加进了网络
+		return (events ^ CLOSE_LIGHT_EVT);
 	}
 	// Discard unknown events
 	return 0;
@@ -459,7 +445,6 @@ UINT16 Button_ProcessEvent( byte task_id, UINT16 events )
  */
 void Button_HandleKeys( byte keys )
 {
-	zAddrType_t dstAddr;
 	
 	// Shift is used to make each button/switch dual purpose.
 	if ( keys_shift )
@@ -544,14 +529,14 @@ void Sys_MessageMSGCB( afIncomingMSGPacket_t *pkt, byte task_id )
 	switch ( pkt->clusterId )
 	{
 		case SYS_CLUSTERID:
-                {
+    {
 			char flag[4];
 			memcpy(flag, pkt->cmd.Data, 4);
 			if( !strcmp( flag, "bind") )
 			{
 				if( pkt->cmd.Data[4] & MY_DEVICE )
 				{
-					HalLedSet(HAL_LED_1, HAL_LED_MODE_ON);		// Set Red LED ON
+					HalLedSet(HAL_LED_1, HAL_LED_MODE_OFF);		// Set Red LED ON
 					osal_start_timerEx(Sys_TaskID, CLOSE_BIND_EVT, 5000);		// Bind operation 5s timeout
 					keys_shift = 1;
 				}
@@ -559,8 +544,12 @@ void Sys_MessageMSGCB( afIncomingMSGPacket_t *pkt, byte task_id )
 #if defined( WIN32 )
 			WPRINTSTR( pkt->cmd.Data );
 #endif
+
+			// Just for test!
+			HalLedSet(HAL_LED_1, HAL_LED_MODE_ON);		// Set Red LED OFF
+
 			break;
-                }
+    }
 	}
 }
 

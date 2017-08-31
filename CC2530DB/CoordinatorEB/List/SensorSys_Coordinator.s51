@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //                                                                            /
-// IAR C/C++ Compiler V8.10.3.10338/W32 for 8051        30/Aug/2017  22:10:24 /
+// IAR C/C++ Compiler V8.10.3.10338/W32 for 8051        31/Aug/2017  21:49:28 /
 // Copyright 2004-2011 IAR Systems AB.                                        /
 //                                                                            /
 //    Core               =  plain                                             /
@@ -217,10 +217,10 @@
         PUBLIC Sys_ProcessEvent
         FUNCTION Sys_ProcessEvent,021203H
         ARGFRAME XSTACK, 0, STACK
-        LOCFRAME XSTACK, 14, STACK
+        LOCFRAME XSTACK, 16, STACK
         PUBLIC Sys_ProcessZDOMsgs
         FUNCTION Sys_ProcessZDOMsgs,0a1203H
-        ARGFRAME XSTACK, 14, STACK
+        ARGFRAME XSTACK, 16, STACK
         ARGFRAME IOVERLAY, 0, STATIC
         ARGFRAME DOVERLAY, 0, STATIC
         LOCFRAME XSTACK, 21, STACK
@@ -240,8 +240,11 @@
         FUNCTION zb_AllowBindConfirm,0203H
         ARGFRAME XSTACK, 0, STACK
         PUBLIC zb_BindConfirm
-        FUNCTION zb_BindConfirm,0203H
-        ARGFRAME XSTACK, 0, STACK
+        FUNCTION zb_BindConfirm,021203H
+        ARGFRAME XSTACK, 20, STACK
+        ARGFRAME IOVERLAY, 0, STATIC
+        ARGFRAME DOVERLAY, 0, STATIC
+        LOCFRAME XSTACK, 9, STACK
         PUBLIC zb_FindDeviceConfirm
         FUNCTION zb_FindDeviceConfirm,0203H
         ARGFRAME XSTACK, 0, STACK
@@ -422,6 +425,9 @@ ZDO_RegisterForZDOMsg SYMBOL "ZDO_RegisterForZDOMsg"
 osal_msg_receive    SYMBOL "osal_msg_receive"
 osal_msg_deallocate SYMBOL "osal_msg_deallocate"
 zb_BindDevice       SYMBOL "zb_BindDevice"
+zb_ReadConfiguration SYMBOL "zb_ReadConfiguration"
+zb_WriteConfiguration SYMBOL "zb_WriteConfiguration"
+zb_SystemReset      SYMBOL "zb_SystemReset"
 ZDO_ParseEPListRsp  SYMBOL "ZDO_ParseEPListRsp"
 APSME_BindRequest   SYMBOL "APSME_BindRequest"
 osal_start_timerEx  SYMBOL "osal_start_timerEx"
@@ -446,7 +452,10 @@ HalLedBlink         SYMBOL "HalLedBlink"
 ??osal_start_timerEx?relay SYMBOL "?relay", osal_start_timerEx
 ??osal_strlen?relay SYMBOL "?relay", osal_strlen
 ??zb_BindDevice?relay SYMBOL "?relay", zb_BindDevice
+??zb_ReadConfiguration?relay SYMBOL "?relay", zb_ReadConfiguration
 ??zb_SendDataRequest?relay SYMBOL "?relay", zb_SendDataRequest
+??zb_SystemReset?relay SYMBOL "?relay", zb_SystemReset
+??zb_WriteConfiguration?relay SYMBOL "?relay", zb_WriteConfiguration
 Button_HandleKeys   SYMBOL "Button_HandleKeys"
 ??Button_HandleKeys?relay SYMBOL "?relay", Button_HandleKeys
 Button_Init         SYMBOL "Button_Init"
@@ -510,21 +519,42 @@ zb_StartConfirm     SYMBOL "zb_StartConfirm"
         FUNCTION osal_msg_receive,0202H
         ARGFRAME ISTACK, 0, STACK
         ARGFRAME PSTACK, 0, STACK
-        ARGFRAME XSTACK, 14, STACK
+        ARGFRAME XSTACK, 16, STACK
         ARGFRAME IOVERLAY, 0, STATIC
         ARGFRAME DOVERLAY, 0, STATIC
         EXTERN osal_msg_deallocate
         FUNCTION osal_msg_deallocate,0202H
         ARGFRAME ISTACK, 0, STACK
         ARGFRAME PSTACK, 0, STACK
-        ARGFRAME XSTACK, 14, STACK
+        ARGFRAME XSTACK, 16, STACK
         ARGFRAME IOVERLAY, 0, STATIC
         ARGFRAME DOVERLAY, 0, STATIC
         EXTERN zb_BindDevice
         FUNCTION zb_BindDevice,0202H
         ARGFRAME ISTACK, 0, STACK
         ARGFRAME PSTACK, 0, STACK
-        ARGFRAME XSTACK, 14, STACK
+        ARGFRAME XSTACK, 16, STACK
+        ARGFRAME IOVERLAY, 0, STATIC
+        ARGFRAME DOVERLAY, 0, STATIC
+        EXTERN zb_ReadConfiguration
+        FUNCTION zb_ReadConfiguration,0202H
+        ARGFRAME ISTACK, 0, STACK
+        ARGFRAME PSTACK, 0, STACK
+        ARGFRAME XSTACK, 16, STACK
+        ARGFRAME IOVERLAY, 0, STATIC
+        ARGFRAME DOVERLAY, 0, STATIC
+        EXTERN zb_WriteConfiguration
+        FUNCTION zb_WriteConfiguration,0202H
+        ARGFRAME ISTACK, 0, STACK
+        ARGFRAME PSTACK, 0, STACK
+        ARGFRAME XSTACK, 16, STACK
+        ARGFRAME IOVERLAY, 0, STATIC
+        ARGFRAME DOVERLAY, 0, STATIC
+        EXTERN zb_SystemReset
+        FUNCTION zb_SystemReset,0202H
+        ARGFRAME ISTACK, 0, STACK
+        ARGFRAME PSTACK, 0, STACK
+        ARGFRAME XSTACK, 16, STACK
         ARGFRAME IOVERLAY, 0, STATIC
         ARGFRAME DOVERLAY, 0, STATIC
         EXTERN ZDO_ParseEPListRsp
@@ -620,9 +650,16 @@ zb_StartConfirm     SYMBOL "zb_StartConfirm"
         FUNCTION ??osal_strlen?relay,00H
         EXTERN ??zb_BindDevice?relay
         FUNCTION ??zb_BindDevice?relay,00H
+        EXTERN ??zb_ReadConfiguration?relay
+        FUNCTION ??zb_ReadConfiguration?relay,00H
         EXTERN ??zb_SendDataRequest?relay
         FUNCTION ??zb_SendDataRequest?relay,00H
+        EXTERN ??zb_SystemReset?relay
+        FUNCTION ??zb_SystemReset?relay,00H
+        EXTERN ??zb_WriteConfiguration?relay
+        FUNCTION ??zb_WriteConfiguration?relay,00H
         EXTERN ZDAppTaskID
+        EXTERN zgDeviceLogicalType
 
 // D:\ProgramData\Hardware\zigbee\Projects\zstack\Samples\SensorSys\Source\SensorSys_Coordinator.c
 //    1 /**************************************************************************************************
@@ -1051,17 +1088,6 @@ Sys_Init:
         ARGFRAME XSTACK, 9, STACK
         ARGFRAME IOVERLAY, 0, STATIC
         ARGFRAME DOVERLAY, 0, STATIC
-        FUNCALL Sys_Init, HalLedSet
-        LOCFRAME ISTACK, 0, STACK
-        LOCFRAME PSTACK, 0, STACK
-        LOCFRAME XSTACK, 9, STACK
-        LOCFRAME IOVERLAY, 0, STATIC
-        LOCFRAME DOVERLAY, 0, STATIC
-        ARGFRAME ISTACK, 0, STACK
-        ARGFRAME PSTACK, 0, STACK
-        ARGFRAME XSTACK, 9, STACK
-        ARGFRAME IOVERLAY, 0, STATIC
-        ARGFRAME DOVERLAY, 0, STATIC
         MOV     A,#-0x9
         LCALL   ?BANKED_ENTER_XDATA
         CFI DPH0 load(1, XDATA, add(CFA_XSP16, literal(-1)))
@@ -1149,59 +1175,41 @@ Sys_Init:
         MOV     R2,#0x1
         MOV     R1,#0x4
         LCALL   ??HalLedSet?relay
-//  256   HalLedSet ( HAL_LED_4, HAL_LED_MODE_ON );
-        ; Setup parameters for call to function HalLedSet
-        MOV     R2,#0x1
-        MOV     R1,#0x8
-        LCALL   ??HalLedSet?relay
+//  256 
+//  257   // Set device as Coordinator
+//  258   zgDeviceLogicalType = ZG_DEVICETYPE_COORDINATOR;
+        MOV     DPTR,#zgDeviceLogicalType
+        CLR     A
+        MOVX    @DPTR,A
+//  259 
+//  260   // To Initiallize
+//  261   // osal_start_timerEx(task_id, CONFIG_OPTION_EVT, 5000);
+//  262 }
+        LJMP    ?Subroutine0 & 0xFFFF
         CFI EndBlock cfiBlock0
-//  257 
-//  258   // To Update the display...
-//  259 }
-        REQUIRE ?Subroutine0
-        ; // Fall through to label ?Subroutine0
-
-        RSEG BANKED_CODE:CODE:NOROOT(0)
-?Subroutine0:
-        CFI Block cfiBlock1 Using cfiCommon0
-        CFI NoFunction
-        CFI CFA_SP SP+0
-        CFI CFA_XSP16 add(XSP16, 9)
-        CFI VB load(1, XDATA, add(CFA_XSP16, literal(-8)))
-        CFI DPL0 load(1, XDATA, add(CFA_XSP16, literal(-2)))
-        CFI DPH0 load(1, XDATA, add(CFA_XSP16, literal(-1)))
-        CFI R6 load(1, XDATA, add(CFA_XSP16, literal(-9)))
-        CFI R7 load(1, XDATA, add(CFA_XSP16, literal(-6)))
-        CFI V0 load(1, XDATA, add(CFA_XSP16, literal(-7)))
-        CFI ?BRET_EXT load(1, XDATA, add(CFA_XSP16, literal(-3)))
-        CFI ?RET_HIGH load(1, XDATA, add(CFA_XSP16, literal(-4)))
-        CFI ?RET_LOW load(1, XDATA, add(CFA_XSP16, literal(-5)))
-        MOV     R7,#0x1
-        LJMP    ?BANKED_LEAVE_XDATA
-        CFI EndBlock cfiBlock1
-//  260 
-//  261 /*********************************************************************
-//  262  * @fn      Button_Init
-//  263  *
-//  264  * @brief   Initialization function for the Generic App Task.
-//  265  *          This is called during initialization and should contain
-//  266  *          any application specific initialization (ie. hardware
-//  267  *          initialization/setup, table initialization, power up
-//  268  *          notificaiton ... ).
-//  269  *
-//  270  * @param   task_id - the ID assigned by OSAL.  This ID should be
-//  271  *                    used to send messages and set timers.
+//  263 
+//  264 /*********************************************************************
+//  265  * @fn      Button_Init
+//  266  *
+//  267  * @brief   Initialization function for the Generic App Task.
+//  268  *          This is called during initialization and should contain
+//  269  *          any application specific initialization (ie. hardware
+//  270  *          initialization/setup, table initialization, power up
+//  271  *          notificaiton ... ).
 //  272  *
-//  273  * @return  none
-//  274  */
+//  273  * @param   task_id - the ID assigned by OSAL.  This ID should be
+//  274  *                    used to send messages and set timers.
+//  275  *
+//  276  * @return  none
+//  277  */
 
         RSEG BANKED_CODE:CODE:NOROOT(0)
-//  275 void Button_Init( byte task_id )
+//  278 void Button_Init( byte task_id )
 Button_Init:
-        CFI Block cfiBlock2 Using cfiCommon0
+        CFI Block cfiBlock1 Using cfiCommon0
         CFI Function Button_Init
         CODE
-//  276 {
+//  279 {
         FUNCALL Button_Init, afRegister
         LOCFRAME ISTACK, 0, STACK
         LOCFRAME PSTACK, 0, STACK
@@ -1251,70 +1259,70 @@ Button_Init:
         ; Saved register size: 9
         ; Auto size: 0
         MOV     A,R1
-//  277   Button_TaskID = task_id;
+//  280   Button_TaskID = task_id;
         MOV     DPTR,#Button_TaskID
         MOVX    @DPTR,A
-//  278 
-//  279   // Device hardware initialization can be added here or in main() (Zmain.c).
-//  280   // If the hardware is application specific - add it here.
-//  281   // If the hardware is other parts of the device add it in main().
-//  282 
-//  283   Button_DstAddr.addrMode = (afAddrMode_t)AddrNotPresent;
+//  281 
+//  282   // Device hardware initialization can be added here or in main() (Zmain.c).
+//  283   // If the hardware is application specific - add it here.
+//  284   // If the hardware is other parts of the device add it in main().
+//  285 
+//  286   Button_DstAddr.addrMode = (afAddrMode_t)AddrNotPresent;
         MOV     DPTR,#Button_DstAddr + 8
         CLR     A
         MOVX    @DPTR,A
-//  284   Button_DstAddr.endPoint = 0;
+//  287   Button_DstAddr.endPoint = 0;
         INC     DPTR
         MOVX    @DPTR,A
-//  285   Button_DstAddr.addr.shortAddr = 0;
+//  288   Button_DstAddr.addr.shortAddr = 0;
         MOV     DPTR,#Button_DstAddr
         MOVX    @DPTR,A
         INC     DPTR
         MOVX    @DPTR,A
-//  286 
-//  287   // Fill out the endpoint description.
-//  288   Button_epDesc.endPoint = BUTTON_ENDPOINT;
+//  289 
+//  290   // Fill out the endpoint description.
+//  291   Button_epDesc.endPoint = BUTTON_ENDPOINT;
         MOV     DPTR,#Button_epDesc
         MOV     A,#0xa
         MOVX    @DPTR,A
-//  289   Button_epDesc.task_id = &Button_TaskID;
+//  292   Button_epDesc.task_id = &Button_TaskID;
         INC     DPTR
         MOV     A,#Button_TaskID & 0xff
         MOVX    @DPTR,A
         INC     DPTR
         MOV     A,#(Button_TaskID >> 8) & 0xff
         MOVX    @DPTR,A
-//  290   Button_epDesc.simpleDesc
-//  291             = (SimpleDescriptionFormat_t *)&Button_SimpleDesc;
+//  293   Button_epDesc.simpleDesc
+//  294             = (SimpleDescriptionFormat_t *)&Button_SimpleDesc;
         INC     DPTR
         MOV     A,#Button_SimpleDesc & 0xff
         MOVX    @DPTR,A
         INC     DPTR
         MOV     A,#(Button_SimpleDesc >> 8) & 0xff
         MOVX    @DPTR,A
-//  292   Button_epDesc.latencyReq = noLatencyReqs;
+//  295   Button_epDesc.latencyReq = noLatencyReqs;
         INC     DPTR
         CLR     A
         MOVX    @DPTR,A
-//  293 
-//  294   // Register the endpoint description with the AF
-//  295   afRegister( &Button_epDesc );
+//  296 
+//  297   // Register the endpoint description with the AF
+//  298   afRegister( &Button_epDesc );
         ; Setup parameters for call to function afRegister
         MOV     R2,#Button_epDesc & 0xff
         MOV     R3,#(Button_epDesc >> 8) & 0xff
         LCALL   ??afRegister?relay
-//  296 
-//  297   // Register for all key events - This app will handle all key events
-//  298   RegisterForKeys( Button_TaskID );
+//  299 
+//  300   // Register for all key events - This app will handle all key events
+//  301   RegisterForKeys( Button_TaskID );
         ; Setup parameters for call to function RegisterForKeys
         MOV     DPTR,#Button_TaskID
         MOVX    A,@DPTR
         MOV     R1,A
         LCALL   ??RegisterForKeys?relay
-//  299 
-//  300   // To Update the display...
-//  301  
-//  302   ZDO_RegisterForZDOMsg( Button_TaskID, Match_Desc_rsp );
+//  302 
+//  303   // To Update the display...
+//  304  
+//  305   ZDO_RegisterForZDOMsg( Button_TaskID, Match_Desc_rsp );
         ; Setup parameters for call to function ZDO_RegisterForZDOMsg
         MOV     R2,#0x6
         MOV     R3,#-0x80
@@ -1322,95 +1330,139 @@ Button_Init:
         MOVX    A,@DPTR
         MOV     R1,A
         LCALL   ??ZDO_RegisterForZDOMsg?relay
-//  303 }
-        SJMP    ?Subroutine0
-        CFI EndBlock cfiBlock2
-//  304 
-//  305 /*********************************************************************
-//  306  * @fn      Sys_ProcessEvent
-//  307  *
-//  308  * @brief   Generic Application Task event processor.  This function
-//  309  *          is called to process all events for the task.  Events
-//  310  *          include timers, messages and any other user defined events.
-//  311  *
-//  312  * @param   task_id  - The OSAL assigned task ID.
-//  313  * @param   events - events to process.  This is a bit map and can
-//  314  *                   contain more than one event.
-//  315  *
-//  316  * @return  none
-//  317  */
+//  306 }
+        LJMP    ?Subroutine0 & 0xFFFF
+        CFI EndBlock cfiBlock1
+//  307 
+//  308 /*********************************************************************
+//  309  * @fn      Sys_ProcessEvent
+//  310  *
+//  311  * @brief   Generic Application Task event processor.  This function
+//  312  *          is called to process all events for the task.  Events
+//  313  *          include timers, messages and any other user defined events.
+//  314  *
+//  315  * @param   task_id  - The OSAL assigned task ID.
+//  316  * @param   events - events to process.  This is a bit map and can
+//  317  *                   contain more than one event.
+//  318  *
+//  319  * @return  none
+//  320  */
 
         RSEG BANKED_CODE:CODE:NOROOT(0)
-//  318 UINT16 Sys_ProcessEvent( byte task_id, UINT16 events )
+//  321 UINT16 Sys_ProcessEvent( byte task_id, UINT16 events )
 Sys_ProcessEvent:
-        CFI Block cfiBlock3 Using cfiCommon0
+        CFI Block cfiBlock2 Using cfiCommon0
         CFI Function Sys_ProcessEvent
         CODE
-//  319 {
+//  322 {
         FUNCALL Sys_ProcessEvent, osal_msg_receive
         LOCFRAME ISTACK, 0, STACK
         LOCFRAME PSTACK, 0, STACK
-        LOCFRAME XSTACK, 14, STACK
+        LOCFRAME XSTACK, 16, STACK
         LOCFRAME IOVERLAY, 0, STATIC
         LOCFRAME DOVERLAY, 0, STATIC
         ARGFRAME ISTACK, 0, STACK
         ARGFRAME PSTACK, 0, STACK
-        ARGFRAME XSTACK, 14, STACK
+        ARGFRAME XSTACK, 16, STACK
         ARGFRAME IOVERLAY, 0, STATIC
         ARGFRAME DOVERLAY, 0, STATIC
         FUNCALL Sys_ProcessEvent, osal_msg_deallocate
         LOCFRAME ISTACK, 0, STACK
         LOCFRAME PSTACK, 0, STACK
-        LOCFRAME XSTACK, 14, STACK
+        LOCFRAME XSTACK, 16, STACK
         LOCFRAME IOVERLAY, 0, STATIC
         LOCFRAME DOVERLAY, 0, STATIC
         ARGFRAME ISTACK, 0, STACK
         ARGFRAME PSTACK, 0, STACK
-        ARGFRAME XSTACK, 14, STACK
+        ARGFRAME XSTACK, 16, STACK
         ARGFRAME IOVERLAY, 0, STATIC
         ARGFRAME DOVERLAY, 0, STATIC
         FUNCALL Sys_ProcessEvent, osal_msg_receive
         LOCFRAME ISTACK, 0, STACK
         LOCFRAME PSTACK, 0, STACK
-        LOCFRAME XSTACK, 14, STACK
+        LOCFRAME XSTACK, 16, STACK
         LOCFRAME IOVERLAY, 0, STATIC
         LOCFRAME DOVERLAY, 0, STATIC
         ARGFRAME ISTACK, 0, STACK
         ARGFRAME PSTACK, 0, STACK
-        ARGFRAME XSTACK, 14, STACK
+        ARGFRAME XSTACK, 16, STACK
         ARGFRAME IOVERLAY, 0, STATIC
         ARGFRAME DOVERLAY, 0, STATIC
         FUNCALL Sys_ProcessEvent, Sys_ProcessZDOMsgs
         LOCFRAME ISTACK, 0, STACK
         LOCFRAME PSTACK, 0, STACK
-        LOCFRAME XSTACK, 14, STACK
+        LOCFRAME XSTACK, 16, STACK
         LOCFRAME IOVERLAY, 0, STATIC
         LOCFRAME DOVERLAY, 0, STATIC
         ARGFRAME ISTACK, 0, STACK
         ARGFRAME PSTACK, 0, STACK
-        ARGFRAME XSTACK, 14, STACK
+        ARGFRAME XSTACK, 16, STACK
         ARGFRAME IOVERLAY, 0, STATIC
         ARGFRAME DOVERLAY, 0, STATIC
         FUNCALL Sys_ProcessEvent, zb_BindDevice
         LOCFRAME ISTACK, 0, STACK
         LOCFRAME PSTACK, 0, STACK
-        LOCFRAME XSTACK, 14, STACK
+        LOCFRAME XSTACK, 16, STACK
         LOCFRAME IOVERLAY, 0, STATIC
         LOCFRAME DOVERLAY, 0, STATIC
         ARGFRAME ISTACK, 0, STACK
         ARGFRAME PSTACK, 0, STACK
-        ARGFRAME XSTACK, 14, STACK
+        ARGFRAME XSTACK, 16, STACK
         ARGFRAME IOVERLAY, 0, STATIC
         ARGFRAME DOVERLAY, 0, STATIC
-        FUNCALL Sys_ProcessEvent, HalLedSet
+        FUNCALL Sys_ProcessEvent, zb_ReadConfiguration
         LOCFRAME ISTACK, 0, STACK
         LOCFRAME PSTACK, 0, STACK
-        LOCFRAME XSTACK, 14, STACK
+        LOCFRAME XSTACK, 16, STACK
         LOCFRAME IOVERLAY, 0, STATIC
         LOCFRAME DOVERLAY, 0, STATIC
         ARGFRAME ISTACK, 0, STACK
         ARGFRAME PSTACK, 0, STACK
-        ARGFRAME XSTACK, 14, STACK
+        ARGFRAME XSTACK, 16, STACK
+        ARGFRAME IOVERLAY, 0, STATIC
+        ARGFRAME DOVERLAY, 0, STATIC
+        FUNCALL Sys_ProcessEvent, zb_WriteConfiguration
+        LOCFRAME ISTACK, 0, STACK
+        LOCFRAME PSTACK, 0, STACK
+        LOCFRAME XSTACK, 16, STACK
+        LOCFRAME IOVERLAY, 0, STATIC
+        LOCFRAME DOVERLAY, 0, STATIC
+        ARGFRAME ISTACK, 0, STACK
+        ARGFRAME PSTACK, 0, STACK
+        ARGFRAME XSTACK, 16, STACK
+        ARGFRAME IOVERLAY, 0, STATIC
+        ARGFRAME DOVERLAY, 0, STATIC
+        FUNCALL Sys_ProcessEvent, zb_ReadConfiguration
+        LOCFRAME ISTACK, 0, STACK
+        LOCFRAME PSTACK, 0, STACK
+        LOCFRAME XSTACK, 16, STACK
+        LOCFRAME IOVERLAY, 0, STATIC
+        LOCFRAME DOVERLAY, 0, STATIC
+        ARGFRAME ISTACK, 0, STACK
+        ARGFRAME PSTACK, 0, STACK
+        ARGFRAME XSTACK, 16, STACK
+        ARGFRAME IOVERLAY, 0, STATIC
+        ARGFRAME DOVERLAY, 0, STATIC
+        FUNCALL Sys_ProcessEvent, zb_WriteConfiguration
+        LOCFRAME ISTACK, 0, STACK
+        LOCFRAME PSTACK, 0, STACK
+        LOCFRAME XSTACK, 16, STACK
+        LOCFRAME IOVERLAY, 0, STATIC
+        LOCFRAME DOVERLAY, 0, STATIC
+        ARGFRAME ISTACK, 0, STACK
+        ARGFRAME PSTACK, 0, STACK
+        ARGFRAME XSTACK, 16, STACK
+        ARGFRAME IOVERLAY, 0, STATIC
+        ARGFRAME DOVERLAY, 0, STATIC
+        FUNCALL Sys_ProcessEvent, zb_SystemReset
+        LOCFRAME ISTACK, 0, STACK
+        LOCFRAME PSTACK, 0, STACK
+        LOCFRAME XSTACK, 16, STACK
+        LOCFRAME IOVERLAY, 0, STATIC
+        LOCFRAME DOVERLAY, 0, STATIC
+        ARGFRAME ISTACK, 0, STACK
+        ARGFRAME PSTACK, 0, STACK
+        ARGFRAME XSTACK, 16, STACK
         ARGFRAME IOVERLAY, 0, STATIC
         ARGFRAME DOVERLAY, 0, STATIC
         MOV     A,#-0xe
@@ -1432,97 +1484,102 @@ Sys_ProcessEvent:
         CFI CFA_SP SP+0
         CFI CFA_XSP16 add(XSP16, 14)
         ; Saved register size: 14
-        ; Auto size: 0
+        ; Auto size: 2
+        MOV     A,#-0x2
+        LCALL   ?ALLOC_XSTACK8
+        CFI CFA_XSP16 add(XSP16, 16)
         MOV     ?V0 + 2,R1
-        MOV     ?V0 + 0,R2
-        MOV     ?V0 + 1,R3
-//  320   afIncomingMSGPacket_t *MSGpkt = NULL;
-//  321   afDataConfirm_t *afDataConfirm;
-//  322 
-//  323   // Data Confirmation message fields
-//  324   byte sentEP;
-//  325   ZStatus_t sentStatus;
-//  326   byte sentTransID;       // This should match the value sent
-//  327   (void)task_id;  // Intentionally unreferenced parameter
-//  328 
-//  329   if ( events & SYS_EVENT_MSG )
+        MOV     A,R2
+        MOV     R6,A
         MOV     A,R3
+        MOV     R7,A
+//  323   afIncomingMSGPacket_t *MSGpkt = NULL;
+//  324   afDataConfirm_t *afDataConfirm;
+//  325 
+//  326   // Data Confirmation message fields
+//  327   byte sentEP;
+//  328   ZStatus_t sentStatus;
+//  329   byte sentTransID;       // This should match the value sent
+//  330   (void)task_id;  // Intentionally unreferenced parameter
+//  331 
+//  332   if ( events & SYS_EVENT_MSG )
         ANL     A,#0x80
         JZ      ??Sys_ProcessEvent_0
-//  330   {
-//  331     MSGpkt = (afIncomingMSGPacket_t *)osal_msg_receive( task_id );
+//  333   {
+//  334     MSGpkt = (afIncomingMSGPacket_t *)osal_msg_receive( task_id );
         ; Setup parameters for call to function osal_msg_receive
         SJMP    ??Sys_ProcessEvent_1
-//  332     while ( MSGpkt )
-//  333     {
-//  334       switch ( MSGpkt->hdr.event )
-//  335       {
-//  336         case ZDO_CB_MSG:  // 收到被绑定节点的rsp
-//  337           Sys_ProcessZDOMsgs( (zdoIncomingMsg_t *)MSGpkt, task_id );
-//  338           break;
-//  339 
-//  340         case AF_DATA_CONFIRM_CMD:
-//  341           // This message is received as a confirmation of a data packet sent.
-//  342           // The status is of ZStatus_t type [defined in ZComDef.h]
-//  343           // The message fields are defined in AF.h
-//  344           afDataConfirm = (afDataConfirm_t *)MSGpkt;
-//  345           sentEP = afDataConfirm->endpoint;
-//  346           sentStatus = afDataConfirm->hdr.status;
-//  347           sentTransID = afDataConfirm->transID;
-//  348           (void)sentEP;
-//  349           (void)sentTransID;
-//  350 
-//  351           // Action taken when confirmation is received.
-//  352           if ( sentStatus != ZSuccess )
-//  353           {
-//  354             // The data wasn't delivered -- Do something
-//  355           }
-//  356           break;
-//  357 
-//  358         case AF_INCOMING_MSG_CMD:
-//  359           Sys_MessageMSGCB( MSGpkt, task_id );
-//  360           break;
-//  361 
-//  362         case ZDO_STATE_CHANGE:
-//  363           Sys_NwkState = (devStates_t)(MSGpkt->hdr.status);
+//  335     while ( MSGpkt )
+//  336     {
+//  337       switch ( MSGpkt->hdr.event )
+//  338       {
+//  339         case ZDO_CB_MSG:  // 收到被绑定节点的rsp
+//  340           Sys_ProcessZDOMsgs( (zdoIncomingMsg_t *)MSGpkt, task_id );
+//  341           break;
+//  342 
+//  343         case AF_DATA_CONFIRM_CMD:
+//  344           // This message is received as a confirmation of a data packet sent.
+//  345           // The status is of ZStatus_t type [defined in ZComDef.h]
+//  346           // The message fields are defined in AF.h
+//  347           afDataConfirm = (afDataConfirm_t *)MSGpkt;
+//  348           sentEP = afDataConfirm->endpoint;
+//  349           sentStatus = afDataConfirm->hdr.status;
+//  350           sentTransID = afDataConfirm->transID;
+//  351           (void)sentEP;
+//  352           (void)sentTransID;
+//  353 
+//  354           // Action taken when confirmation is received.
+//  355           if ( sentStatus != ZSuccess )
+//  356           {
+//  357             // The data wasn't delivered -- Do something
+//  358           }
+//  359           break;
+//  360 
+//  361         case AF_INCOMING_MSG_CMD:
+//  362           Sys_MessageMSGCB( MSGpkt, task_id );
+//  363           break;
+//  364 
+//  365         case ZDO_STATE_CHANGE:
+//  366           Sys_NwkState = (devStates_t)(MSGpkt->hdr.status);
 ??Sys_ProcessEvent_2:
         INC     DPTR
         MOVX    A,@DPTR
         MOV     DPTR,#Sys_NwkState
         MOVX    @DPTR,A
-//  364           if ( (Sys_NwkState == DEV_ZB_COORD) )
-//  365           {
-//  366           	;
-//  367           }
-//  368           
-//  369           break;
-//  370 
-//  371         default:
+//  367           if ( (Sys_NwkState == DEV_ZB_COORD) )
+//  368           {
+//  369           	;
+//  370           }
+//  371           
 //  372           break;
-//  373       }
-//  374 
-//  375       // Release the memory
-//  376       osal_msg_deallocate( (uint8 *)MSGpkt );
+//  373 
+//  374         default:
+//  375           break;
+//  376       }
+//  377 
+//  378       // Release the memory
+//  379       osal_msg_deallocate( (uint8 *)MSGpkt );
 ??Sys_ProcessEvent_3:
         ; Setup parameters for call to function osal_msg_deallocate
-        MOV     A,R6
-        MOV     R2,A
-        MOV     A,R7
-        MOV     R3,A
+        MOV     R2,?V0 + 0
+        MOV     R3,?V0 + 1
         LCALL   ??osal_msg_deallocate?relay
-//  377 
-//  378       // Next
-//  379       MSGpkt = (afIncomingMSGPacket_t *)osal_msg_receive( Sys_TaskID );
+//  380 
+//  381       // Next
+//  382       MSGpkt = (afIncomingMSGPacket_t *)osal_msg_receive( Sys_TaskID );
         ; Setup parameters for call to function osal_msg_receive
         MOV     DPTR,#Sys_TaskID
         MOVX    A,@DPTR
         MOV     R1,A
 ??Sys_ProcessEvent_1:
-        LCALL   ?Subroutine4 & 0xFFFF
-??CrossCallReturnLabel_2:
+        LCALL   ??osal_msg_receive?relay
+        MOV     ?V0 + 0,R2
+        MOV     ?V0 + 1,R3
+        MOV     A,?V0 + 0
+        ORL     A,?V0 + 1
         JZ      ??Sys_ProcessEvent_4
-        MOV     DPL,R6
-        MOV     DPH,R7
+        MOV     DPL,?V0 + 0
+        MOV     DPH,?V0 + 1
         MOVX    A,@DPTR
         ADD     A,#0x2f
         JZ      ??Sys_ProcessEvent_2
@@ -1530,36 +1587,36 @@ Sys_ProcessEvent:
         JNZ     ??Sys_ProcessEvent_3
         ; Setup parameters for call to function Sys_ProcessZDOMsgs
         MOV     R1,?V0 + 2
+        MOV     R2,?V0 + 0
+        MOV     R3,?V0 + 1
+        LCALL   ??Sys_ProcessZDOMsgs?relay
+        SJMP    ??Sys_ProcessEvent_3
+//  383     }
+//  384     // return unprocessed events
+//  385     return (events ^ SYS_EVENT_MSG);
+??Sys_ProcessEvent_4:
         MOV     A,R6
         MOV     R2,A
         MOV     A,R7
-        MOV     R3,A
-        LCALL   ??Sys_ProcessZDOMsgs?relay
-        SJMP    ??Sys_ProcessEvent_3
-//  380     }
-//  381     // return unprocessed events
-//  382     return (events ^ SYS_EVENT_MSG);
-??Sys_ProcessEvent_4:
-        MOV     R2,?V0 + 0
-        MOV     A,?V0 + 1
         XRL     A,#0x80
+??Sys_ProcessEvent_5:
         MOV     R3,A
-        SJMP    ??Sys_ProcessEvent_5
-//  383   }
-//  384 
-//  385    if( events & MATCH_BIND_EVT ) // 广播 match 绑定
+        SJMP    ??Sys_ProcessEvent_6
+//  386   }
+//  387 
+//  388   if( events & MATCH_BIND_EVT ) // 广播 match 绑定
 ??Sys_ProcessEvent_0:
-        MOV     A,R2
+        MOV     A,R6
         ANL     A,#0x2
-        JZ      ??Sys_ProcessEvent_6
-//  386    {
-//  387       if(task_id == Button_TaskID)
+        JZ      ??Sys_ProcessEvent_7
+//  389   {
+//  390       if(task_id == Button_TaskID)
         MOV     DPTR,#Button_TaskID
         MOVX    A,@DPTR
         XRL     A,?V0 + 2
-        JNZ     ??Sys_ProcessEvent_7
-//  388       {
-//  389          zb_BindDevice(TRUE, BUTTON_CMD_ID, NULL);
+        JNZ     ??Sys_ProcessEvent_8
+//  391       {
+//  392          zb_BindDevice(TRUE, BUTTON_CMD_ID, NULL);
         ; Setup parameters for call to function zb_BindDevice
         MOV     R4,#0x0
         MOV     R5,#0x0
@@ -1567,36 +1624,104 @@ Sys_ProcessEvent:
         MOV     R3,#0x0
         MOV     R1,#0x1
         LCALL   ??zb_BindDevice?relay
-//  390          HalLedSet(HAL_LED_2, HAL_LED_MODE_ON); // 亮绿灯
-        ; Setup parameters for call to function HalLedSet
-        MOV     R2,#0x1
-        MOV     R1,#0x2
-        LCALL   ??HalLedSet?relay
-//  391       }
-//  392       return (events ^ MATCH_BIND_EVT);
-??Sys_ProcessEvent_7:
-        MOV     A,?V0 + 0
+//  393          // HalLedSet(HAL_LED_2, HAL_LED_MODE_OFF); // 亮D2
+//  394       }
+//  395       return (events ^ MATCH_BIND_EVT);
+??Sys_ProcessEvent_8:
+        MOV     A,R6
         XRL     A,#0x2
         MOV     R2,A
-        MOV     R3,?V0 + 1
+        MOV     A,R7
         SJMP    ??Sys_ProcessEvent_5
-//  393    }
-//  394 
-//  395 
-//  396   // Discard unknown events
-//  397   return 0;
-??Sys_ProcessEvent_6:
+//  396   }
+//  397 
+//  398   if( events & CONFIG_OPTION_EVT )
+??Sys_ProcessEvent_7:
+        MOV     A,R6
+        ANL     A,#0x4
+        JZ      ??Sys_ProcessEvent_9
+//  399   {
+//  400     uint8 logicalType;
+//  401     uint8 startOptions;
+//  402     if ( myAppState == APP_INIT  )
+        MOV     DPTR,#myAppState
+        MOVX    A,@DPTR
+        JNZ     ??Sys_ProcessEvent_9
+//  403     {
+//  404       zb_ReadConfiguration( ZCD_NV_LOGICAL_TYPE, sizeof(uint8), &logicalType );
+        ; Setup parameters for call to function zb_ReadConfiguration
+        MOV     DPL,?XSP + 0
+        MOV     DPH,?XSP + 1
+        MOV     R4,DPL
+        MOV     R5,DPH
+        MOV     R2,#0x1
+        MOV     R1,#-0x79
+        LCALL   ??zb_ReadConfiguration?relay
+//  405       if ( logicalType != ZG_DEVICETYPE_ENDDEVICE )
+        MOV     DPL,?XSP + 0
+        MOV     DPH,?XSP + 1
+        MOVX    A,@DPTR
+        XRL     A,#0x2
+        JZ      ??Sys_ProcessEvent_10
+//  406       {
+//  407         logicalType = ZG_DEVICETYPE_COORDINATOR;
+        CLR     A
+        MOVX    @DPTR,A
+//  408         zb_WriteConfiguration(ZCD_NV_LOGICAL_TYPE, sizeof(uint8), &logicalType);
+        ; Setup parameters for call to function zb_WriteConfiguration
+        MOV     R4,DPL
+        MOV     R5,DPH
+        MOV     R2,#0x1
+        MOV     R1,#-0x79
+        LCALL   ??zb_WriteConfiguration?relay
+//  409       }
+//  410       // Do more configuration if necessary and then restart device with auto-start bit set
+//  411       // write endpoint to simple desc...dont pass it in start req..then reset
+//  412 
+//  413       zb_ReadConfiguration( ZCD_NV_STARTUP_OPTION, sizeof(uint8), &startOptions );
+??Sys_ProcessEvent_10:
+        ; Setup parameters for call to function zb_ReadConfiguration
+        MOV     A,#0x1
+        LCALL   ?XSTACK_DISP0_8
+        MOV     R4,DPL
+        MOV     R5,DPH
+        MOV     R2,#0x1
+        MOV     R1,#0x3
+        LCALL   ??zb_ReadConfiguration?relay
+//  414       startOptions = ZCD_STARTOPT_AUTO_START;
+        MOV     A,#0x1
+        LCALL   ?XSTACK_DISP0_8
+        MOV     A,#0x4
+        MOVX    @DPTR,A
+//  415       zb_WriteConfiguration( ZCD_NV_STARTUP_OPTION, sizeof(uint8), &startOptions );
+        ; Setup parameters for call to function zb_WriteConfiguration
+        MOV     R4,DPL
+        MOV     R5,DPH
+        MOV     R2,#0x1
+        MOV     R1,#0x3
+        LCALL   ??zb_WriteConfiguration?relay
+//  416       zb_SystemReset();
+        ; Setup parameters for call to function zb_SystemReset
+        LCALL   ??zb_SystemReset?relay
+//  417     }
+//  418   }
+//  419 
+//  420   // Discard unknown events
+//  421   return 0;
+??Sys_ProcessEvent_9:
         MOV     R2,#0x0
         MOV     R3,#0x0
-        CFI EndBlock cfiBlock3
-??Sys_ProcessEvent_5:
+??Sys_ProcessEvent_6:
+        MOV     A,#0x2
+        LCALL   ?DEALLOC_XSTACK8
+        CFI EndBlock cfiBlock2
         REQUIRE ?Subroutine1
         ; // Fall through to label ?Subroutine1
-//  398 }
+//  422 }
 
         RSEG BANKED_CODE:CODE:NOROOT(0)
 ?Subroutine1:
-        CFI Block cfiBlock4 Using cfiCommon0
+        CFI Block cfiBlock3 Using cfiCommon0
         CFI NoFunction
         CFI CFA_SP SP+0
         CFI CFA_XSP16 add(XSP16, 14)
@@ -1616,16 +1741,16 @@ Sys_ProcessEvent:
         CFI ?RET_LOW load(1, XDATA, add(CFA_XSP16, literal(-5)))
         MOV     R7,#0x6
         LJMP    ?BANKED_LEAVE_XDATA
-        CFI EndBlock cfiBlock4
-//  399 
+        CFI EndBlock cfiBlock3
+//  423 
 
         RSEG BANKED_CODE:CODE:NOROOT(0)
-//  400 UINT16 Button_ProcessEvent( byte task_id, UINT16 events )
+//  424 UINT16 Button_ProcessEvent( byte task_id, UINT16 events )
 Button_ProcessEvent:
-        CFI Block cfiBlock5 Using cfiCommon0
+        CFI Block cfiBlock4 Using cfiCommon0
         CFI Function Button_ProcessEvent
         CODE
-//  401 {
+//  425 {
         FUNCALL Button_ProcessEvent, osal_msg_receive
         LOCFRAME ISTACK, 0, STACK
         LOCFRAME PSTACK, 0, STACK
@@ -1692,30 +1817,30 @@ Button_ProcessEvent:
         ; Auto size: 0
         MOV     ?V0 + 0,R2
         MOV     ?V0 + 1,R3
-//  402   afIncomingMSGPacket_t *MSGpkt = NULL;
-//  403 
-//  404   (void)task_id;  // Intentionally unreferenced parameter
-//  405 
-//  406   if ( events & SYS_EVENT_MSG )
+//  426   afIncomingMSGPacket_t *MSGpkt = NULL;
+//  427 
+//  428   (void)task_id;  // Intentionally unreferenced parameter
+//  429 
+//  430   if ( events & SYS_EVENT_MSG )
         MOV     A,R3
         ANL     A,#0x80
         JZ      ??Button_ProcessEvent_0
-//  407   {
-//  408     MSGpkt = (afIncomingMSGPacket_t *)osal_msg_receive( task_id );
+//  431   {
+//  432     MSGpkt = (afIncomingMSGPacket_t *)osal_msg_receive( task_id );
         ; Setup parameters for call to function osal_msg_receive
         SJMP    ??Button_ProcessEvent_1
-//  409     while ( MSGpkt )
-//  410     {
-//  411       switch ( MSGpkt->hdr.event )
+//  433     while ( MSGpkt )
+//  434     {
+//  435       switch ( MSGpkt->hdr.event )
 ??Button_ProcessEvent_2:
         MOV     DPL,R6
         MOV     DPH,R7
         MOVX    A,@DPTR
         XRL     A,#0xc0
         JNZ     ??Button_ProcessEvent_3
-//  412       {
-//  413         case KEY_CHANGE:
-//  414           Button_HandleKeys( ((keyChange_t *)MSGpkt)->state, ((keyChange_t *)MSGpkt)->keys );
+//  436       {
+//  437         case KEY_CHANGE:
+//  438           Button_HandleKeys( ((keyChange_t *)MSGpkt)->state, ((keyChange_t *)MSGpkt)->keys );
         ; Setup parameters for call to function Button_HandleKeys
         INC     DPTR
         INC     DPTR
@@ -1729,10 +1854,10 @@ Button_ProcessEvent:
         MOVX    A,@DPTR
         MOV     R1,A
         LCALL   ??Button_HandleKeys?relay
-//  415         break;
-//  416       }
-//  417       // Release the memory
-//  418       osal_msg_deallocate( (uint8 *)MSGpkt );
+//  439         break;
+//  440       }
+//  441       // Release the memory
+//  442       osal_msg_deallocate( (uint8 *)MSGpkt );
 ??Button_ProcessEvent_3:
         ; Setup parameters for call to function osal_msg_deallocate
         MOV     A,R6
@@ -1740,110 +1865,60 @@ Button_ProcessEvent:
         MOV     A,R7
         MOV     R3,A
         LCALL   ??osal_msg_deallocate?relay
-//  419 
-//  420       // Next
-//  421       MSGpkt = (afIncomingMSGPacket_t *)osal_msg_receive( Button_TaskID );
+//  443 
+//  444       // Next
+//  445       MSGpkt = (afIncomingMSGPacket_t *)osal_msg_receive( Button_TaskID );
         ; Setup parameters for call to function osal_msg_receive
         MOV     DPTR,#Button_TaskID
         MOVX    A,@DPTR
         MOV     R1,A
-//  422     }
 ??Button_ProcessEvent_1:
-        LCALL   ?Subroutine4 & 0xFFFF
-??CrossCallReturnLabel_3:
-        JNZ     ??Button_ProcessEvent_2
-//  423    return (events ^ SYS_EVENT_MSG);
-        MOV     R2,?V0 + 0
-        MOV     A,?V0 + 1
-        XRL     A,#0x80
-        MOV     R3,A
-        SJMP    ??Button_ProcessEvent_4
-//  424   }
-//  425   return 0;
-??Button_ProcessEvent_0:
-        MOV     R2,#0x0
-        MOV     R3,#0x0
-??Button_ProcessEvent_4:
-        SJMP    ?Subroutine1
-        CFI EndBlock cfiBlock5
-//  426 }
-
-        RSEG BANKED_CODE:CODE:NOROOT(0)
-?Subroutine4:
-        CFI Block cfiCond6 Using cfiCommon0
-        CFI NoFunction
-        CFI Conditional ??CrossCallReturnLabel_2
-        CFI R6 load(1, XDATA, add(CFA_XSP16, literal(-14)))
-        CFI VB load(1, XDATA, add(CFA_XSP16, literal(-13)))
-        CFI V0 load(1, XDATA, add(CFA_XSP16, literal(-12)))
-        CFI V1 load(1, XDATA, add(CFA_XSP16, literal(-11)))
-        CFI V2 load(1, XDATA, add(CFA_XSP16, literal(-10)))
-        CFI V3 load(1, XDATA, add(CFA_XSP16, literal(-9)))
-        CFI V4 load(1, XDATA, add(CFA_XSP16, literal(-8)))
-        CFI V5 load(1, XDATA, add(CFA_XSP16, literal(-7)))
-        CFI R7 load(1, XDATA, add(CFA_XSP16, literal(-6)))
-        CFI ?RET_LOW load(1, XDATA, add(CFA_XSP16, literal(-5)))
-        CFI ?RET_HIGH load(1, XDATA, add(CFA_XSP16, literal(-4)))
-        CFI ?BRET_EXT load(1, XDATA, add(CFA_XSP16, literal(-3)))
-        CFI DPL0 load(1, XDATA, add(CFA_XSP16, literal(-2)))
-        CFI DPH0 load(1, XDATA, add(CFA_XSP16, literal(-1)))
-        CFI CFA_SP SP+0
-        CFI CFA_XSP16 add(XSP16, 14)
-        CFI Block cfiCond7 Using cfiCommon0
-        CFI (cfiCond7) NoFunction
-        CFI (cfiCond7) Conditional ??CrossCallReturnLabel_3
-        CFI (cfiCond7) R6 load(1, XDATA, add(CFA_XSP16, literal(-14)))
-        CFI (cfiCond7) VB load(1, XDATA, add(CFA_XSP16, literal(-13)))
-        CFI (cfiCond7) V0 load(1, XDATA, add(CFA_XSP16, literal(-12)))
-        CFI (cfiCond7) V1 load(1, XDATA, add(CFA_XSP16, literal(-11)))
-        CFI (cfiCond7) V2 load(1, XDATA, add(CFA_XSP16, literal(-10)))
-        CFI (cfiCond7) V3 load(1, XDATA, add(CFA_XSP16, literal(-9)))
-        CFI (cfiCond7) V4 load(1, XDATA, add(CFA_XSP16, literal(-8)))
-        CFI (cfiCond7) V5 load(1, XDATA, add(CFA_XSP16, literal(-7)))
-        CFI (cfiCond7) R7 load(1, XDATA, add(CFA_XSP16, literal(-6)))
-        CFI (cfiCond7) ?RET_LOW load(1, XDATA, add(CFA_XSP16, literal(-5)))
-        CFI (cfiCond7) ?RET_HIGH load(1, XDATA, add(CFA_XSP16, literal(-4)))
-        CFI (cfiCond7) ?BRET_EXT load(1, XDATA, add(CFA_XSP16, literal(-3)))
-        CFI (cfiCond7) DPL0 load(1, XDATA, add(CFA_XSP16, literal(-2)))
-        CFI (cfiCond7) DPH0 load(1, XDATA, add(CFA_XSP16, literal(-1)))
-        CFI (cfiCond7) CFA_SP SP+0
-        CFI (cfiCond7) CFA_XSP16 add(XSP16, 14)
-        CFI Block cfiPicker8 Using cfiCommon1
-        CFI (cfiPicker8) NoFunction
-        CFI (cfiPicker8) Picker
         LCALL   ??osal_msg_receive?relay
         MOV     ?V0 + 4,R2
         MOV     ?V0 + 5,R3
         MOV     R6,?V0 + 4
         MOV     R7,?V0 + 5
+//  446     }
         MOV     A,R6
         ORL     A,R7
-        RET
-        CFI EndBlock cfiCond6
-        CFI EndBlock cfiCond7
-        CFI EndBlock cfiPicker8
-//  427 
-//  428 /*********************************************************************
-//  429  * Event Generation Functions
-//  430  */
-//  431 
-//  432 /*********************************************************************
-//  433  * @fn      Sys_ProcessZDOMsgs()
-//  434  *
-//  435  * @brief   Process response messages
-//  436  *
-//  437  * @param   none
-//  438  *
-//  439  * @return  none
-//  440  */
+        JNZ     ??Button_ProcessEvent_2
+//  447    return (events ^ SYS_EVENT_MSG);
+        MOV     R2,?V0 + 0
+        MOV     A,?V0 + 1
+        XRL     A,#0x80
+        MOV     R3,A
+        SJMP    ??Button_ProcessEvent_4
+//  448   }
+//  449   return 0;
+??Button_ProcessEvent_0:
+        MOV     R2,#0x0
+        MOV     R3,#0x0
+??Button_ProcessEvent_4:
+        SJMP    ?Subroutine1
+        CFI EndBlock cfiBlock4
+//  450 }
+//  451 
+//  452 /*********************************************************************
+//  453  * Event Generation Functions
+//  454  */
+//  455 
+//  456 /*********************************************************************
+//  457  * @fn      Sys_ProcessZDOMsgs()
+//  458  *
+//  459  * @brief   Process response messages
+//  460  *
+//  461  * @param   none
+//  462  *
+//  463  * @return  none
+//  464  */
 
         RSEG BANKED_CODE:CODE:NOROOT(0)
-//  441 void Sys_ProcessZDOMsgs( zdoIncomingMsg_t *inMsg , byte task_id )
+//  465 void Sys_ProcessZDOMsgs( zdoIncomingMsg_t *inMsg , byte task_id )
 Sys_ProcessZDOMsgs:
-        CFI Block cfiBlock9 Using cfiCommon0
+        CFI Block cfiBlock5 Using cfiCommon0
         CFI Function Sys_ProcessZDOMsgs
         CODE
-//  442 {
+//  466 {
         FUNCALL Sys_ProcessZDOMsgs, HalLedSet
         LOCFRAME ISTACK, 0, STACK
         LOCFRAME PSTACK, 0, STACK
@@ -1910,6 +1985,17 @@ Sys_ProcessZDOMsgs:
         ARGFRAME XSTACK, 20, STACK
         ARGFRAME IOVERLAY, 0, STATIC
         ARGFRAME DOVERLAY, 0, STATIC
+        FUNCALL Sys_ProcessZDOMsgs, zb_BindConfirm
+        LOCFRAME ISTACK, 0, STACK
+        LOCFRAME PSTACK, 0, STACK
+        LOCFRAME XSTACK, 20, STACK
+        LOCFRAME IOVERLAY, 0, STATIC
+        LOCFRAME DOVERLAY, 0, STATIC
+        ARGFRAME ISTACK, 0, STACK
+        ARGFRAME PSTACK, 0, STACK
+        ARGFRAME XSTACK, 20, STACK
+        ARGFRAME IOVERLAY, 0, STATIC
+        ARGFRAME DOVERLAY, 0, STATIC
         FUNCALL Sys_ProcessZDOMsgs, HalLedSet
         LOCFRAME ISTACK, 0, STACK
         LOCFRAME PSTACK, 0, STACK
@@ -1952,8 +2038,8 @@ Sys_ProcessZDOMsgs:
         MOV     A,#-0x9
         LCALL   ?ALLOC_XSTACK8
         CFI CFA_XSP16 add(XSP16, 20)
-//  443 
-//  444   switch ( inMsg->clusterID )
+//  467 
+//  468   switch ( inMsg->clusterID )
         MOV     A,R2
         ADD     A,#0xc
         MOV     DPL,A
@@ -2016,9 +2102,9 @@ Sys_ProcessZDOMsgs:
         DATA16
         DW        ??Sys_ProcessZDOMsgs_2
         CODE
-//  445   {
-//  446     case End_Device_Bind_rsp:
-//  447       if ( ZDO_ParseBindRsp( inMsg ) == ZSuccess )
+//  469   {
+//  470     case End_Device_Bind_rsp:
+//  471       if ( ZDO_ParseBindRsp( inMsg ) == ZSuccess )
 ??Sys_ProcessZDOMsgs_1:
         MOV     A,R2
         ADD     A,#0x13
@@ -2026,36 +2112,36 @@ Sys_ProcessZDOMsgs:
         MOV     A,R3
         ADDC    A,#0x0
         MOV     DPH,A
-        LCALL   ?Subroutine5 & 0xFFFF
-??CrossCallReturnLabel_4:
+        LCALL   ?Subroutine4 & 0xFFFF
+??CrossCallReturnLabel_2:
         JNZ     ??Sys_ProcessZDOMsgs_3
-//  448       {
-//  449         // Light LED
-//  450         HalLedSet( HAL_LED_4, HAL_LED_MODE_ON );
+//  472       {
+//  473         // Light LED
+//  474         HalLedSet( HAL_LED_4, HAL_LED_MODE_ON );
         ; Setup parameters for call to function HalLedSet
         MOV     R2,#0x1
 ??Sys_ProcessZDOMsgs_4:
         MOV     R1,#0x8
         LCALL   ??HalLedSet?relay
         LJMP    ??Sys_ProcessZDOMsgs_2 & 0xFFFF
-//  451       }
-//  452 #if defined(BLINK_LEDS)
-//  453       else
-//  454       {
-//  455         // Flash LED to show failure
-//  456         HalLedSet ( HAL_LED_4, HAL_LED_MODE_FLASH );
+//  475       }
+//  476 #if defined(BLINK_LEDS)
+//  477       else
+//  478       {
+//  479         // Flash LED to show failure
+//  480         HalLedSet ( HAL_LED_4, HAL_LED_MODE_FLASH );
 ??Sys_ProcessZDOMsgs_3:
         ; Setup parameters for call to function HalLedSet
         MOV     R2,#0x4
         SJMP    ??Sys_ProcessZDOMsgs_4
-//  457       }
-//  458 #endif
-//  459       break;
-//  460 
-//  461     case Match_Desc_rsp:
-//  462       {
-//  463         zAddrType_t dstAddr;
-//  464         ZDO_ActiveEndpointRsp_t *pRsp = ZDO_ParseEPListRsp( inMsg );
+//  481       }
+//  482 #endif
+//  483       break;
+//  484 
+//  485     case Match_Desc_rsp:
+//  486       {
+//  487         zAddrType_t dstAddr;
+//  488         ZDO_ActiveEndpointRsp_t *pRsp = ZDO_ParseEPListRsp( inMsg );
 ??Sys_ProcessZDOMsgs_0:
         ; Setup parameters for call to function ZDO_ParseEPListRsp
         LCALL   ??ZDO_ParseEPListRsp?relay
@@ -2063,13 +2149,13 @@ Sys_ProcessZDOMsgs:
         MOV     ?V0 + 1,R3
         MOV     R6,?V0 + 0
         MOV     R7,?V0 + 1
-//  465         if ( pRsp )
+//  489         if ( pRsp )
         MOV     A,R6
         ORL     A,R7
         JNZ     $+5
         LJMP    ??Sys_ProcessZDOMsgs_2 & 0xFFFF
-//  466         {
-//  467           if ( pRsp->status == ZSuccess && pRsp->cnt )
+//  490         {
+//  491           if ( pRsp->status == ZSuccess && pRsp->cnt )
         MOV     DPL,R6
         MOV     DPH,R7
         MOVX    A,@DPTR
@@ -2081,28 +2167,28 @@ Sys_ProcessZDOMsgs:
         MOVX    A,@DPTR
         JNZ     $+5
         LJMP    ??Sys_ProcessZDOMsgs_5 & 0xFFFF
-//  468           {
-//  469             switch (type_join)
+//  492           {
+//  493             switch (type_join)
         MOV     DPTR,#type_join
         MOVX    A,@DPTR
         XRL     A,#0x1
         JZ      $+5
         LJMP    ??Sys_ProcessZDOMsgs_5 & 0xFFFF
-//  470             {
-//  471               case BUTTON_TYPE_ID:
-//  472               {
-//  473                 for(int i=0; pRsp->cnt<i; i++)
+//  494             {
+//  495               case BUTTON_TYPE_ID:
+//  496               {
+//  497                 for(int i=0; pRsp->cnt<i; i++)
         MOV     ?V0 + 0,#0x0
         MOV     ?V0 + 1,#0x0
-        SJMP    ??Sys_ProcessZDOMsgs_6
-//  474                 {
-//  475                   dstAddr.addrMode = (afAddrMode_t)Addr16Bit;
+        LJMP    ??Sys_ProcessZDOMsgs_6 & 0xFFFF
+//  498                 {
+//  499                   dstAddr.addrMode = (afAddrMode_t)Addr16Bit;
 ??Sys_ProcessZDOMsgs_7:
         MOV     A,#0x8
         LCALL   ?XSTACK_DISP0_8
         MOV     A,#0x2
         MOVX    @DPTR,A
-//  476                   dstAddr.addr.shortAddr = pRsp->nwkAddr;
+//  500                   dstAddr.addr.shortAddr = pRsp->nwkAddr;
         MOV     DPL,R6
         MOV     DPH,R7
         INC     DPTR
@@ -2118,9 +2204,9 @@ Sys_ProcessZDOMsgs:
         INC     DPTR
         MOV     A,R1
         MOVX    @DPTR,A
-//  477 
-//  478                   if ( APSME_BindRequest( Button_epDesc.simpleDesc->EndPoint,
-//  479                         BUTTON_CLUSTERID, &dstAddr, pRsp->epList[i] ) == ZSuccess )
+//  501 
+//  502                   if ( APSME_BindRequest( Button_epDesc.simpleDesc->EndPoint,
+//  503                         BUTTON_CLUSTERID, &dstAddr, pRsp->epList[i] ) == ZSuccess )
         ; Setup parameters for call to function APSME_BindRequest
         LCALL   ?Subroutine3 & 0xFFFF
 ??CrossCallReturnLabel_0:
@@ -2135,8 +2221,8 @@ Sys_ProcessZDOMsgs:
         MOV     R2,#0x3
         MOV     R3,#0x0
         MOV     DPTR,#Button_epDesc + 3
-        LCALL   ?Subroutine5 & 0xFFFF
-??CrossCallReturnLabel_5:
+        LCALL   ?Subroutine4 & 0xFFFF
+??CrossCallReturnLabel_3:
         MOV     R1,A
         LCALL   ??APSME_BindRequest?relay
         MOV     A,#0x1
@@ -2144,9 +2230,9 @@ Sys_ProcessZDOMsgs:
         CFI CFA_XSP16 add(XSP16, 20)
         MOV     A,R1
         JNZ     ??Sys_ProcessZDOMsgs_8
-//  480                   {
-//  481                     //Bind Success
-//  482                     osal_start_timerEx( ZDAppTaskID, ZDO_NWK_UPDATE_NV,250);
+//  504                   {
+//  505                     //Bind Success
+//  506                     osal_start_timerEx( ZDAppTaskID, ZDO_NWK_UPDATE_NV,250);
         ; Setup parameters for call to function osal_start_timerEx
         MOV     R4,#-0x6
         MOV     R5,#0x0
@@ -2156,8 +2242,8 @@ Sys_ProcessZDOMsgs:
         MOVX    A,@DPTR
         MOV     R1,A
         LCALL   ??osal_start_timerEx?relay
-//  483                     // 获取目的设备的短地址---干什么的？
-//  484                     ZDP_IEEEAddrReq(pRsp->nwkAddr, ZDP_ADDR_REQTYPE_SINGLE, 0, 0);
+//  507                     // 获取目的设备的短地址---干什么的？
+//  508                     ZDP_IEEEAddrReq(pRsp->nwkAddr, ZDP_ADDR_REQTYPE_SINGLE, 0, 0);
         ; Setup parameters for call to function ZDP_IEEEAddrReq
         MOV     R5,#0x0
         MOV     R4,#0x0
@@ -2171,15 +2257,20 @@ Sys_ProcessZDOMsgs:
         MOVX    A,@DPTR
         MOV     R3,A
         LCALL   ??ZDP_IEEEAddrReq?relay
-//  485 
-//  486                     zb_BindConfirm(BUTTON_CLUSTERID, ZB_SUCCESS);
-//  487                   }
-//  488 
-//  489                   // Take the first endpoint, Can be changed to search through endpoints
-//  490                   Button_DstAddr.endPoint = pRsp->epList[i];
+//  509 
+//  510                     zb_BindConfirm(BUTTON_CLUSTERID, ZB_SUCCESS);
+        ; Setup parameters for call to function zb_BindConfirm
+        MOV     R1,#0x0
+        MOV     R2,#0x3
+        MOV     R3,#0x0
+        LCALL   ??zb_BindConfirm?relay
+//  511                   }
+//  512 
+//  513                   // Take the first endpoint, Can be changed to search through endpoints
+//  514                   Button_DstAddr.endPoint = pRsp->epList[i];
 ??Sys_ProcessZDOMsgs_8:
         LCALL   ?Subroutine3 & 0xFFFF
-//  491                 }
+//  515                 }
 ??CrossCallReturnLabel_1:
         MOV     DPTR,#Button_DstAddr + 9
         MOVX    @DPTR,A
@@ -2205,17 +2296,17 @@ Sys_ProcessZDOMsgs:
         RLC     A
         JNC     $+5
         LJMP    ??Sys_ProcessZDOMsgs_7 & 0xFFFF
-//  492                 HalLedSet( HAL_LED_4, HAL_LED_MODE_ON );
+//  516                 HalLedSet( HAL_LED_4, HAL_LED_MODE_ON );
         ; Setup parameters for call to function HalLedSet
         MOV     R2,#0x1
         MOV     R1,#0x8
         LCALL   ??HalLedSet?relay
-//  493               }
-//  494 
-//  495               // case Led_TaskID:
-//  496             }
-//  497           }
-//  498           osal_mem_free( pRsp );
+//  517               }
+//  518 
+//  519               // case Led_TaskID:
+//  520             }
+//  521           }
+//  522           osal_mem_free( pRsp );
 ??Sys_ProcessZDOMsgs_5:
         ; Setup parameters for call to function osal_mem_free
         MOV     A,R6
@@ -2223,24 +2314,24 @@ Sys_ProcessZDOMsgs:
         MOV     A,R7
         MOV     R3,A
         LCALL   ??osal_mem_free?relay
-//  499         }
-//  500       }
-//  501       break;
-//  502   }
-//  503 }
+//  523         }
+//  524       }
+//  525       break;
+//  526   }
+//  527 }
 ??Sys_ProcessZDOMsgs_2:
         MOV     A,#0x9
         LCALL   ?DEALLOC_XSTACK8
         CFI CFA_XSP16 add(XSP16, 11)
         MOV     R7,#0x3
         LJMP    ?BANKED_LEAVE_XDATA
-        CFI EndBlock cfiBlock9
+        CFI EndBlock cfiBlock5
 
         RSEG BANKED_CODE:CODE:NOROOT(0)
-?Subroutine5:
-        CFI Block cfiCond10 Using cfiCommon0
+?Subroutine4:
+        CFI Block cfiCond6 Using cfiCommon0
         CFI NoFunction
-        CFI Conditional ??CrossCallReturnLabel_4
+        CFI Conditional ??CrossCallReturnLabel_2
         CFI R6 load(1, XDATA, add(CFA_XSP16, literal(-11)))
         CFI VB load(1, XDATA, add(CFA_XSP16, literal(-10)))
         CFI V0 load(1, XDATA, add(CFA_XSP16, literal(-9)))
@@ -2254,25 +2345,25 @@ Sys_ProcessZDOMsgs:
         CFI DPH0 load(1, XDATA, add(CFA_XSP16, literal(-1)))
         CFI CFA_SP SP+0
         CFI CFA_XSP16 add(XSP16, 20)
-        CFI Block cfiCond11 Using cfiCommon0
-        CFI (cfiCond11) NoFunction
-        CFI (cfiCond11) Conditional ??CrossCallReturnLabel_5
-        CFI (cfiCond11) R6 load(1, XDATA, add(CFA_XSP16, literal(-11)))
-        CFI (cfiCond11) VB load(1, XDATA, add(CFA_XSP16, literal(-10)))
-        CFI (cfiCond11) V0 load(1, XDATA, add(CFA_XSP16, literal(-9)))
-        CFI (cfiCond11) V1 load(1, XDATA, add(CFA_XSP16, literal(-8)))
-        CFI (cfiCond11) V2 load(1, XDATA, add(CFA_XSP16, literal(-7)))
-        CFI (cfiCond11) R7 load(1, XDATA, add(CFA_XSP16, literal(-6)))
-        CFI (cfiCond11) ?RET_LOW load(1, XDATA, add(CFA_XSP16, literal(-5)))
-        CFI (cfiCond11) ?RET_HIGH load(1, XDATA, add(CFA_XSP16, literal(-4)))
-        CFI (cfiCond11) ?BRET_EXT load(1, XDATA, add(CFA_XSP16, literal(-3)))
-        CFI (cfiCond11) DPL0 load(1, XDATA, add(CFA_XSP16, literal(-2)))
-        CFI (cfiCond11) DPH0 load(1, XDATA, add(CFA_XSP16, literal(-1)))
-        CFI (cfiCond11) CFA_SP SP+0
-        CFI (cfiCond11) CFA_XSP16 add(XSP16, 21)
-        CFI Block cfiPicker12 Using cfiCommon1
-        CFI (cfiPicker12) NoFunction
-        CFI (cfiPicker12) Picker
+        CFI Block cfiCond7 Using cfiCommon0
+        CFI (cfiCond7) NoFunction
+        CFI (cfiCond7) Conditional ??CrossCallReturnLabel_3
+        CFI (cfiCond7) R6 load(1, XDATA, add(CFA_XSP16, literal(-11)))
+        CFI (cfiCond7) VB load(1, XDATA, add(CFA_XSP16, literal(-10)))
+        CFI (cfiCond7) V0 load(1, XDATA, add(CFA_XSP16, literal(-9)))
+        CFI (cfiCond7) V1 load(1, XDATA, add(CFA_XSP16, literal(-8)))
+        CFI (cfiCond7) V2 load(1, XDATA, add(CFA_XSP16, literal(-7)))
+        CFI (cfiCond7) R7 load(1, XDATA, add(CFA_XSP16, literal(-6)))
+        CFI (cfiCond7) ?RET_LOW load(1, XDATA, add(CFA_XSP16, literal(-5)))
+        CFI (cfiCond7) ?RET_HIGH load(1, XDATA, add(CFA_XSP16, literal(-4)))
+        CFI (cfiCond7) ?BRET_EXT load(1, XDATA, add(CFA_XSP16, literal(-3)))
+        CFI (cfiCond7) DPL0 load(1, XDATA, add(CFA_XSP16, literal(-2)))
+        CFI (cfiCond7) DPH0 load(1, XDATA, add(CFA_XSP16, literal(-1)))
+        CFI (cfiCond7) CFA_SP SP+0
+        CFI (cfiCond7) CFA_XSP16 add(XSP16, 21)
+        CFI Block cfiPicker8 Using cfiCommon1
+        CFI (cfiPicker8) NoFunction
+        CFI (cfiPicker8) Picker
         MOVX    A,@DPTR
         MOV     R0,A
         INC     DPTR
@@ -2281,13 +2372,13 @@ Sys_ProcessZDOMsgs:
         MOV     DPL,R0
         MOVX    A,@DPTR
         RET
-        CFI EndBlock cfiCond10
-        CFI EndBlock cfiCond11
-        CFI EndBlock cfiPicker12
+        CFI EndBlock cfiCond6
+        CFI EndBlock cfiCond7
+        CFI EndBlock cfiPicker8
 
         RSEG BANKED_CODE:CODE:NOROOT(0)
 ?Subroutine3:
-        CFI Block cfiCond13 Using cfiCommon0
+        CFI Block cfiCond9 Using cfiCommon0
         CFI NoFunction
         CFI Conditional ??CrossCallReturnLabel_0
         CFI R6 load(1, XDATA, add(CFA_XSP16, literal(-11)))
@@ -2303,25 +2394,25 @@ Sys_ProcessZDOMsgs:
         CFI DPH0 load(1, XDATA, add(CFA_XSP16, literal(-1)))
         CFI CFA_SP SP+0
         CFI CFA_XSP16 add(XSP16, 20)
-        CFI Block cfiCond14 Using cfiCommon0
-        CFI (cfiCond14) NoFunction
-        CFI (cfiCond14) Conditional ??CrossCallReturnLabel_1
-        CFI (cfiCond14) R6 load(1, XDATA, add(CFA_XSP16, literal(-11)))
-        CFI (cfiCond14) VB load(1, XDATA, add(CFA_XSP16, literal(-10)))
-        CFI (cfiCond14) V0 load(1, XDATA, add(CFA_XSP16, literal(-9)))
-        CFI (cfiCond14) V1 load(1, XDATA, add(CFA_XSP16, literal(-8)))
-        CFI (cfiCond14) V2 load(1, XDATA, add(CFA_XSP16, literal(-7)))
-        CFI (cfiCond14) R7 load(1, XDATA, add(CFA_XSP16, literal(-6)))
-        CFI (cfiCond14) ?RET_LOW load(1, XDATA, add(CFA_XSP16, literal(-5)))
-        CFI (cfiCond14) ?RET_HIGH load(1, XDATA, add(CFA_XSP16, literal(-4)))
-        CFI (cfiCond14) ?BRET_EXT load(1, XDATA, add(CFA_XSP16, literal(-3)))
-        CFI (cfiCond14) DPL0 load(1, XDATA, add(CFA_XSP16, literal(-2)))
-        CFI (cfiCond14) DPH0 load(1, XDATA, add(CFA_XSP16, literal(-1)))
-        CFI (cfiCond14) CFA_SP SP+0
-        CFI (cfiCond14) CFA_XSP16 add(XSP16, 20)
-        CFI Block cfiPicker15 Using cfiCommon1
-        CFI (cfiPicker15) NoFunction
-        CFI (cfiPicker15) Picker
+        CFI Block cfiCond10 Using cfiCommon0
+        CFI (cfiCond10) NoFunction
+        CFI (cfiCond10) Conditional ??CrossCallReturnLabel_1
+        CFI (cfiCond10) R6 load(1, XDATA, add(CFA_XSP16, literal(-11)))
+        CFI (cfiCond10) VB load(1, XDATA, add(CFA_XSP16, literal(-10)))
+        CFI (cfiCond10) V0 load(1, XDATA, add(CFA_XSP16, literal(-9)))
+        CFI (cfiCond10) V1 load(1, XDATA, add(CFA_XSP16, literal(-8)))
+        CFI (cfiCond10) V2 load(1, XDATA, add(CFA_XSP16, literal(-7)))
+        CFI (cfiCond10) R7 load(1, XDATA, add(CFA_XSP16, literal(-6)))
+        CFI (cfiCond10) ?RET_LOW load(1, XDATA, add(CFA_XSP16, literal(-5)))
+        CFI (cfiCond10) ?RET_HIGH load(1, XDATA, add(CFA_XSP16, literal(-4)))
+        CFI (cfiCond10) ?BRET_EXT load(1, XDATA, add(CFA_XSP16, literal(-3)))
+        CFI (cfiCond10) DPL0 load(1, XDATA, add(CFA_XSP16, literal(-2)))
+        CFI (cfiCond10) DPH0 load(1, XDATA, add(CFA_XSP16, literal(-1)))
+        CFI (cfiCond10) CFA_SP SP+0
+        CFI (cfiCond10) CFA_XSP16 add(XSP16, 20)
+        CFI Block cfiPicker11 Using cfiCommon1
+        CFI (cfiPicker11) NoFunction
+        CFI (cfiPicker11) Picker
         MOV     A,R6
         ADD     A,?V0 + 0
         MOV     DPL,A
@@ -2334,32 +2425,32 @@ Sys_ProcessZDOMsgs:
         INC     DPTR
         MOVX    A,@DPTR
         RET
-        CFI EndBlock cfiCond13
-        CFI EndBlock cfiCond14
-        CFI EndBlock cfiPicker15
-//  504 
-//  505 /*********************************************************************
-//  506  * @fn      Button_HandleKeys
-//  507  *
-//  508  * @brief   Handles all key events for this device.
-//  509  *
-//  510  * @param   shift - true if in shift/alt.
-//  511  * @param   keys - bit field for key events. Valid entries:
-//  512  *                 HAL_KEY_SW_4
-//  513  *                 HAL_KEY_SW_3
-//  514  *                 HAL_KEY_SW_2
-//  515  *                 HAL_KEY_SW_1
-//  516  *
-//  517  * @return  none
-//  518  */
+        CFI EndBlock cfiCond9
+        CFI EndBlock cfiCond10
+        CFI EndBlock cfiPicker11
+//  528 
+//  529 /*********************************************************************
+//  530  * @fn      Button_HandleKeys
+//  531  *
+//  532  * @brief   Handles all key events for this device.
+//  533  *
+//  534  * @param   shift - true if in shift/alt.
+//  535  * @param   keys - bit field for key events. Valid entries:
+//  536  *                 HAL_KEY_SW_4
+//  537  *                 HAL_KEY_SW_3
+//  538  *                 HAL_KEY_SW_2
+//  539  *                 HAL_KEY_SW_1
+//  540  *
+//  541  * @return  none
+//  542  */
 
         RSEG BANKED_CODE:CODE:NOROOT(0)
-//  519 void Button_HandleKeys( byte shift, byte keys )
+//  543 void Button_HandleKeys( byte shift, byte keys )
 Button_HandleKeys:
-        CFI Block cfiBlock16 Using cfiCommon0
+        CFI Block cfiBlock12 Using cfiCommon0
         CFI Function Button_HandleKeys
         CODE
-//  520 {
+//  544 {
         FUNCALL Button_HandleKeys, Sys_SendPreBindMessage
         LOCFRAME ISTACK, 0, STACK
         LOCFRAME PSTACK, 0, STACK
@@ -2402,49 +2493,48 @@ Button_HandleKeys:
         MOV     R6,A
         MOV     A,R2
         MOV     R7,A
-//  521   
-//  522   // Shift is used to make each button/switch dual purpose.
-//  523   if ( shift )
+//  545   // Shift is used to make each button/switch dual purpose.
+//  546   if ( shift )
         MOV     A,R6
         JNZ     ??Button_HandleKeys_0
-//  524   {
-//  525     if ( keys & HAL_KEY_SW_1 )
-//  526     {
-//  527     }
-//  528     if ( keys & HAL_KEY_SW_2 )
-//  529     {
-//  530     }
-//  531     if ( keys & HAL_KEY_SW_3 )
-//  532     {
-//  533     }
-//  534     if ( keys & HAL_KEY_SW_4 )
-//  535     {
-//  536     }
-//  537   }
-//  538   else
-//  539   {
-//  540     if ( keys & HAL_KEY_SW_1 )
+//  547   {
+//  548     if ( keys & HAL_KEY_SW_1 )
+//  549     {
+//  550     }
+//  551     if ( keys & HAL_KEY_SW_2 )
+//  552     {
+//  553     }
+//  554     if ( keys & HAL_KEY_SW_3 )
+//  555     {
+//  556     }
+//  557     if ( keys & HAL_KEY_SW_4 )
+//  558     {
+//  559     }
+//  560   }
+//  561   else
+//  562   {
+//  563     if ( keys & HAL_KEY_SW_1 )
         MOV     A,R7
         MOV     C,0xE0 /* A   */.0
         JNC     ??Button_HandleKeys_1
-//  541     {
-//  542       Sys_SendPreBindMessage(BUTTON_TYPE_ID);
+//  564     {
+//  565       Sys_SendPreBindMessage(BUTTON_TYPE_ID);
         ; Setup parameters for call to function Sys_SendPreBindMessage
         MOV     R1,#0x1
         LCALL   ??Sys_SendPreBindMessage?relay
-//  543     }
-//  544 
-//  545     // 对远程端点发送命令
-//  546     if ( keys & HAL_KEY_SW_2 )
+//  566     }
+//  567 
+//  568     // 对远程端点发送命令
+//  569     if ( keys & HAL_KEY_SW_2 )
 ??Button_HandleKeys_1:
         MOV     A,R7
         MOV     C,0xE0 /* A   */.1
         JNC     ??Button_HandleKeys_0
-//  547     {
-//  548       //( uint16 destination, uint16 commandId, uint8 len,
-//  549       //  uint8 *pData, uint8 handle, uint8 txOptions, uint8 radius )
-//  550       zb_SendDataRequest( 0xFFFE,  BUTTON_CMD_ID, 0,
-//  551                         (uint8 *)NULL, sysSeqNumber, 0, 0 );
+//  570     {
+//  571       //( uint16 destination, uint16 commandId, uint8 len,
+//  572       //  uint8 *pData, uint8 handle, uint8 txOptions, uint8 radius )
+//  573       zb_SendDataRequest( 0xFFFE,  BUTTON_CMD_ID, 0,
+//  574                         (uint8 *)NULL, sysSeqNumber, 0, 0 );
         ; Setup parameters for call to function zb_SendDataRequest
         MOV     ?V0 + 0,#0x0
         MOV     R0,#?V0 + 0
@@ -2474,37 +2564,37 @@ Button_HandleKeys:
         MOV     A,#0x5
         LCALL   ?DEALLOC_XSTACK8
         CFI CFA_XSP16 add(XSP16, 10)
-        CFI EndBlock cfiBlock16
-//  552       // 0xFFFE -- 没有目的地址的dstaddr(Match 的 addr)
-//  553     }
-//  554 
-//  555     if ( keys & HAL_KEY_SW_3 )
-//  556     {
-//  557     }
-//  558 
-//  559     // 是用来查找有没有东西可以匹配的
-//  560     if ( keys & HAL_KEY_SW_4 )
-//  561     {/*
-//  562       HalLedSet ( HAL_LED_4, HAL_LED_MODE_OFF );
-//  563       // Initiate a Match Description Request (Service Discovery)
-//  564       dstAddr.addrMode = AddrBroadcast;
-//  565       dstAddr.addr.shortAddr = NWK_BROADCAST_SHORTADDR;
-//  566       ZDP_MatchDescReq( &dstAddr, NWK_BROADCAST_SHORTADDR,
-//  567                         SYS_PROFID,
-//  568                         SYS_MAX_CLUSTERS, (cId_t *)Button_ClusterList,
-//  569                         SYS_MAX_CLUSTERS, (cId_t *)Button_ClusterList,
-//  570                         FALSE );
-//  571                         */
-//  572     }
-//  573   }
-//  574 }
+        CFI EndBlock cfiBlock12
+//  575       // 0xFFFE -- 没有目的地址的dstaddr(Match 的 addr)
+//  576     }
+//  577 
+//  578     if ( keys & HAL_KEY_SW_3 )
+//  579     {
+//  580     }
+//  581 
+//  582     // 是用来查找有没有东西可以匹配的
+//  583     if ( keys & HAL_KEY_SW_4 )
+//  584     {/*
+//  585       HalLedSet ( HAL_LED_4, HAL_LED_MODE_OFF );
+//  586       // Initiate a Match Description Request (Service Discovery)
+//  587       dstAddr.addrMode = AddrBroadcast;
+//  588       dstAddr.addr.shortAddr = NWK_BROADCAST_SHORTADDR;
+//  589       ZDP_MatchDescReq( &dstAddr, NWK_BROADCAST_SHORTADDR,
+//  590                         SYS_PROFID,
+//  591                         SYS_MAX_CLUSTERS, (cId_t *)Button_ClusterList,
+//  592                         SYS_MAX_CLUSTERS, (cId_t *)Button_ClusterList,
+//  593                         FALSE );
+//  594                         */
+//  595     }
+//  596   }
+//  597 }
 ??Button_HandleKeys_0:
         REQUIRE ?Subroutine2
         ; // Fall through to label ?Subroutine2
 
         RSEG BANKED_CODE:CODE:NOROOT(0)
 ?Subroutine2:
-        CFI Block cfiBlock17 Using cfiCommon0
+        CFI Block cfiBlock13 Using cfiCommon0
         CFI NoFunction
         CFI CFA_SP SP+0
         CFI CFA_XSP16 add(XSP16, 10)
@@ -2520,63 +2610,63 @@ Button_HandleKeys:
         CFI ?RET_LOW load(1, XDATA, add(CFA_XSP16, literal(-5)))
         MOV     R7,#0x2
         LJMP    ?BANKED_LEAVE_XDATA
-        CFI EndBlock cfiBlock17
-//  575 
-//  576 /*********************************************************************
-//  577  * LOCAL FUNCTIONS
-//  578  */
-//  579 
-//  580 /*********************************************************************
-//  581  * @fn      Sys_MessageMSGCB
-//  582  *
-//  583  * @brief   Data message processor callback.  This function processes
-//  584  *          any incoming data - probably from other devices.  So, based
-//  585  *          on cluster ID, perform the intended action.
-//  586  *
-//  587  * @param   none
-//  588  *
-//  589  * @return  none
-//  590  */
+        CFI EndBlock cfiBlock13
+//  598 
+//  599 /*********************************************************************
+//  600  * LOCAL FUNCTIONS
+//  601  */
+//  602 
+//  603 /*********************************************************************
+//  604  * @fn      Sys_MessageMSGCB
+//  605  *
+//  606  * @brief   Data message processor callback.  This function processes
+//  607  *          any incoming data - probably from other devices.  So, based
+//  608  *          on cluster ID, perform the intended action.
+//  609  *
+//  610  * @param   none
+//  611  *
+//  612  * @return  none
+//  613  */
 
         RSEG BANKED_CODE:CODE:NOROOT(0)
-//  591 void Sys_MessageMSGCB( afIncomingMSGPacket_t *pkt, byte task_id )
+//  614 void Sys_MessageMSGCB( afIncomingMSGPacket_t *pkt, byte task_id )
 Sys_MessageMSGCB:
-        CFI Block cfiBlock18 Using cfiCommon0
+        CFI Block cfiBlock14 Using cfiCommon0
         CFI Function Sys_MessageMSGCB
         CODE
-//  592 {
+//  615 {
         ; Saved register size: 0
         ; Auto size: 0
-//  593   switch ( pkt->clusterId )
-//  594   {
-//  595     case BUTTON_CLUSTERID:
-//  596       // "the" message
-//  597 #if defined( WIN32 )
-//  598       WPRINTSTR( pkt->cmd.Data );
-//  599 #endif
-//  600       break;
-//  601   }
-//  602 }
+//  616   switch ( pkt->clusterId )
+//  617   {
+//  618     case BUTTON_CLUSTERID:
+//  619       // "the" message
+//  620 #if defined( WIN32 )
+//  621       WPRINTSTR( pkt->cmd.Data );
+//  622 #endif
+//  623       break;
+//  624   }
+//  625 }
         LJMP    ?BRET
-        CFI EndBlock cfiBlock18
-//  603 
-//  604 /*********************************************************************
-//  605  * @fn      Sys_SendPreBindMessage
-//  606  * * @brief   Broadcast prebind message.
-//  607  *
-//  608  *
-//  609  * @param   type_id : 想要绑定的终端类型
-//  610  *
-//  611  * @return  none
-//  612  */
+        CFI EndBlock cfiBlock14
+//  626 
+//  627 /*********************************************************************
+//  628  * @fn      Sys_SendPreBindMessage
+//  629  * * @brief   Broadcast prebind message.
+//  630  *
+//  631  *
+//  632  * @param   type_id : 想要绑定的终端类型
+//  633  *
+//  634  * @return  none
+//  635  */
 
         RSEG BANKED_CODE:CODE:NOROOT(0)
-//  613 void Sys_SendPreBindMessage( byte type_id )
+//  636 void Sys_SendPreBindMessage( byte type_id )
 Sys_SendPreBindMessage:
-        CFI Block cfiBlock19 Using cfiCommon0
+        CFI Block cfiBlock15 Using cfiCommon0
         CFI Function Sys_SendPreBindMessage
         CODE
-//  614 {
+//  637 {
         FUNCALL Sys_SendPreBindMessage, osal_strlen
         LOCFRAME ISTACK, 0, STACK
         LOCFRAME PSTACK, 0, STACK
@@ -2653,7 +2743,7 @@ Sys_SendPreBindMessage:
         CFI CFA_XSP16 add(XSP16, 15)
         MOV     A,R1
         MOV     R6,A
-//  615   char theMessageData[5] = "bind";
+//  638   char theMessageData[5] = "bind";
         MOV     DPL,?XSP + 0
         MOV     DPH,?XSP + 1
         MOV     R4,DPL
@@ -2662,18 +2752,18 @@ Sys_SendPreBindMessage:
         MOV     DPL,#`?<Constant "bind">` & 0xff
         MOV     A,#0x5
         LCALL   ?MOVE_LONG8_XDATA_XDATA
-//  616   theMessageData[4] = type_id;
+//  639   theMessageData[4] = type_id;
         MOV     A,#0x4
         LCALL   ?XSTACK_DISP0_8
         MOV     A,R1
         MOVX    @DPTR,A
-//  617 
-//  618   if ( AF_DataRequest( &Broadcast_DstAddr, &Sys_epDesc,
-//  619                        SYS_CLUSTERID,
-//  620                        (byte)osal_strlen( theMessageData ) + 1,
-//  621                        (byte *)&theMessageData,
-//  622                        &Sys_TransID,
-//  623                        AF_DISCV_ROUTE, AF_DEFAULT_RADIUS ) == afStatus_SUCCESS )
+//  640 
+//  641   if ( AF_DataRequest( &Broadcast_DstAddr, &Sys_epDesc,
+//  642                        SYS_CLUSTERID,
+//  643                        (byte)osal_strlen( theMessageData ) + 1,
+//  644                        (byte *)&theMessageData,
+//  645                        &Sys_TransID,
+//  646                        AF_DISCV_ROUTE, AF_DEFAULT_RADIUS ) == afStatus_SUCCESS )
         ; Setup parameters for call to function AF_DataRequest
         MOV     ?V0 + 0,#0x1e
         MOV     R0,#?V0 + 0
@@ -2722,28 +2812,28 @@ Sys_SendPreBindMessage:
         CFI CFA_XSP16 add(XSP16, 15)
         MOV     A,R1
         JNZ     ??Sys_SendPreBindMessage_0
-//  624   {
-//  625     // Successfully requested to be sent.
-//  626     // 闪5s灯
-//  627     HalLedBlink (HAL_LED_1, 1, HAL_LED_DEFAULT_DUTY_CYCLE, 5);
+//  647   {
+//  648     // Successfully requested to be sent.
+//  649     // 闪5s灯
+//  650     HalLedBlink (HAL_LED_1, 1, 50, 5000);
         ; Setup parameters for call to function HalLedBlink
-        MOV     R4,#0x5
-        MOV     R5,#0x0
-        MOV     R3,#0x5
+        MOV     R4,#-0x78
+        MOV     R5,#0x13
+        MOV     R3,#0x32
         MOV     R2,#0x1
         MOV     R1,#0x1
         LCALL   ??HalLedBlink?relay
-//  628    //if(想要绑定什么就对应的 TypeID)
-//  629 
-//  630     type_join = type_id;
+//  651    //if(想要绑定什么就对应的 TypeID)
+//  652 
+//  653     type_join = type_id;
         MOV     A,R6
         MOV     DPTR,#type_join
         MOVX    @DPTR,A
-//  631     if(type_id == BUTTON_TYPE_ID)
+//  654     if(type_id == BUTTON_TYPE_ID)
         MOV     A,#0x1
         XRL     A,R6
         JNZ     ??Sys_SendPreBindMessage_1
-//  632       osal_start_timerEx(Button_TaskID, MATCH_BIND_EVT, 5000);
+//  655       osal_start_timerEx(Button_TaskID, MATCH_BIND_EVT, 5000);
         ; Setup parameters for call to function osal_start_timerEx
         MOV     R4,#-0x78
         MOV     R5,#0x13
@@ -2754,50 +2844,50 @@ Sys_SendPreBindMessage:
         MOV     R1,A
         LCALL   ??osal_start_timerEx?relay
         SJMP    ??Sys_SendPreBindMessage_1
-//  633 
-//  634   }
-//  635   else
-//  636   {
-//  637     // Error occurred in request to send.
-//  638     HalLedSet(HAL_LED_1, HAL_LED_MODE_OFF);
+//  656 
+//  657   }
+//  658   else
+//  659   {
+//  660     // Error occurred in request to send.
+//  661     HalLedSet(HAL_LED_1, HAL_LED_MODE_OFF);
 ??Sys_SendPreBindMessage_0:
         ; Setup parameters for call to function HalLedSet
         MOV     R2,#0x0
         MOV     R1,#0x1
         LCALL   ??HalLedSet?relay
-//  639   }
-//  640 }
+//  662   }
+//  663 }
 ??Sys_SendPreBindMessage_1:
         MOV     A,#0x5
         LCALL   ?DEALLOC_XSTACK8
         CFI CFA_XSP16 add(XSP16, 10)
         LJMP    ?Subroutine2 & 0xFFFF
-        CFI EndBlock cfiBlock19
-//  641 
-//  642 /*********************************************************************
-//  643 *********************************************************************/
-//  644 
-//  645 
-//  646 /******************************************************************************
-//  647  * @fn          zb_StartConfirm
-//  648  *
-//  649  * @brief       The zb_StartConfirm callback is called by the ZigBee stack
-//  650  *              after a start request operation completes
-//  651  *
-//  652  * @param       status - The status of the start operation.  Status of
-//  653  *                       ZB_SUCCESS indicates the start operation completed
-//  654  *                       successfully.  Else the status is an error code.
-//  655  *
-//  656  * @return      none
-//  657  */
+        CFI EndBlock cfiBlock15
+//  664 
+//  665 /*********************************************************************
+//  666 *********************************************************************/
+//  667 
+//  668 
+//  669 /******************************************************************************
+//  670  * @fn          zb_StartConfirm
+//  671  *
+//  672  * @brief       The zb_StartConfirm callback is called by the ZigBee stack
+//  673  *              after a start request operation completes
+//  674  *
+//  675  * @param       status - The status of the start operation.  Status of
+//  676  *                       ZB_SUCCESS indicates the start operation completed
+//  677  *                       successfully.  Else the status is an error code.
+//  678  *
+//  679  * @return      none
+//  680  */
 
         RSEG BANKED_CODE:CODE:NOROOT(0)
-//  658 void zb_StartConfirm( uint8 status )
+//  681 void zb_StartConfirm( uint8 status )
 zb_StartConfirm:
-        CFI Block cfiBlock20 Using cfiCommon0
+        CFI Block cfiBlock16 Using cfiCommon0
         CFI Function zb_StartConfirm
         CODE
-//  659 {
+//  682 {
         FUNCALL zb_StartConfirm, HalLedSet
         LOCFRAME ISTACK, 0, STACK
         LOCFRAME PSTACK, 0, STACK
@@ -2825,167 +2915,248 @@ zb_StartConfirm:
         ; Saved register size: 9
         ; Auto size: 0
         MOV     A,R1
-//  660     if ( status == ZB_SUCCESS )
+//  683     if ( status == ZB_SUCCESS )
         JNZ     ??zb_StartConfirm_0
-//  661   {
-//  662     myAppState = APP_START;
+//  684   {
+//  685     myAppState = APP_START;
         MOV     DPTR,#myAppState
         MOV     A,#0x1
         MOVX    @DPTR,A
         SJMP    ??zb_StartConfirm_1
-//  663   }
-//  664   else
-//  665   {
-//  666     // Try again later with a delay
-//  667 
-//  668     HalLedSet(HAL_LED_2, HAL_LED_MODE_BLINK);
+//  686   }
+//  687   else
+//  688   {
+//  689     // Try again later with a delay
+//  690 
+//  691     HalLedSet(HAL_LED_2, HAL_LED_MODE_BLINK);
 ??zb_StartConfirm_0:
         ; Setup parameters for call to function HalLedSet
         MOV     R2,#0x2
         MOV     R1,#0x2
         LCALL   ??HalLedSet?relay
-//  669   }
-//  670 }
+        CFI EndBlock cfiBlock16
+//  692   }
+//  693 }
 ??zb_StartConfirm_1:
-        LJMP    ?Subroutine0 & 0xFFFF
-        CFI EndBlock cfiBlock20
-//  671 /******************************************************************************
-//  672  * @fn          zb_SendDataConfirm
-//  673  *
-//  674  * @brief       The zb_SendDataConfirm callback function is called by the
-//  675  *              ZigBee after a send data operation completes
-//  676  *
-//  677  * @param       handle - The handle identifying the data transmission.
-//  678  *              status - The status of the operation.
-//  679  *
-//  680  * @return      none
-//  681  */
+        REQUIRE ?Subroutine0
+        ; // Fall through to label ?Subroutine0
 
         RSEG BANKED_CODE:CODE:NOROOT(0)
-//  682 void zb_SendDataConfirm( uint8 handle, uint8 status )
+?Subroutine0:
+        CFI Block cfiBlock17 Using cfiCommon0
+        CFI NoFunction
+        CFI CFA_SP SP+0
+        CFI CFA_XSP16 add(XSP16, 9)
+        CFI VB load(1, XDATA, add(CFA_XSP16, literal(-8)))
+        CFI DPL0 load(1, XDATA, add(CFA_XSP16, literal(-2)))
+        CFI DPH0 load(1, XDATA, add(CFA_XSP16, literal(-1)))
+        CFI R6 load(1, XDATA, add(CFA_XSP16, literal(-9)))
+        CFI R7 load(1, XDATA, add(CFA_XSP16, literal(-6)))
+        CFI V0 load(1, XDATA, add(CFA_XSP16, literal(-7)))
+        CFI ?BRET_EXT load(1, XDATA, add(CFA_XSP16, literal(-3)))
+        CFI ?RET_HIGH load(1, XDATA, add(CFA_XSP16, literal(-4)))
+        CFI ?RET_LOW load(1, XDATA, add(CFA_XSP16, literal(-5)))
+        MOV     R7,#0x1
+        LJMP    ?BANKED_LEAVE_XDATA
+        CFI EndBlock cfiBlock17
+//  694 /******************************************************************************
+//  695  * @fn          zb_SendDataConfirm
+//  696  *
+//  697  * @brief       The zb_SendDataConfirm callback function is called by the
+//  698  *              ZigBee after a send data operation completes
+//  699  *
+//  700  * @param       handle - The handle identifying the data transmission.
+//  701  *              status - The status of the operation.
+//  702  *
+//  703  * @return      none
+//  704  */
+
+        RSEG BANKED_CODE:CODE:NOROOT(0)
+//  705 void zb_SendDataConfirm( uint8 handle, uint8 status )
 zb_SendDataConfirm:
-        CFI Block cfiBlock21 Using cfiCommon0
+        CFI Block cfiBlock18 Using cfiCommon0
         CFI Function zb_SendDataConfirm
         CODE
-//  683 {
+//  706 {
         ; Saved register size: 0
         ; Auto size: 0
-//  684 }
+//  707 }
         LJMP    ?BRET
-        CFI EndBlock cfiBlock21
-//  685 /******************************************************************************
-//  686  * @fn          zb_BindConfirm
-//  687  *
-//  688  * @brief       The zb_BindConfirm callback is called by the ZigBee stack
-//  689  *              after a bind operation completes.
-//  690  *
-//  691  * @param       commandId - The command ID of the binding being confirmed.
-//  692  *              status - The status of the bind operation.
-//  693  *
-//  694  * @return      none
-//  695  */
+        CFI EndBlock cfiBlock18
+//  708 /******************************************************************************
+//  709  * @fn          zb_BindConfirm
+//  710  *
+//  711  * @brief       The zb_BindConfirm callback is called by the ZigBee stack
+//  712  *              after a bind operation completes.
+//  713  *
+//  714  * @param       commandId - The command ID of the binding being confirmed.
+//  715  *              status - The status of the bind operation.
+//  716  *
+//  717  * @return      none
+//  718  */
 
         RSEG BANKED_CODE:CODE:NOROOT(0)
-//  696 void zb_BindConfirm( uint16 commandId, uint8 status )
+//  719 void zb_BindConfirm( uint16 commandId, uint8 status )
 zb_BindConfirm:
-        CFI Block cfiBlock22 Using cfiCommon0
+        CFI Block cfiBlock19 Using cfiCommon0
         CFI Function zb_BindConfirm
         CODE
-//  697 {
-        ; Saved register size: 0
+//  720 {
+        FUNCALL zb_BindConfirm, HalLedBlink
+        LOCFRAME ISTACK, 0, STACK
+        LOCFRAME PSTACK, 0, STACK
+        LOCFRAME XSTACK, 9, STACK
+        LOCFRAME IOVERLAY, 0, STATIC
+        LOCFRAME DOVERLAY, 0, STATIC
+        ARGFRAME ISTACK, 0, STACK
+        ARGFRAME PSTACK, 0, STACK
+        ARGFRAME XSTACK, 9, STACK
+        ARGFRAME IOVERLAY, 0, STATIC
+        ARGFRAME DOVERLAY, 0, STATIC
+        FUNCALL zb_BindConfirm, HalLedBlink
+        LOCFRAME ISTACK, 0, STACK
+        LOCFRAME PSTACK, 0, STACK
+        LOCFRAME XSTACK, 9, STACK
+        LOCFRAME IOVERLAY, 0, STATIC
+        LOCFRAME DOVERLAY, 0, STATIC
+        ARGFRAME ISTACK, 0, STACK
+        ARGFRAME PSTACK, 0, STACK
+        ARGFRAME XSTACK, 9, STACK
+        ARGFRAME IOVERLAY, 0, STATIC
+        ARGFRAME DOVERLAY, 0, STATIC
+        MOV     A,#-0x9
+        LCALL   ?BANKED_ENTER_XDATA
+        CFI DPH0 load(1, XDATA, add(CFA_XSP16, literal(-1)))
+        CFI DPL0 load(1, XDATA, add(CFA_XSP16, literal(-2)))
+        CFI ?BRET_EXT load(1, XDATA, add(CFA_XSP16, literal(-3)))
+        CFI ?RET_HIGH load(1, XDATA, add(CFA_XSP16, literal(-4)))
+        CFI ?RET_LOW load(1, XDATA, add(CFA_XSP16, literal(-5)))
+        CFI R7 load(1, XDATA, add(CFA_XSP16, literal(-6)))
+        CFI V0 load(1, XDATA, add(CFA_XSP16, literal(-7)))
+        CFI VB load(1, XDATA, add(CFA_XSP16, literal(-8)))
+        CFI R6 load(1, XDATA, add(CFA_XSP16, literal(-9)))
+        CFI CFA_SP SP+0
+        CFI CFA_XSP16 add(XSP16, 9)
+        ; Saved register size: 9
         ; Auto size: 0
-//  698 }
-        LJMP    ?BRET
-        CFI EndBlock cfiBlock22
-//  699 /******************************************************************************
-//  700  * @fn          zb_AllowBindConfirm
-//  701  *
-//  702  * @brief       Indicates when another device attempted to bind to this device
-//  703  *
-//  704  * @param
-//  705  *
-//  706  * @return      none
-//  707  */
+        MOV     A,R1
+//  721   if( status == ZB_SUCCESS)
+        MOV     R4,#-0x30
+        MOV     R5,#0x7
+        MOV     R3,#0x32
+        MOV     R2,#0x1
+        JNZ     ??zb_BindConfirm_0
+//  722   {
+//  723     // Light D2 for 3s
+//  724     HalLedBlink(HAL_LED_2, 1, 50, 2000);  // 闪烁2s
+        ; Setup parameters for call to function HalLedBlink
+        MOV     R1,#0x2
+        SJMP    ??zb_BindConfirm_1
+//  725 
+//  726   }
+//  727   else
+//  728   {
+//  729     // Light D3 for 3s
+//  730     HalLedBlink(HAL_LED_3, 1, 50, 2000);  // 闪烁2s
+??zb_BindConfirm_0:
+        ; Setup parameters for call to function HalLedBlink
+        MOV     R1,#0x4
+??zb_BindConfirm_1:
+        LCALL   ??HalLedBlink?relay
+//  731 
+//  732   }
+//  733 }
+        SJMP    ?Subroutine0
+        CFI EndBlock cfiBlock19
+//  734 /******************************************************************************
+//  735  * @fn          zb_AllowBindConfirm
+//  736  *
+//  737  * @brief       Indicates when another device attempted to bind to this device
+//  738  *
+//  739  * @param
+//  740  *
+//  741  * @return      none
+//  742  */
 
         RSEG BANKED_CODE:CODE:NOROOT(0)
-//  708 void zb_AllowBindConfirm( uint16 source )
+//  743 void zb_AllowBindConfirm( uint16 source )
 zb_AllowBindConfirm:
-        CFI Block cfiBlock23 Using cfiCommon0
+        CFI Block cfiBlock20 Using cfiCommon0
         CFI Function zb_AllowBindConfirm
         CODE
-//  709 {
+//  744 {
         ; Saved register size: 0
         ; Auto size: 0
-//  710 }
+//  745 }
         LJMP    ?BRET
-        CFI EndBlock cfiBlock23
-//  711 /******************************************************************************
-//  712  * @fn          zb_FindDeviceConfirm
-//  713  *
-//  714  * @brief       The zb_FindDeviceConfirm callback function is called by the
-//  715  *              ZigBee stack when a find device operation completes.
-//  716  *
-//  717  * @param       searchType - The type of search that was performed.
-//  718  *              searchKey - Value that the search was executed on.
-//  719  *              result - The result of the search.
-//  720  *
-//  721  * @return      none
-//  722  */
+        CFI EndBlock cfiBlock20
+//  746 /******************************************************************************
+//  747  * @fn          zb_FindDeviceConfirm
+//  748  *
+//  749  * @brief       The zb_FindDeviceConfirm callback function is called by the
+//  750  *              ZigBee stack when a find device operation completes.
+//  751  *
+//  752  * @param       searchType - The type of search that was performed.
+//  753  *              searchKey - Value that the search was executed on.
+//  754  *              result - The result of the search.
+//  755  *
+//  756  * @return      none
+//  757  */
 
         RSEG BANKED_CODE:CODE:NOROOT(0)
-//  723 void zb_FindDeviceConfirm( uint8 searchType, uint8 *searchKey, uint8 *result )
+//  758 void zb_FindDeviceConfirm( uint8 searchType, uint8 *searchKey, uint8 *result )
 zb_FindDeviceConfirm:
-        CFI Block cfiBlock24 Using cfiCommon0
+        CFI Block cfiBlock21 Using cfiCommon0
         CFI Function zb_FindDeviceConfirm
         CODE
-//  724 {
+//  759 {
         ; Saved register size: 0
         ; Auto size: 0
-//  725 }
+//  760 }
         LJMP    ?BRET
-        CFI EndBlock cfiBlock24
-//  726 /******************************************************************************
-//  727  * @fn          zb_ReceiveDataIndication
-//  728  *
-//  729  * @brief       The zb_ReceiveDataIndication callback function is called
-//  730  *              asynchronously by the ZigBee stack to notify the application
-//  731  *              when data is received from a peer device.
-//  732  *
-//  733  * @param       source - The short address of the peer device that sent the data
-//  734  *              command - The commandId associated with the data
-//  735  *              len - The number of bytes in the pData parameter
-//  736  *              pData - The data sent by the peer device
-//  737  *
-//  738  * @return      none
-//  739  */
+        CFI EndBlock cfiBlock21
+//  761 /******************************************************************************
+//  762  * @fn          zb_ReceiveDataIndication
+//  763  *
+//  764  * @brief       The zb_ReceiveDataIndication callback function is called
+//  765  *              asynchronously by the ZigBee stack to notify the application
+//  766  *              when data is received from a peer device.
+//  767  *
+//  768  * @param       source - The short address of the peer device that sent the data
+//  769  *              command - The commandId associated with the data
+//  770  *              len - The number of bytes in the pData parameter
+//  771  *              pData - The data sent by the peer device
+//  772  *
+//  773  * @return      none
+//  774  */
 
         RSEG BANKED_CODE:CODE:NOROOT(0)
-//  740 void zb_ReceiveDataIndication( uint16 source, uint16 command, uint16 len, uint8 *pData  )
+//  775 void zb_ReceiveDataIndication( uint16 source, uint16 command, uint16 len, uint8 *pData  )
 zb_ReceiveDataIndication:
-        CFI Block cfiBlock25 Using cfiCommon0
+        CFI Block cfiBlock22 Using cfiCommon0
         CFI Function zb_ReceiveDataIndication
         CODE
-//  741 {
+//  776 {
         ; Saved register size: 0
         ; Auto size: 0
-//  742 }
+//  777 }
         LJMP    ?BRET
-        CFI EndBlock cfiBlock25
-//  743 
+        CFI EndBlock cfiBlock22
+//  778 
 
         RSEG BANKED_CODE:CODE:NOROOT(0)
-//  744 void zb_HandleOsalEvent( uint16 event )
+//  779 void zb_HandleOsalEvent( uint16 event )
 zb_HandleOsalEvent:
-        CFI Block cfiBlock26 Using cfiCommon0
+        CFI Block cfiBlock23 Using cfiCommon0
         CFI Function zb_HandleOsalEvent
         CODE
-//  745 {
+//  780 {
         ; Saved register size: 0
         ; Auto size: 0
-//  746 
-//  747 }
+//  781 
+//  782 }
         LJMP    ?BRET
-        CFI EndBlock cfiBlock26
+        CFI EndBlock cfiBlock23
 
         RSEG XDATA_ID:CODE:NOROOT(0)
 `?<Initializer for AppTitle>`:
@@ -3088,16 +3259,16 @@ zb_HandleOsalEvent:
 
         END
 // 
-// 1 032 bytes in segment BANKED_CODE
+// 1 160 bytes in segment BANKED_CODE
 //    90 bytes in segment BANK_RELAYS
 //    10 bytes in segment XDATA_I
 //    10 bytes in segment XDATA_ID
 //    55 bytes in segment XDATA_ROM_C
 //    43 bytes in segment XDATA_Z
 // 
-// 1 132 bytes of CODE  memory
+// 1 260 bytes of CODE  memory
 //    55 bytes of CONST memory
 //    53 bytes of XDATA memory
 //
 //Errors: none
-//Warnings: 1
+//Warnings: none
