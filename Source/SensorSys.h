@@ -118,6 +118,7 @@ extern void Button_Init( byte task_id );
  * Task Event Processor for the Generic Application
  */
 extern UINT16 Sys_ProcessEvent( byte task_id, UINT16 events );
+extern UINT16 Button_ProcessEvent( byte task_id, UINT16 events );
 /*********************************************************************
 *********************************************************************/
 

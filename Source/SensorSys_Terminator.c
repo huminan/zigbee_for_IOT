@@ -226,6 +226,24 @@ void zb_ReceiveDataIndication( uint16 source, uint16 command, uint16 len, uint8 
  */
 void Sys_Init( byte task_id )
 {
+	if ( myAppState == APP_INIT )
+  {
+  	uint8 startOptions;
+ 		uint8 logicalType;
+    // In the init state, keys are used to indicate the logical mode.
+    // The Switch device is always an end-device
+    logicalType = ZG_DEVICETYPE_ENDDEVICE;
+    zb_WriteConfiguration(ZCD_NV_LOGICAL_TYPE, sizeof(uint8), &logicalType);
+
+    // Do more configuration if necessary and then restart device with auto-start bit set
+
+    zb_ReadConfiguration( ZCD_NV_STARTUP_OPTION, sizeof(uint8), &startOptions );
+    startOptions = ZCD_STARTOPT_AUTO_START;
+    zb_WriteConfiguration( ZCD_NV_STARTUP_OPTION, sizeof(uint8), &startOptions );
+    zb_SystemReset();
+  }
+
+
   Sys_TaskID = task_id;
 
   // Device hardware initialization can be added here or in main() (Zmain.c).
@@ -245,6 +263,11 @@ void Sys_Init( byte task_id )
 
   // Register the endpoint description with the AF
   afRegister( &Sys_epDesc );
+
+  HalLedSet ( HAL_LED_1, HAL_LED_MODE_ON );
+  HalLedSet ( HAL_LED_2, HAL_LED_MODE_ON );
+  HalLedSet ( HAL_LED_3, HAL_LED_MODE_ON );
+  HalLedSet ( HAL_LED_4, HAL_LED_MODE_ON );
 
   // To Update the display...
 }
@@ -320,91 +343,60 @@ UINT16 Sys_ProcessEvent( byte task_id, UINT16 events )
 
 	if ( events & SYS_EVENT_MSG )
 	{
-		/*** SYS task ***/
-		if(task_id == Sys_TaskID)
+		MSGpkt = (afIncomingMSGPacket_t *)osal_msg_receive( task_id );
+		// 其它 task_id 同上
+		while ( MSGpkt )
 		{
-			MSGpkt = (afIncomingMSGPacket_t *)osal_msg_receive( task_id );
-			// 其它 task_id 同上
-			while ( MSGpkt )
+			switch ( MSGpkt->hdr.event )
 			{
-				switch ( MSGpkt->hdr.event )
-				{
-					case AF_DATA_CONFIRM_CMD: // 判断信息是否发送成功
-						// This message is received as a confirmation of a data packet sent.
-						// The status is of ZStatus_t type [defined in ZComDef.h]
-						// The message fields are defined in AF.h
-						afDataConfirm = (afDataConfirm_t *)MSGpkt;
-						sentEP = afDataConfirm->endpoint;
-						sentStatus = afDataConfirm->hdr.status;
-						sentTransID = afDataConfirm->transID;
-						(void)sentEP;
-						(void)sentTransID;
+				case AF_DATA_CONFIRM_CMD: // 判断信息是否发送成功
+					// This message is received as a confirmation of a data packet sent.
+					// The status is of ZStatus_t type [defined in ZComDef.h]
+					// The message fields are defined in AF.h
+					afDataConfirm = (afDataConfirm_t *)MSGpkt;
+					sentEP = afDataConfirm->endpoint;
+					sentStatus = afDataConfirm->hdr.status;
+					sentTransID = afDataConfirm->transID;
+					(void)sentEP;
+					(void)sentTransID;
 
-						// Action taken when confirmation is received.
-						if ( sentStatus != ZSuccess )
-						{
-							// The data wasn't delivered -- Do something
-						}
-						break;
+					// Action taken when confirmation is received.
+					if ( sentStatus != ZSuccess )
+					{
+						// The data wasn't delivered -- Do something
+					}
+					break;
 
-					case AF_INCOMING_MSG_CMD:   // 接收信息
-						Sys_MessageMSGCB( MSGpkt, task_id );
-						break;
+				case AF_INCOMING_MSG_CMD:   // 接收信息
+					Sys_MessageMSGCB( MSGpkt, task_id );
+					break;
 
-					case ZDO_STATE_CHANGE:      // 设备网络状态改变
-						if(myAppState == APP_INIT) {
-							myAppState = APP_START;
-						}
+				case ZDO_STATE_CHANGE:      // 设备网络状态改变
+					if(myAppState == APP_INIT) {
+						myAppState = APP_START;
+					}
 
-						SensorSys_NwkState = (devStates_t)(MSGpkt->hdr.status);
-						if ( (SensorSys_NwkState == DEV_ZB_COORD)
-								|| (SensorSys_NwkState == DEV_ROUTER)
-								|| (SensorSys_NwkState == DEV_END_DEVICE) )
-						{
-							;
-						}
+					SensorSys_NwkState = (devStates_t)(MSGpkt->hdr.status);
+					if ( (SensorSys_NwkState == DEV_ZB_COORD)
+							|| (SensorSys_NwkState == DEV_ROUTER)
+							|| (SensorSys_NwkState == DEV_END_DEVICE) )
+					{
+						;
+					}
 
-						if( myAppState = APP_INIT)
-           				{
-            				HalLedSet(HAL_LED_1, HAL_LED_MODE_OFF);
-             				HalLedSet(HAL_LED_2, HAL_LED_MODE_OFF);
-				            HalLedSet(HAL_LED_3, HAL_LED_MODE_OFF);
-				            HalLedSet(HAL_LED_4, HAL_LED_MODE_OFF);
-          				}
+					break;
 
-						break;
-
-					default:
-						break;
-				}
-
-				// Release the memory
-				osal_msg_deallocate( (uint8 *)MSGpkt );
-
-				// Next
-				MSGpkt = (afIncomingMSGPacket_t *)osal_msg_receive( Sys_TaskID );
+				default:
+					break;
 			}
+
+			// Release the memory
+			osal_msg_deallocate( (uint8 *)MSGpkt );
+
+			// Next
+			MSGpkt = (afIncomingMSGPacket_t *)osal_msg_receive( Sys_TaskID );
 		}
-
-		if(task_id == Button_TaskID)
-	   {
-	      MSGpkt = (afIncomingMSGPacket_t *)osal_msg_receive( task_id );
-	      while ( MSGpkt )
-	      {
-	        switch ( MSGpkt->hdr.event )
-	        {
-	        		case KEY_CHANGE:
-            		Button_HandleKeys( ((keyChange_t *)MSGpkt)->keys );
-            	break;
-	        }
-	        // Release the memory
-	        osal_msg_deallocate( (uint8 *)MSGpkt );
-
-	        // Next
-	        MSGpkt = (afIncomingMSGPacket_t *)osal_msg_receive( Button_TaskID );
-	      }
-	   }
-	   // return unprocessed events
+	  // return unprocessed events
 		return (events ^ SYS_EVENT_MSG);
 	}
 
@@ -416,6 +408,36 @@ UINT16 Sys_ProcessEvent( byte task_id, UINT16 events )
 	// Discard unknown events
 	return 0;
 }
+
+
+UINT16 Button_ProcessEvent( byte task_id, UINT16 events )
+{
+	afIncomingMSGPacket_t *MSGpkt = NULL;
+
+	(void)task_id;  // Intentionally unreferenced parameter
+
+	if ( events & SYS_EVENT_MSG )
+	{
+    MSGpkt = (afIncomingMSGPacket_t *)osal_msg_receive( task_id );
+    while ( MSGpkt )
+    {
+      switch ( MSGpkt->hdr.event )
+      {
+      	case KEY_CHANGE:
+      		Button_HandleKeys( ((keyChange_t *)MSGpkt)->keys );
+      	break;
+      }
+      // Release the memory
+      osal_msg_deallocate( (uint8 *)MSGpkt );
+
+      // Next
+      MSGpkt = (afIncomingMSGPacket_t *)osal_msg_receive( Button_TaskID );
+    }
+    return (events ^ SYS_EVENT_MSG);
+	}
+  return 0;
+}
+
 
 /*********************************************************************
  * Event Generation Functions
@@ -442,6 +464,7 @@ void Button_HandleKeys( byte keys )
 	// Shift is used to make each button/switch dual purpose.
 	if ( keys_shift )
 	{
+		// Allow Binding
 		if ( keys & HAL_KEY_SW_1 )
 		{
 			zb_AllowBind(10);
@@ -607,6 +630,16 @@ void zb_ReceiveDataIndication( uint16 source, uint16 command, uint16 len, uint8 
  */
 void zb_StartConfirm( uint8 status )
 {
+  if ( status == ZB_SUCCESS )
+  {
+    myAppState = APP_START;
+  }
+  else
+  {
+    // Try again later with a delay
+    
+    HalLedSet(HAL_LED_1, HAL_LED_MODE_BLINK);
+  }
 }
 /******************************************************************************
  * @fn          zb_SendDataConfirm
