@@ -360,7 +360,8 @@ UINT16 Sys_ProcessEvent( byte task_id, UINT16 events )
 					if ( (SensorSys_NwkState == DEV_ROUTER)
 							|| (SensorSys_NwkState == DEV_END_DEVICE) )
 					{
-						osal_start_timerEx( task_id, CLOSE_LIGHT_EVT, 1000);	// 1s 后关了所有的灯
+						if(myAppState == APP_INIT)
+							osal_start_timerEx( task_id, CLOSE_LIGHT_EVT, 1000);	// 1s 后关了所有的灯
 					}
 
 					break;
@@ -388,7 +389,6 @@ UINT16 Sys_ProcessEvent( byte task_id, UINT16 events )
 	if(events & CLOSE_LIGHT_EVT)
 	{
 		HalLedSet(HAL_LED_ALL, HAL_LED_MODE_ON);
-		HalLedBlink(HAL_LED_1, 1, 10, 2000);	// D1闪烁2s 表示加进了网络
 		return (events ^ CLOSE_LIGHT_EVT);
 	}
 	// Discard unknown events
@@ -453,7 +453,7 @@ void Button_HandleKeys( byte keys )
 		if ( keys & HAL_KEY_SW_1 )
 		{
 			zb_AllowBind(10);
-			HalLedSet(HAL_LED_1, HAL_LED_MODE_FLASH);
+			HalLedSet(HAL_LED_1, HAL_LED_MODE_BLINK);
 			osal_start_timerEx(Sys_TaskID, CLOSE_BIND_EVT, 10000);
 			
 			keys_shift = 0;
@@ -531,23 +531,19 @@ void Sys_MessageMSGCB( afIncomingMSGPacket_t *pkt, byte task_id )
 		case SYS_CLUSTERID:
     {
 			char flag[4];
-			memcpy(flag, pkt->cmd.Data, 4);
-			if( !strcmp( flag, "bind") )
+			osal_memcpy( flag, pkt->cmd.Data, 4 );
+			if( osal_memcmp( flag, "bind", 4) )
 			{
 				if( pkt->cmd.Data[4] & MY_DEVICE )
 				{
 					HalLedSet(HAL_LED_1, HAL_LED_MODE_OFF);		// Set Red LED ON
-					osal_start_timerEx(Sys_TaskID, CLOSE_BIND_EVT, 5000);		// Bind operation 5s timeout
+			//		osal_start_timerEx(Sys_TaskID, CLOSE_BIND_EVT, 5000);		// Bind operation 5s timeout
 					keys_shift = 1;
 				}
 			}
 #if defined( WIN32 )
 			WPRINTSTR( pkt->cmd.Data );
 #endif
-
-			// Just for test!
-			HalLedSet(HAL_LED_1, HAL_LED_MODE_ON);		// Set Red LED OFF
-
 			break;
     }
 	}

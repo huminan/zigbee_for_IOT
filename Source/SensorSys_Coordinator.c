@@ -188,7 +188,6 @@ devStates_t Sys_NwkState;   // 节点现在的网络状态
 
 byte Sys_TransID;  // 数据包的发送ID，每发一个自增1
 
-afAddrType_t Broadcast_DstAddr;
 afAddrType_t Button_DstAddr;
 
 static uint8 sysSeqNumber = 0;    // 在端点间数据交流时被使用zb_SendDataRequest
@@ -230,14 +229,6 @@ void Sys_SendPreBindMessage( byte type_id );
 void Sys_Init( byte task_id )
 {
   Sys_TaskID = task_id;
-
-  // Device hardware initialization can be added here or in main() (Zmain.c).
-  // If the hardware is application specific - add it here.
-  // If the hardware is other parts of the device add it in main().
-
-  Broadcast_DstAddr.addrMode = (afAddrMode_t)AddrBroadcast;
-  Broadcast_DstAddr.endPoint = SYS_ENDPOINT;
-  Broadcast_DstAddr.addr.shortAddr = 0xFFFF;
 
   // Fill out the endpoint description.
   Sys_epDesc.endPoint = SYS_ENDPOINT;
@@ -635,10 +626,16 @@ void Sys_MessageMSGCB( afIncomingMSGPacket_t *pkt, byte task_id )
  */
 void Sys_SendPreBindMessage( byte type_id )
 {
+  afAddrType_t dstAddr;
+
+  dstAddr.addr.shortAddr = 0xFFFF;
+  dstAddr.addrMode = (afAddrMode_t)AddrBroadcast;
+  dstAddr.endPoint = Sys_epDesc.simpleDesc->EndPoint;
+
   char theMessageData[5] = "bind";
   theMessageData[4] = type_id;
 
-  if ( AF_DataRequest( &Broadcast_DstAddr, &Sys_epDesc,
+  if ( AF_DataRequest( &dstAddr, &Sys_epDesc,
                        SYS_CLUSTERID,
                        (byte)osal_strlen( theMessageData ) + 1,
                        (byte *)&theMessageData,
@@ -648,7 +645,7 @@ void Sys_SendPreBindMessage( byte type_id )
     // Successfully requested to be sent.
     // 闪5s灯
     HalLedBlink (HAL_LED_1, 1, 50, 5000);
-   //if(想要绑定什么就对应的 TypeID)
+    //if(想要绑定什么就对应的 TypeID)
 
     type_join = type_id;
     if(type_id == BUTTON_TYPE_ID)
