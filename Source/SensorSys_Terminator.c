@@ -138,8 +138,8 @@ const SimpleDescriptionFormat_t Button_SimpleDesc =
 	SYS_DEVICEID,              //  uint16 AppDeviceId[2];
 	SYS_DEVICE_VERSION,        //  int   AppDevVer:4;
 	SYS_FLAGS,                 //  int   AppFlags:4;
-	0,          			   //  byte  AppNumInClusters;
-	NULL,  					   //  byte *pAppInClusterList;
+	BUTTON_MAX_CLUSTERS,          //  byte  AppNumInClusters;
+	(cId_t *)Button_ClusterList,  //  byte *pAppInClusterList;
 	BUTTON_MAX_CLUSTERS,          //  byte  AppNumInClusters;
 	(cId_t *)Button_ClusterList   //  byte *pAppInClusterList;
 };
@@ -183,10 +183,9 @@ byte Button_TaskID;   // Task ID for internal task/event processing
 										// This variable will be received when
 										// Button_Init() is called.
 
-devStates_t SensorSys_NwkState;   // 节点现在的网络状态
+devStates_t Sys_NwkState;   // 节点现在的网络状态
 
-
-byte SensorSys_TransID;  // 数据包的发送ID，每发一个自增1
+byte Sys_TransID;  // 数据包的发送ID，每发一个自增1
 
 afAddrType_t Broadcast_DstAddr;
 afAddrType_t Button_DstAddr;
@@ -196,7 +195,8 @@ afAddrType_t Button_DstAddr;
  */
 void Sys_Init( byte task_id );
 void Button_Init( byte task_id );
-void Button_HandleKeys( byte keys );
+UINT16 Button_ProcessEvent( byte task_id, UINT16 events );
+void Button_HandleKeys( byte shift, byte keys );
 UINT16 Sys_ProcessEvent( byte task_id, UINT16 events );
 void Sys_MessageMSGCB( afIncomingMSGPacket_t *pckt, byte task_id );
 // void Sys_SendMessage( byte task_id );
@@ -245,10 +245,7 @@ void Sys_Init( byte task_id )
 
   // Register the endpoint description with the AF
   afRegister( &Sys_epDesc );
-
-  HalLedSet ( HAL_LED_1, HAL_LED_MODE_ON );
-  HalLedSet ( HAL_LED_2, HAL_LED_MODE_ON );
-  HalLedSet ( HAL_LED_3, HAL_LED_MODE_ON );
+	RegisterForKeys( task_id ); 
 
   // Set device as Enddevice
   zgDeviceLogicalType = ZG_DEVICETYPE_ENDDEVICE;
@@ -273,8 +270,7 @@ void Sys_Init( byte task_id )
 void Button_Init( byte task_id )
 {
 	Button_TaskID = task_id;
-	SensorSys_NwkState = DEV_INIT;    // added to main()
-	SensorSys_TransID = 0;            // added to main()
+	Sys_TransID = 0;            // added to main()
 
 	// Device hardware initialization can be added here or in main() (Zmain.c).
 	// If the hardware is application specific - add it here.
@@ -295,10 +291,14 @@ void Button_Init( byte task_id )
 	afRegister( &Button_epDesc );
 
 	// Register for all key events - This app will handle all key events
-	RegisterForKeys( Button_TaskID );
+	// RegisterForKeys( Button_TaskID ); !!!!!!!!!!!!!!!!!!!!!
  
-//	ZDO_RegisterForZDOMsg( Button_TaskID, End_Device_Bind_rsp );
+	//	ZDO_RegisterForZDOMsg( Button_TaskID, End_Device_Bind_rsp );
 	ZDO_RegisterForZDOMsg( Button_TaskID, Match_Desc_rsp );
+
+	HalLedSet ( HAL_LED_1, HAL_LED_MODE_ON );
+  HalLedSet ( HAL_LED_2, HAL_LED_MODE_ON );
+  HalLedSet ( HAL_LED_3, HAL_LED_MODE_ON );
 }
 
 /*********************************************************************
@@ -355,10 +355,15 @@ UINT16 Sys_ProcessEvent( byte task_id, UINT16 events )
 					Sys_MessageMSGCB( MSGpkt, task_id );
 					break;
 
+				case KEY_CHANGE:
+    			Button_HandleKeys( ((keyChange_t *)MSGpkt)->state, ((keyChange_t *)MSGpkt)->keys );
+      		break;
+
+
 				case ZDO_STATE_CHANGE:      // 设备网络状态改变
-					SensorSys_NwkState = (devStates_t)(MSGpkt->hdr.status);
-					if ( (SensorSys_NwkState == DEV_ROUTER)
-							|| (SensorSys_NwkState == DEV_END_DEVICE) )
+					Sys_NwkState = (devStates_t)(MSGpkt->hdr.status);
+					if ( (Sys_NwkState == DEV_ROUTER)
+							|| (Sys_NwkState == DEV_END_DEVICE) )
 					{
 						if(myAppState == APP_INIT)
 							osal_start_timerEx( task_id, CLOSE_LIGHT_EVT, 1000);	// 1s 后关了所有的灯
@@ -399,7 +404,6 @@ UINT16 Sys_ProcessEvent( byte task_id, UINT16 events )
 UINT16 Button_ProcessEvent( byte task_id, UINT16 events )
 {
 	afIncomingMSGPacket_t *MSGpkt = NULL;
-
 	(void)task_id;  // Intentionally unreferenced parameter
 
 	if ( events & SYS_EVENT_MSG )
@@ -410,7 +414,7 @@ UINT16 Button_ProcessEvent( byte task_id, UINT16 events )
       switch ( MSGpkt->hdr.event )
       {
       	case KEY_CHANGE:
-      		Button_HandleKeys( ((keyChange_t *)MSGpkt)->keys );
+      		Button_HandleKeys( ((keyChange_t *)MSGpkt)->state, ((keyChange_t *)MSGpkt)->keys );
       	break;
       }
       // Release the memory
@@ -420,6 +424,12 @@ UINT16 Button_ProcessEvent( byte task_id, UINT16 events )
       MSGpkt = (afIncomingMSGPacket_t *)osal_msg_receive( Button_TaskID );
     }
     return (events ^ SYS_EVENT_MSG);
+	}
+	// for test!
+	if(events & CLOSE_LIGHT_EVT)
+	{
+		HalLedSet(HAL_LED_ALL, HAL_LED_MODE_ON);
+		return (events ^ CLOSE_LIGHT_EVT);
 	}
   return 0;
 }
@@ -443,7 +453,7 @@ UINT16 Button_ProcessEvent( byte task_id, UINT16 events )
  *
  * @return  none
  */
-void Button_HandleKeys( byte keys )
+void Button_HandleKeys( byte shift, byte keys )
 {
 	
 	// Shift is used to make each button/switch dual purpose.
@@ -453,8 +463,8 @@ void Button_HandleKeys( byte keys )
 		if ( keys & HAL_KEY_SW_1 )
 		{
 			zb_AllowBind(10);
-			HalLedSet(HAL_LED_1, HAL_LED_MODE_BLINK);
-			osal_start_timerEx(Sys_TaskID, CLOSE_BIND_EVT, 10000);
+			HalLedSet(HAL_LED_1, HAL_LED_MODE_OFF);
+			// osal_start_timerEx(Sys_TaskID, CLOSE_BIND_EVT, 10000);
 			
 			keys_shift = 0;
 		}
@@ -472,6 +482,7 @@ void Button_HandleKeys( byte keys )
 	{
 		if ( keys & HAL_KEY_SW_1 )
 		{
+			HalLedSet(HAL_LED_2, HAL_LED_MODE_ON);
 		}
 
 		if ( keys & HAL_KEY_SW_2 )
@@ -536,7 +547,7 @@ void Sys_MessageMSGCB( afIncomingMSGPacket_t *pkt, byte task_id )
 			{
 				if( pkt->cmd.Data[4] & MY_DEVICE )
 				{
-					HalLedSet(HAL_LED_1, HAL_LED_MODE_OFF);		// Set Red LED ON
+					HalLedSet(HAL_LED_2, HAL_LED_MODE_OFF);		// Set Red LED ON
 			//		osal_start_timerEx(Sys_TaskID, CLOSE_BIND_EVT, 5000);		// Bind operation 5s timeout
 					keys_shift = 1;
 				}
@@ -566,7 +577,7 @@ void Sys_SendMessage( void )
 											 button_CLUSTERID,
 											 (byte)osal_strlen( theMessageData ) + 1,
 											 (byte *)&theMessageData,
-											 &SensorSys_TransID,
+											 &Sys_TransID,
 											 AF_DISCV_ROUTE, AF_DEFAULT_RADIUS ) == afStatus_SUCCESS )
 	{
 		// Successfully requested to be sent.
@@ -596,7 +607,7 @@ void zb_ReceiveDataIndication( uint16 source, uint16 command, uint16 len, uint8 
   if (command == BUTTON_CMD_ID)
   {
     // Received application command to toggle the LED
-    HalLedSet(HAL_LED_2, HAL_LED_MODE_BLINK);
+    HalLedSet(HAL_LED_2, HAL_LED_MODE_ON);
   }
 }
 /*********************************************************************

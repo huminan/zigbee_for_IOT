@@ -240,7 +240,6 @@ void Sys_Init( byte task_id )
   // Register the endpoint description with the AF
   afRegister( &Sys_epDesc );
 
-
   HalLedSet ( HAL_LED_1, HAL_LED_MODE_ON );
   HalLedSet ( HAL_LED_2, HAL_LED_MODE_ON );
   HalLedSet ( HAL_LED_3, HAL_LED_MODE_ON );
@@ -292,7 +291,6 @@ void Button_Init( byte task_id )
   RegisterForKeys( Button_TaskID );
 
   // To Update the display...
- 
   ZDO_RegisterForZDOMsg( Button_TaskID, Match_Desc_rsp );
 }
 
@@ -376,16 +374,6 @@ UINT16 Sys_ProcessEvent( byte task_id, UINT16 events )
     return (events ^ SYS_EVENT_MSG);
   }
 
-  if( events & MATCH_BIND_EVT ) // π„≤• match ∞Û∂®
-  {
-      if(task_id == Button_TaskID)
-      {
-         zb_BindDevice(TRUE, BUTTON_CMD_ID, NULL);
-         // HalLedSet(HAL_LED_2, HAL_LED_MODE_OFF); // ¡¡D2
-      }
-      return (events ^ MATCH_BIND_EVT);
-  }
-
   if( events & CONFIG_OPTION_EVT )
   {
     uint8 logicalType;
@@ -436,6 +424,13 @@ UINT16 Button_ProcessEvent( byte task_id, UINT16 events )
       MSGpkt = (afIncomingMSGPacket_t *)osal_msg_receive( Button_TaskID );
     }
    return (events ^ SYS_EVENT_MSG);
+  }
+
+  if( events & MATCH_BIND_EVT ) // π„≤• match ∞Û∂®
+  {
+    zb_BindDevice(TRUE, BUTTON_CMD_ID, NULL);
+    // HalLedSet(HAL_LED_2, HAL_LED_MODE_OFF); // ¡¡D2
+    return (events ^ MATCH_BIND_EVT);
   }
   return 0;
 }
@@ -717,15 +712,13 @@ void zb_BindConfirm( uint16 commandId, uint8 status )
 {
   if( status == ZB_SUCCESS)
   {
-    // Light D2 for 3s
-    HalLedBlink(HAL_LED_2, 1, 50, 2000);  // …¡À∏2s
-
+    // Light D2
+    HalLedSet(HAL_LED_2, HAL_LED_MODE_OFF);
   }
   else
   {
-    // Light D3 for 3s
-    HalLedBlink(HAL_LED_3, 1, 50, 2000);  // …¡À∏2s
-
+    // Light D3
+    HalLedSet(HAL_LED_3, HAL_LED_MODE_OFF);
   }
 }
 /******************************************************************************

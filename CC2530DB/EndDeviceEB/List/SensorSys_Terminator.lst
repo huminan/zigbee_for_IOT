@@ -1,6 +1,6 @@
 ###############################################################################
 #                                                                             #
-# IAR C/C++ Compiler V8.10.3.10338/W32 for 8051         01/Sep/2017  22:48:46 #
+# IAR C/C++ Compiler V8.10.3.10338/W32 for 8051         02/Sep/2017  23:15:15 #
 # Copyright 2004-2011 IAR Systems AB.                                         #
 #                                                                             #
 #    Core               =  plain                                              #
@@ -293,8 +293,8 @@ D:\ProgramData\Hardware\zigbee\Projects\zstack\Samples\SensorSys\Source\SensorSy
    \   000001   040F         DW 3844
    \   000003   0100         DW 1
    \   000005   00           DB 0
-   \   000006   00           DB 0
-   \   000007   0000         DW 0H
+   \   000006   02           DB 2
+   \   000007   ....         DW Button_ClusterList
    \   000009   02           DB 2
    \   00000A   ....         DW Button_ClusterList
     135          {
@@ -303,8 +303,8 @@ D:\ProgramData\Hardware\zigbee\Projects\zstack\Samples\SensorSys\Source\SensorSy
     138          	SYS_DEVICEID,              //  uint16 AppDeviceId[2];
     139          	SYS_DEVICE_VERSION,        //  int   AppDevVer:4;
     140          	SYS_FLAGS,                 //  int   AppFlags:4;
-    141          	0,          			   //  byte  AppNumInClusters;
-    142          	NULL,  					   //  byte *pAppInClusterList;
+    141          	BUTTON_MAX_CLUSTERS,          //  byte  AppNumInClusters;
+    142          	(cId_t *)Button_ClusterList,  //  byte *pAppInClusterList;
     143          	BUTTON_MAX_CLUSTERS,          //  byte  AppNumInClusters;
     144          	(cId_t *)Button_ClusterList   //  byte *pAppInClusterList;
     145          };
@@ -391,38 +391,38 @@ D:\ProgramData\Hardware\zigbee\Projects\zstack\Samples\SensorSys\Source\SensorSy
     185          
 
    \                                 In  segment XDATA_Z, align 1, keep-with-next
-    186          devStates_t SensorSys_NwkState;   // 节点现在的网络状态
-   \                     SensorSys_NwkState:
+    186          devStates_t Sys_NwkState;   // 节点现在的网络状态
+   \                     Sys_NwkState:
    \   000000                DS 1
    \   000001                REQUIRE __INIT_XDATA_Z
     187          
-    188          
 
    \                                 In  segment XDATA_Z, align 1, keep-with-next
-    189          byte SensorSys_TransID;  // 数据包的发送ID，每发一个自增1
-   \                     SensorSys_TransID:
+    188          byte Sys_TransID;  // 数据包的发送ID，每发一个自增1
+   \                     Sys_TransID:
    \   000000                DS 1
    \   000001                REQUIRE __INIT_XDATA_Z
-    190          
+    189          
 
    \                                 In  segment XDATA_Z, align 1, keep-with-next
-    191          afAddrType_t Broadcast_DstAddr;
+    190          afAddrType_t Broadcast_DstAddr;
    \                     Broadcast_DstAddr:
    \   000000                DS 12
    \   00000C                REQUIRE __INIT_XDATA_Z
 
    \                                 In  segment XDATA_Z, align 1, keep-with-next
-    192          afAddrType_t Button_DstAddr;
+    191          afAddrType_t Button_DstAddr;
    \                     Button_DstAddr:
    \   000000                DS 12
    \   00000C                REQUIRE __INIT_XDATA_Z
-    193          
-    194          /*********************************************************************
-    195           * LOCAL FUNCTIONS
-    196           */
-    197          void Sys_Init( byte task_id );
-    198          void Button_Init( byte task_id );
-    199          void Button_HandleKeys( byte keys );
+    192          
+    193          /*********************************************************************
+    194           * LOCAL FUNCTIONS
+    195           */
+    196          void Sys_Init( byte task_id );
+    197          void Button_Init( byte task_id );
+    198          UINT16 Button_ProcessEvent( byte task_id, UINT16 events );
+    199          void Button_HandleKeys( byte shift, byte keys );
     200          UINT16 Sys_ProcessEvent( byte task_id, UINT16 events );
     201          void Sys_MessageMSGCB( afIncomingMSGPacket_t *pckt, byte task_id );
     202          // void Sys_SendMessage( byte task_id );
@@ -460,195 +460,192 @@ D:\ProgramData\Hardware\zigbee\Projects\zstack\Samples\SensorSys\Source\SensorSy
    \   000005                ; Saved register size: 9
    \   000005                ; Auto size: 0
    \   000005   E9           MOV     A,R1
+   \   000006   FE           MOV     R6,A
     229            Sys_TaskID = task_id;
-   \   000006   90....       MOV     DPTR,#Sys_TaskID
-   \   000009   F0           MOVX    @DPTR,A
+   \   000007   90....       MOV     DPTR,#Sys_TaskID
+   \   00000A   F0           MOVX    @DPTR,A
     230          
     231            // Device hardware initialization can be added here or in main() (Zmain.c).
     232            // If the hardware is application specific - add it here.
     233            // If the hardware is other parts of the device add it in main().
     234          
     235            Broadcast_DstAddr.addrMode = (afAddrMode_t)AddrBroadcast;
-   \   00000A   90....       MOV     DPTR,#Broadcast_DstAddr + 8
-   \   00000D   740F         MOV     A,#0xf
-   \   00000F   F0           MOVX    @DPTR,A
+   \   00000B   90....       MOV     DPTR,#Broadcast_DstAddr + 8
+   \   00000E   740F         MOV     A,#0xf
+   \   000010   F0           MOVX    @DPTR,A
     236            Broadcast_DstAddr.endPoint = SYS_ENDPOINT;
-   \   000010   A3           INC     DPTR
-   \   000011   7402         MOV     A,#0x2
-   \   000013   F0           MOVX    @DPTR,A
+   \   000011   A3           INC     DPTR
+   \   000012   7402         MOV     A,#0x2
+   \   000014   F0           MOVX    @DPTR,A
     237            Broadcast_DstAddr.addr.shortAddr = 0xFFFF;
-   \   000014   90....       MOV     DPTR,#Broadcast_DstAddr
-   \   000017   74FF         MOV     A,#-0x1
-   \   000019   F0           MOVX    @DPTR,A
-   \   00001A   A3           INC     DPTR
-   \   00001B   F0           MOVX    @DPTR,A
+   \   000015   90....       MOV     DPTR,#Broadcast_DstAddr
+   \   000018   74FF         MOV     A,#-0x1
+   \   00001A   F0           MOVX    @DPTR,A
+   \   00001B   A3           INC     DPTR
+   \   00001C   F0           MOVX    @DPTR,A
     238          
     239            // Fill out the endpoint description.
     240            Sys_epDesc.endPoint = SYS_ENDPOINT;
-   \   00001C   90....       MOV     DPTR,#Sys_epDesc
-   \   00001F   7402         MOV     A,#0x2
-   \   000021   F0           MOVX    @DPTR,A
+   \   00001D   90....       MOV     DPTR,#Sys_epDesc
+   \   000020   7402         MOV     A,#0x2
+   \   000022   F0           MOVX    @DPTR,A
     241            Sys_epDesc.task_id = &Sys_TaskID;
-   \   000022   A3           INC     DPTR
-   \   000023   74..         MOV     A,#Sys_TaskID & 0xff
-   \   000025   F0           MOVX    @DPTR,A
-   \   000026   A3           INC     DPTR
-   \   000027   74..         MOV     A,#(Sys_TaskID >> 8) & 0xff
-   \   000029   F0           MOVX    @DPTR,A
+   \   000023   A3           INC     DPTR
+   \   000024   74..         MOV     A,#Sys_TaskID & 0xff
+   \   000026   F0           MOVX    @DPTR,A
+   \   000027   A3           INC     DPTR
+   \   000028   74..         MOV     A,#(Sys_TaskID >> 8) & 0xff
+   \   00002A   F0           MOVX    @DPTR,A
     242            Sys_epDesc.simpleDesc
     243                      = (SimpleDescriptionFormat_t *)&Sys_SimpleDesc;
-   \   00002A   A3           INC     DPTR
-   \   00002B   74..         MOV     A,#Sys_SimpleDesc & 0xff
-   \   00002D   F0           MOVX    @DPTR,A
-   \   00002E   A3           INC     DPTR
-   \   00002F   74..         MOV     A,#(Sys_SimpleDesc >> 8) & 0xff
-   \   000031   F0           MOVX    @DPTR,A
+   \   00002B   A3           INC     DPTR
+   \   00002C   74..         MOV     A,#Sys_SimpleDesc & 0xff
+   \   00002E   F0           MOVX    @DPTR,A
+   \   00002F   A3           INC     DPTR
+   \   000030   74..         MOV     A,#(Sys_SimpleDesc >> 8) & 0xff
+   \   000032   F0           MOVX    @DPTR,A
     244            Sys_epDesc.latencyReq = noLatencyReqs;
-   \   000032   A3           INC     DPTR
-   \   000033   E4           CLR     A
-   \   000034   F0           MOVX    @DPTR,A
+   \   000033   A3           INC     DPTR
+   \   000034   E4           CLR     A
+   \   000035   F0           MOVX    @DPTR,A
     245          
     246            // Register the endpoint description with the AF
     247            afRegister( &Sys_epDesc );
-   \   000035                ; Setup parameters for call to function afRegister
-   \   000035   7A..         MOV     R2,#Sys_epDesc & 0xff
-   \   000037   7B..         MOV     R3,#(Sys_epDesc >> 8) & 0xff
-   \   000039   12....       LCALL   ??afRegister?relay
-    248          
-    249            HalLedSet ( HAL_LED_1, HAL_LED_MODE_ON );
-   \   00003C                ; Setup parameters for call to function HalLedSet
-   \   00003C   7A01         MOV     R2,#0x1
-   \   00003E   7901         MOV     R1,#0x1
-   \   000040   12....       LCALL   ??HalLedSet?relay
-    250            HalLedSet ( HAL_LED_2, HAL_LED_MODE_ON );
-   \   000043                ; Setup parameters for call to function HalLedSet
-   \   000043   7A01         MOV     R2,#0x1
-   \   000045   7902         MOV     R1,#0x2
-   \   000047   12....       LCALL   ??HalLedSet?relay
-    251            HalLedSet ( HAL_LED_3, HAL_LED_MODE_ON );
-   \   00004A                ; Setup parameters for call to function HalLedSet
-   \   00004A   7A01         MOV     R2,#0x1
-   \   00004C   7904         MOV     R1,#0x4
-   \   00004E   12....       LCALL   ??HalLedSet?relay
+   \   000036                ; Setup parameters for call to function afRegister
+   \   000036   7A..         MOV     R2,#Sys_epDesc & 0xff
+   \   000038   7B..         MOV     R3,#(Sys_epDesc >> 8) & 0xff
+   \   00003A   12....       LCALL   ??afRegister?relay
+    248          	RegisterForKeys( task_id ); 
+   \   00003D                ; Setup parameters for call to function RegisterForKeys
+   \   00003D   EE           MOV     A,R6
+   \   00003E   F9           MOV     R1,A
+   \   00003F   12....       LCALL   ??RegisterForKeys?relay
+    249          
+    250            // Set device as Enddevice
+    251            zgDeviceLogicalType = ZG_DEVICETYPE_ENDDEVICE;
+   \   000042   90....       MOV     DPTR,#zgDeviceLogicalType
+   \   000045   7402         MOV     A,#0x2
+   \   000047   F0           MOVX    @DPTR,A
     252          
-    253            // Set device as Enddevice
-    254            zgDeviceLogicalType = ZG_DEVICETYPE_ENDDEVICE;
-   \   000051   90....       MOV     DPTR,#zgDeviceLogicalType
-   \   000054   7402         MOV     A,#0x2
-   \   000056   F0           MOVX    @DPTR,A
-    255          
-    256            // To Update the display...
-    257          }
-   \   000057   02....       LJMP    ?Subroutine0 & 0xFFFF
+    253            // To Update the display...
+    254          }
+   \   000048   02....       LJMP    ?Subroutine0 & 0xFFFF
 
    \                                 In  segment BANKED_CODE, align 1, keep-with-next
    \                     ?Subroutine0:
    \   000000   7F01         MOV     R7,#0x1
    \   000002   02....       LJMP    ?BANKED_LEAVE_XDATA
-    258          
-    259          /*********************************************************************
-    260           * @fn      Button_Init
-    261           *
-    262           * @brief   Initialization function for the Generic App Task.
-    263           *          This is called during initialization and should contain
-    264           *          any application specific initialization (ie. hardware
-    265           *          initialization/setup, table initialization, power up
-    266           *          notificaiton ... ).
+    255          
+    256          /*********************************************************************
+    257           * @fn      Button_Init
+    258           *
+    259           * @brief   Initialization function for the Generic App Task.
+    260           *          This is called during initialization and should contain
+    261           *          any application specific initialization (ie. hardware
+    262           *          initialization/setup, table initialization, power up
+    263           *          notificaiton ... ).
+    264           *
+    265           * @param   task_id - the ID assigned by OSAL.  This ID should be
+    266           *                    used to send messages and set timers.
     267           *
-    268           * @param   task_id - the ID assigned by OSAL.  This ID should be
-    269           *                    used to send messages and set timers.
-    270           *
-    271           * @return  none
-    272           */
+    268           * @return  none
+    269           */
 
    \                                 In  segment BANKED_CODE, align 1, keep-with-next
-    273          void Button_Init( byte task_id )
+    270          void Button_Init( byte task_id )
    \                     Button_Init:
-    274          {
+    271          {
    \   000000   74F7         MOV     A,#-0x9
    \   000002   12....       LCALL   ?BANKED_ENTER_XDATA
    \   000005                ; Saved register size: 9
    \   000005                ; Auto size: 0
    \   000005   E9           MOV     A,R1
-    275          	Button_TaskID = task_id;
+    272          	Button_TaskID = task_id;
    \   000006   90....       MOV     DPTR,#Button_TaskID
    \   000009   F0           MOVX    @DPTR,A
-    276          	SensorSys_NwkState = DEV_INIT;    // added to main()
-   \   00000A   90....       MOV     DPTR,#SensorSys_NwkState
-   \   00000D   7401         MOV     A,#0x1
-   \   00000F   F0           MOVX    @DPTR,A
-    277          	SensorSys_TransID = 0;            // added to main()
-   \   000010   90....       MOV     DPTR,#SensorSys_TransID
-   \   000013   E4           CLR     A
-   \   000014   F0           MOVX    @DPTR,A
+    273          	Sys_TransID = 0;            // added to main()
+   \   00000A   90....       MOV     DPTR,#Sys_TransID
+   \   00000D   E4           CLR     A
+   \   00000E   F0           MOVX    @DPTR,A
+    274          
+    275          	// Device hardware initialization can be added here or in main() (Zmain.c).
+    276          	// If the hardware is application specific - add it here.
+    277          	// If the hardware is other parts of the device add it in main().
     278          
-    279          	// Device hardware initialization can be added here or in main() (Zmain.c).
-    280          	// If the hardware is application specific - add it here.
-    281          	// If the hardware is other parts of the device add it in main().
-    282          
-    283          	Button_DstAddr.addrMode = (afAddrMode_t)AddrNotPresent;
-   \   000015   90....       MOV     DPTR,#Button_DstAddr + 8
+    279          	Button_DstAddr.addrMode = (afAddrMode_t)AddrNotPresent;
+   \   00000F   90....       MOV     DPTR,#Button_DstAddr + 8
+   \   000012   F0           MOVX    @DPTR,A
+    280          	Button_DstAddr.endPoint = 0;
+   \   000013   A3           INC     DPTR
+   \   000014   F0           MOVX    @DPTR,A
+    281          	Button_DstAddr.addr.shortAddr = 0;
+   \   000015   90....       MOV     DPTR,#Button_DstAddr
    \   000018   F0           MOVX    @DPTR,A
-    284          	Button_DstAddr.endPoint = 0;
    \   000019   A3           INC     DPTR
    \   00001A   F0           MOVX    @DPTR,A
-    285          	Button_DstAddr.addr.shortAddr = 0;
-   \   00001B   90....       MOV     DPTR,#Button_DstAddr
-   \   00001E   F0           MOVX    @DPTR,A
-   \   00001F   A3           INC     DPTR
+    282          
+    283          	// Fill out the endpoint description.
+    284          	Button_epDesc.endPoint = BUTTON_ENDPOINT;
+   \   00001B   90....       MOV     DPTR,#Button_epDesc
+   \   00001E   740A         MOV     A,#0xa
    \   000020   F0           MOVX    @DPTR,A
-    286          
-    287          	// Fill out the endpoint description.
-    288          	Button_epDesc.endPoint = BUTTON_ENDPOINT;
-   \   000021   90....       MOV     DPTR,#Button_epDesc
-   \   000024   740A         MOV     A,#0xa
-   \   000026   F0           MOVX    @DPTR,A
-    289          	Button_epDesc.task_id = &Button_TaskID;
-   \   000027   A3           INC     DPTR
-   \   000028   74..         MOV     A,#Button_TaskID & 0xff
-   \   00002A   F0           MOVX    @DPTR,A
-   \   00002B   A3           INC     DPTR
-   \   00002C   74..         MOV     A,#(Button_TaskID >> 8) & 0xff
-   \   00002E   F0           MOVX    @DPTR,A
-    290          	Button_epDesc.simpleDesc
-    291          						= (SimpleDescriptionFormat_t *)&Button_SimpleDesc;
-   \   00002F   A3           INC     DPTR
-   \   000030   74..         MOV     A,#Button_SimpleDesc & 0xff
-   \   000032   F0           MOVX    @DPTR,A
-   \   000033   A3           INC     DPTR
-   \   000034   74..         MOV     A,#(Button_SimpleDesc >> 8) & 0xff
-   \   000036   F0           MOVX    @DPTR,A
-    292          	Button_epDesc.latencyReq = noLatencyReqs;
-   \   000037   A3           INC     DPTR
-   \   000038   E4           CLR     A
-   \   000039   F0           MOVX    @DPTR,A
-    293          
-    294          	// Register the endpoint description with the AF
-    295          	afRegister( &Button_epDesc );
-   \   00003A                ; Setup parameters for call to function afRegister
-   \   00003A   7A..         MOV     R2,#Button_epDesc & 0xff
-   \   00003C   7B..         MOV     R3,#(Button_epDesc >> 8) & 0xff
-   \   00003E   12....       LCALL   ??afRegister?relay
-    296          
-    297          	// Register for all key events - This app will handle all key events
-    298          	RegisterForKeys( Button_TaskID );
-   \   000041                ; Setup parameters for call to function RegisterForKeys
-   \   000041   90....       MOV     DPTR,#Button_TaskID
-   \   000044   E0           MOVX    A,@DPTR
-   \   000045   F9           MOV     R1,A
-   \   000046   12....       LCALL   ??RegisterForKeys?relay
-    299           
-    300          //	ZDO_RegisterForZDOMsg( Button_TaskID, End_Device_Bind_rsp );
-    301          	ZDO_RegisterForZDOMsg( Button_TaskID, Match_Desc_rsp );
-   \   000049                ; Setup parameters for call to function ZDO_RegisterForZDOMsg
-   \   000049   7A06         MOV     R2,#0x6
-   \   00004B   7B80         MOV     R3,#-0x80
-   \   00004D   90....       MOV     DPTR,#Button_TaskID
-   \   000050   E0           MOVX    A,@DPTR
-   \   000051   F9           MOV     R1,A
-   \   000052   12....       LCALL   ??ZDO_RegisterForZDOMsg?relay
+    285          	Button_epDesc.task_id = &Button_TaskID;
+   \   000021   A3           INC     DPTR
+   \   000022   74..         MOV     A,#Button_TaskID & 0xff
+   \   000024   F0           MOVX    @DPTR,A
+   \   000025   A3           INC     DPTR
+   \   000026   74..         MOV     A,#(Button_TaskID >> 8) & 0xff
+   \   000028   F0           MOVX    @DPTR,A
+    286          	Button_epDesc.simpleDesc
+    287          						= (SimpleDescriptionFormat_t *)&Button_SimpleDesc;
+   \   000029   A3           INC     DPTR
+   \   00002A   74..         MOV     A,#Button_SimpleDesc & 0xff
+   \   00002C   F0           MOVX    @DPTR,A
+   \   00002D   A3           INC     DPTR
+   \   00002E   74..         MOV     A,#(Button_SimpleDesc >> 8) & 0xff
+   \   000030   F0           MOVX    @DPTR,A
+    288          	Button_epDesc.latencyReq = noLatencyReqs;
+   \   000031   A3           INC     DPTR
+   \   000032   E4           CLR     A
+   \   000033   F0           MOVX    @DPTR,A
+    289          
+    290          	// Register the endpoint description with the AF
+    291          	afRegister( &Button_epDesc );
+   \   000034                ; Setup parameters for call to function afRegister
+   \   000034   7A..         MOV     R2,#Button_epDesc & 0xff
+   \   000036   7B..         MOV     R3,#(Button_epDesc >> 8) & 0xff
+   \   000038   12....       LCALL   ??afRegister?relay
+    292          
+    293          	// Register for all key events - This app will handle all key events
+    294          	// RegisterForKeys( Button_TaskID ); !!!!!!!!!!!!!!!!!!!!!
+    295           
+    296          	//	ZDO_RegisterForZDOMsg( Button_TaskID, End_Device_Bind_rsp );
+    297          	ZDO_RegisterForZDOMsg( Button_TaskID, Match_Desc_rsp );
+   \   00003B                ; Setup parameters for call to function ZDO_RegisterForZDOMsg
+   \   00003B   7A06         MOV     R2,#0x6
+   \   00003D   7B80         MOV     R3,#-0x80
+   \   00003F   90....       MOV     DPTR,#Button_TaskID
+   \   000042   E0           MOVX    A,@DPTR
+   \   000043   F9           MOV     R1,A
+   \   000044   12....       LCALL   ??ZDO_RegisterForZDOMsg?relay
+    298          
+    299          	HalLedSet ( HAL_LED_1, HAL_LED_MODE_ON );
+   \   000047                ; Setup parameters for call to function HalLedSet
+   \   000047   7A01         MOV     R2,#0x1
+   \   000049   7901         MOV     R1,#0x1
+   \   00004B   12....       LCALL   ??HalLedSet?relay
+    300            HalLedSet ( HAL_LED_2, HAL_LED_MODE_ON );
+   \   00004E                ; Setup parameters for call to function HalLedSet
+   \   00004E   7A01         MOV     R2,#0x1
+   \   000050   7902         MOV     R1,#0x2
+   \   000052   12....       LCALL   ??HalLedSet?relay
+    301            HalLedSet ( HAL_LED_3, HAL_LED_MODE_ON );
+   \   000055                ; Setup parameters for call to function HalLedSet
+   \   000055   7A01         MOV     R2,#0x1
+   \   000057   7904         MOV     R1,#0x4
+   \   000059   12....       LCALL   ??HalLedSet?relay
     302          }
-   \   000055   02....       LJMP    ?Subroutine0 & 0xFFFF
+   \   00005C   02....       LJMP    ?Subroutine0 & 0xFFFF
     303          
     304          /*********************************************************************
     305           * @fn      Sys_ProcessEvent
@@ -688,7 +685,7 @@ D:\ProgramData\Hardware\zigbee\Projects\zstack\Samples\SensorSys\Source\SensorSy
     327          
     328          	if ( events & SYS_EVENT_MSG )
    \   00000B   5480         ANL     A,#0x80
-   \   00000D   6061         JZ      ??Sys_ProcessEvent_0
+   \   00000D   6062         JZ      ??Sys_ProcessEvent_0
     329          	{
     330          		MSGpkt = (afIncomingMSGPacket_t *)osal_msg_receive( task_id );
    \   00000F                ; Setup parameters for call to function osal_msg_receive
@@ -720,27 +717,32 @@ D:\ProgramData\Hardware\zigbee\Projects\zstack\Samples\SensorSys\Source\SensorSy
     355          					Sys_MessageMSGCB( MSGpkt, task_id );
     356          					break;
     357          
-    358          				case ZDO_STATE_CHANGE:      // 设备网络状态改变
-    359          					SensorSys_NwkState = (devStates_t)(MSGpkt->hdr.status);
+    358          				case KEY_CHANGE:
+    359              			Button_HandleKeys( ((keyChange_t *)MSGpkt)->state, ((keyChange_t *)MSGpkt)->keys );
+    360                		break;
+    361          
+    362          
+    363          				case ZDO_STATE_CHANGE:      // 设备网络状态改变
+    364          					Sys_NwkState = (devStates_t)(MSGpkt->hdr.status);
    \                     ??Sys_ProcessEvent_2:
    \   000011   A3           INC     DPTR
    \   000012   E0           MOVX    A,@DPTR
-   \   000013   90....       MOV     DPTR,#SensorSys_NwkState
+   \   000013   90....       MOV     DPTR,#Sys_NwkState
    \   000016   F0           MOVX    @DPTR,A
-    360          					if ( (SensorSys_NwkState == DEV_ROUTER)
-    361          							|| (SensorSys_NwkState == DEV_END_DEVICE) )
+    365          					if ( (Sys_NwkState == DEV_ROUTER)
+    366          							|| (Sys_NwkState == DEV_END_DEVICE) )
    \   000017   6407         XRL     A,#0x7
    \   000019   6005         JZ      ??Sys_ProcessEvent_3
    \   00001B   E0           MOVX    A,@DPTR
    \   00001C   6406         XRL     A,#0x6
    \   00001E   7013         JNZ     ??Sys_ProcessEvent_4
-    362          					{
-    363          						if(myAppState == APP_INIT)
+    367          					{
+    368          						if(myAppState == APP_INIT)
    \                     ??Sys_ProcessEvent_3:
    \   000020   90....       MOV     DPTR,#myAppState
    \   000023   E0           MOVX    A,@DPTR
    \   000024   700D         JNZ     ??Sys_ProcessEvent_4
-    364          							osal_start_timerEx( task_id, CLOSE_LIGHT_EVT, 1000);	// 1s 后关了所有的灯
+    369          							osal_start_timerEx( task_id, CLOSE_LIGHT_EVT, 1000);	// 1s 后关了所有的灯
    \   000026                ; Setup parameters for call to function osal_start_timerEx
    \   000026   7CE8         MOV     R4,#-0x18
    \   000028   7D03         MOV     R5,#0x3
@@ -748,342 +750,381 @@ D:\ProgramData\Hardware\zigbee\Projects\zstack\Samples\SensorSys\Source\SensorSy
    \   00002C   7B00         MOV     R3,#0x0
    \   00002E   A9..         MOV     R1,?V0 + 2
    \   000030   12....       LCALL   ??osal_start_timerEx?relay
-    365          					}
-    366          
-    367          					break;
-    368          
-    369          				default:
-    370          					break;
-    371          			}
-    372          
-    373          			// Release the memory
-    374          			osal_msg_deallocate( (uint8 *)MSGpkt );
+    370          					}
+    371          
+    372          					break;
+    373          
+    374          				default:
+    375          					break;
+    376          			}
+    377          
+    378          			// Release the memory
+    379          			osal_msg_deallocate( (uint8 *)MSGpkt );
    \                     ??Sys_ProcessEvent_4:
    \   000033                ; Setup parameters for call to function osal_msg_deallocate
    \   000033   AA..         MOV     R2,?V0 + 0
    \   000035   AB..         MOV     R3,?V0 + 1
    \   000037   12....       LCALL   ??osal_msg_deallocate?relay
-    375          
-    376          			// Next
-    377          			MSGpkt = (afIncomingMSGPacket_t *)osal_msg_receive( Sys_TaskID );
+    380          
+    381          			// Next
+    382          			MSGpkt = (afIncomingMSGPacket_t *)osal_msg_receive( Sys_TaskID );
    \   00003A                ; Setup parameters for call to function osal_msg_receive
    \   00003A   90....       MOV     DPTR,#Sys_TaskID
    \   00003D   E0           MOVX    A,@DPTR
    \   00003E   F9           MOV     R1,A
    \                     ??Sys_ProcessEvent_1:
-   \   00003F   12....       LCALL   ??osal_msg_receive?relay
-   \   000042   8A..         MOV     ?V0 + 0,R2
-   \   000044   8B..         MOV     ?V0 + 1,R3
-   \   000046   E5..         MOV     A,?V0 + 0
-   \   000048   45..         ORL     A,?V0 + 1
-   \   00004A   601C         JZ      ??Sys_ProcessEvent_5
-   \   00004C   85..82       MOV     DPL,?V0 + 0
-   \   00004F   85..83       MOV     DPH,?V0 + 1
-   \   000052   E0           MOVX    A,@DPTR
-   \   000053   24E6         ADD     A,#-0x1a
-   \   000055   6006         JZ      ??Sys_ProcessEvent_6
-   \   000057   2449         ADD     A,#0x49
-   \   000059   60B6         JZ      ??Sys_ProcessEvent_2
-   \   00005B   80D6         SJMP    ??Sys_ProcessEvent_4
+   \   00003F   12....       LCALL   ?Subroutine3 & 0xFFFF
+   \                     ??CrossCallReturnLabel_2:
+   \   000042   6025         JZ      ??Sys_ProcessEvent_5
+   \   000044   85..82       MOV     DPL,?V0 + 0
+   \   000047   85..83       MOV     DPH,?V0 + 1
+   \   00004A   E0           MOVX    A,@DPTR
+   \   00004B   24E6         ADD     A,#-0x1a
+   \   00004D   600A         JZ      ??Sys_ProcessEvent_6
+   \   00004F   245A         ADD     A,#0x5a
+   \   000051   6011         JZ      ??Sys_ProcessEvent_7
+   \   000053   24EF         ADD     A,#-0x11
+   \   000055   60BA         JZ      ??Sys_ProcessEvent_2
+   \   000057   80DA         SJMP    ??Sys_ProcessEvent_4
    \                     ??Sys_ProcessEvent_6:
-   \   00005D                ; Setup parameters for call to function Sys_MessageMSGCB
-   \   00005D   A9..         MOV     R1,?V0 + 2
-   \   00005F   AA..         MOV     R2,?V0 + 0
-   \   000061   AB..         MOV     R3,?V0 + 1
-   \   000063   12....       LCALL   ??Sys_MessageMSGCB?relay
-   \   000066   80CB         SJMP    ??Sys_ProcessEvent_4
-    378          		}
-    379          	  // return unprocessed events
-    380          		return (events ^ SYS_EVENT_MSG);
-   \                     ??Sys_ProcessEvent_5:
-   \   000068   EE           MOV     A,R6
-   \   000069   FA           MOV     R2,A
-   \   00006A   EF           MOV     A,R7
-   \   00006B   6480         XRL     A,#0x80
+   \   000059                ; Setup parameters for call to function Sys_MessageMSGCB
+   \   000059   A9..         MOV     R1,?V0 + 2
+   \   00005B   AA..         MOV     R2,?V0 + 0
+   \   00005D   AB..         MOV     R3,?V0 + 1
+   \   00005F   12....       LCALL   ??Sys_MessageMSGCB?relay
+   \   000062   80CF         SJMP    ??Sys_ProcessEvent_4
    \                     ??Sys_ProcessEvent_7:
-   \   00006D   FB           MOV     R3,A
-   \   00006E   8028         SJMP    ??Sys_ProcessEvent_8
-    381          	}
-    382          
-    383          	if(events & CLOSE_BIND_EVT)
-   \                     ??Sys_ProcessEvent_0:
-   \   000070   EE           MOV     A,R6
-   \   000071   5403         ANL     A,#0x3
-   \   000073   600E         JZ      ??Sys_ProcessEvent_9
-    384          	{
-    385          		HalLedSet(HAL_LED_1, HAL_LED_MODE_ON);
-   \   000075                ; Setup parameters for call to function HalLedSet
-   \   000075   7A01         MOV     R2,#0x1
-   \   000077   7901         MOV     R1,#0x1
-   \   000079   12....       LCALL   ??HalLedSet?relay
-    386          		return (events ^ CLOSE_BIND_EVT);
-   \   00007C   EE           MOV     A,R6
-   \   00007D   6403         XRL     A,#0x3
-   \                     ??Sys_ProcessEvent_10:
-   \   00007F   FA           MOV     R2,A
-   \   000080   EF           MOV     A,R7
-   \   000081   80EA         SJMP    ??Sys_ProcessEvent_7
-    387          	}
-    388          
-    389          	if(events & CLOSE_LIGHT_EVT)
-   \                     ??Sys_ProcessEvent_9:
-   \   000083   EE           MOV     A,R6
-   \   000084   5405         ANL     A,#0x5
-   \   000086   600C         JZ      ??Sys_ProcessEvent_11
-    390          	{
-    391          		HalLedSet(HAL_LED_ALL, HAL_LED_MODE_ON);
-   \   000088                ; Setup parameters for call to function HalLedSet
-   \   000088   7A01         MOV     R2,#0x1
-   \   00008A   790F         MOV     R1,#0xf
-   \   00008C   12....       LCALL   ??HalLedSet?relay
-    392          		return (events ^ CLOSE_LIGHT_EVT);
-   \   00008F   EE           MOV     A,R6
-   \   000090   6405         XRL     A,#0x5
-   \   000092   80EB         SJMP    ??Sys_ProcessEvent_10
-    393          	}
-    394          	// Discard unknown events
-    395          	return 0;
-   \                     ??Sys_ProcessEvent_11:
-   \   000094   7A00         MOV     R2,#0x0
-   \   000096   7B00         MOV     R3,#0x0
+   \   000064                ; Setup parameters for call to function Button_HandleKeys
+   \   000064   12....       LCALL   ?Subroutine2 & 0xFFFF
+   \                     ??CrossCallReturnLabel_0:
+   \   000067   80CA         SJMP    ??Sys_ProcessEvent_4
+    383          		}
+    384          	  // return unprocessed events
+    385          		return (events ^ SYS_EVENT_MSG);
+   \                     ??Sys_ProcessEvent_5:
+   \   000069   EE           MOV     A,R6
+   \   00006A   FA           MOV     R2,A
+   \   00006B   EF           MOV     A,R7
+   \   00006C   6480         XRL     A,#0x80
    \                     ??Sys_ProcessEvent_8:
-   \   000098                REQUIRE ?Subroutine1
-   \   000098                ; // Fall through to label ?Subroutine1
-    396          }
+   \   00006E   FB           MOV     R3,A
+   \   00006F   8028         SJMP    ??Sys_ProcessEvent_9
+    386          	}
+    387          
+    388          	if(events & CLOSE_BIND_EVT)
+   \                     ??Sys_ProcessEvent_0:
+   \   000071   EE           MOV     A,R6
+   \   000072   5403         ANL     A,#0x3
+   \   000074   600E         JZ      ??Sys_ProcessEvent_10
+    389          	{
+    390          		HalLedSet(HAL_LED_1, HAL_LED_MODE_ON);
+   \   000076                ; Setup parameters for call to function HalLedSet
+   \   000076   7A01         MOV     R2,#0x1
+   \   000078   7901         MOV     R1,#0x1
+   \   00007A   12....       LCALL   ??HalLedSet?relay
+    391          		return (events ^ CLOSE_BIND_EVT);
+   \   00007D   EE           MOV     A,R6
+   \   00007E   6403         XRL     A,#0x3
+   \                     ??Sys_ProcessEvent_11:
+   \   000080   FA           MOV     R2,A
+   \   000081   EF           MOV     A,R7
+   \   000082   80EA         SJMP    ??Sys_ProcessEvent_8
+    392          	}
+    393          
+    394          	if(events & CLOSE_LIGHT_EVT)
+   \                     ??Sys_ProcessEvent_10:
+   \   000084   EE           MOV     A,R6
+   \   000085   5405         ANL     A,#0x5
+   \   000087   600C         JZ      ??Sys_ProcessEvent_12
+    395          	{
+    396          		HalLedSet(HAL_LED_ALL, HAL_LED_MODE_ON);
+   \   000089                ; Setup parameters for call to function HalLedSet
+   \   000089   7A01         MOV     R2,#0x1
+   \   00008B   790F         MOV     R1,#0xf
+   \   00008D   12....       LCALL   ??HalLedSet?relay
+    397          		return (events ^ CLOSE_LIGHT_EVT);
+   \   000090   EE           MOV     A,R6
+   \   000091   6405         XRL     A,#0x5
+   \   000093   80EB         SJMP    ??Sys_ProcessEvent_11
+    398          	}
+    399          	// Discard unknown events
+    400          	return 0;
+   \                     ??Sys_ProcessEvent_12:
+   \   000095   7A00         MOV     R2,#0x0
+   \   000097   7B00         MOV     R3,#0x0
+   \                     ??Sys_ProcessEvent_9:
+   \   000099                REQUIRE ?Subroutine1
+   \   000099                ; // Fall through to label ?Subroutine1
+    401          }
 
    \                                 In  segment BANKED_CODE, align 1, keep-with-next
    \                     ?Subroutine1:
    \   000000   7F06         MOV     R7,#0x6
    \   000002   02....       LJMP    ?BANKED_LEAVE_XDATA
-    397          
-    398          
 
    \                                 In  segment BANKED_CODE, align 1, keep-with-next
-    399          UINT16 Button_ProcessEvent( byte task_id, UINT16 events )
+   \                     ?Subroutine3:
+   \   000000   12....       LCALL   ??osal_msg_receive?relay
+   \   000003   8A..         MOV     ?V0 + 0,R2
+   \   000005   8B..         MOV     ?V0 + 1,R3
+   \   000007   E5..         MOV     A,?V0 + 0
+   \   000009   45..         ORL     A,?V0 + 1
+   \   00000B   22           RET
+
+   \                                 In  segment BANKED_CODE, align 1, keep-with-next
+   \                     ?Subroutine2:
+   \   000000   A3           INC     DPTR
+   \   000001   A3           INC     DPTR
+   \   000002   A3           INC     DPTR
+   \   000003   E0           MOVX    A,@DPTR
+   \   000004   FA           MOV     R2,A
+   \   000005   85..82       MOV     DPL,?V0 + 0
+   \   000008   85..83       MOV     DPH,?V0 + 1
+   \   00000B   A3           INC     DPTR
+   \   00000C   A3           INC     DPTR
+   \   00000D   E0           MOVX    A,@DPTR
+   \   00000E   F9           MOV     R1,A
+   \   00000F   12....       LCALL   ??Button_HandleKeys?relay
+   \   000012   22           RET
+    402          
+    403          
+
+   \                                 In  segment BANKED_CODE, align 1, keep-with-next
+    404          UINT16 Button_ProcessEvent( byte task_id, UINT16 events )
    \                     Button_ProcessEvent:
-    400          {
+    405          {
    \   000000   74F2         MOV     A,#-0xe
    \   000002   12....       LCALL   ?BANKED_ENTER_XDATA
    \   000005                ; Saved register size: 14
    \   000005                ; Auto size: 0
-   \   000005   8A..         MOV     ?V0 + 0,R2
-   \   000007   8B..         MOV     ?V0 + 1,R3
-    401          	afIncomingMSGPacket_t *MSGpkt = NULL;
-    402          
-    403          	(void)task_id;  // Intentionally unreferenced parameter
-    404          
-    405          	if ( events & SYS_EVENT_MSG )
-   \   000009   EB           MOV     A,R3
-   \   00000A   5480         ANL     A,#0x80
-   \   00000C   6037         JZ      ??Button_ProcessEvent_0
-    406          	{
-    407              MSGpkt = (afIncomingMSGPacket_t *)osal_msg_receive( task_id );
-   \   00000E                ; Setup parameters for call to function osal_msg_receive
-   \   00000E   801D         SJMP    ??Button_ProcessEvent_1
-    408              while ( MSGpkt )
-    409              {
-    410                switch ( MSGpkt->hdr.event )
+   \   000005   EA           MOV     A,R2
+   \   000006   FE           MOV     R6,A
+   \   000007   EB           MOV     A,R3
+   \   000008   FF           MOV     R7,A
+    406          	afIncomingMSGPacket_t *MSGpkt = NULL;
+    407          	(void)task_id;  // Intentionally unreferenced parameter
+    408          
+    409          	if ( events & SYS_EVENT_MSG )
+   \   000009   5480         ANL     A,#0x80
+   \   00000B   6029         JZ      ??Button_ProcessEvent_0
+    410          	{
+    411              MSGpkt = (afIncomingMSGPacket_t *)osal_msg_receive( task_id );
+   \   00000D                ; Setup parameters for call to function osal_msg_receive
+   \   00000D   801A         SJMP    ??Button_ProcessEvent_1
+    412              while ( MSGpkt )
+    413              {
+    414                switch ( MSGpkt->hdr.event )
    \                     ??Button_ProcessEvent_2:
-   \   000010   8E82         MOV     DPL,R6
-   \   000012   8F83         MOV     DPH,R7
-   \   000014   E0           MOVX    A,@DPTR
-   \   000015   64C0         XRL     A,#0xc0
-   \   000017   7008         JNZ     ??Button_ProcessEvent_3
-    411                {
-    412                	case KEY_CHANGE:
-    413                		Button_HandleKeys( ((keyChange_t *)MSGpkt)->keys );
-   \   000019                ; Setup parameters for call to function Button_HandleKeys
-   \   000019   A3           INC     DPTR
-   \   00001A   A3           INC     DPTR
-   \   00001B   A3           INC     DPTR
-   \   00001C   E0           MOVX    A,@DPTR
-   \   00001D   F9           MOV     R1,A
-   \   00001E   12....       LCALL   ??Button_HandleKeys?relay
-    414                	break;
-    415                }
-    416                // Release the memory
-    417                osal_msg_deallocate( (uint8 *)MSGpkt );
-   \                     ??Button_ProcessEvent_3:
-   \   000021                ; Setup parameters for call to function osal_msg_deallocate
-   \   000021   EE           MOV     A,R6
-   \   000022   FA           MOV     R2,A
-   \   000023   EF           MOV     A,R7
-   \   000024   FB           MOV     R3,A
-   \   000025   12....       LCALL   ??osal_msg_deallocate?relay
-    418          
-    419                // Next
-    420                MSGpkt = (afIncomingMSGPacket_t *)osal_msg_receive( Button_TaskID );
-   \   000028                ; Setup parameters for call to function osal_msg_receive
-   \   000028   90....       MOV     DPTR,#Button_TaskID
-   \   00002B   E0           MOVX    A,@DPTR
-   \   00002C   F9           MOV     R1,A
+   \   00000F   85..82       MOV     DPL,?V0 + 0
+   \   000012   85..83       MOV     DPH,?V0 + 1
+   \   000015   E0           MOVX    A,@DPTR
+   \   000016   64C0         XRL     A,#0xc0
+   \   000018   7003         JNZ     ??CrossCallReturnLabel_1
+    415                {
+    416                	case KEY_CHANGE:
+    417                		Button_HandleKeys( ((keyChange_t *)MSGpkt)->state, ((keyChange_t *)MSGpkt)->keys );
+   \   00001A                ; Setup parameters for call to function Button_HandleKeys
+   \   00001A   12....       LCALL   ?Subroutine2 & 0xFFFF
+    418                	break;
+    419                }
+    420                // Release the memory
+    421                osal_msg_deallocate( (uint8 *)MSGpkt );
+   \                     ??CrossCallReturnLabel_1:
+   \   00001D                ; Setup parameters for call to function osal_msg_deallocate
+   \   00001D   AA..         MOV     R2,?V0 + 0
+   \   00001F   AB..         MOV     R3,?V0 + 1
+   \   000021   12....       LCALL   ??osal_msg_deallocate?relay
+    422          
+    423                // Next
+    424                MSGpkt = (afIncomingMSGPacket_t *)osal_msg_receive( Button_TaskID );
+   \   000024                ; Setup parameters for call to function osal_msg_receive
+   \   000024   90....       MOV     DPTR,#Button_TaskID
+   \   000027   E0           MOVX    A,@DPTR
+   \   000028   F9           MOV     R1,A
+    425              }
    \                     ??Button_ProcessEvent_1:
-   \   00002D   12....       LCALL   ??osal_msg_receive?relay
-   \   000030   8A..         MOV     ?V0 + 4,R2
-   \   000032   8B..         MOV     ?V0 + 5,R3
-   \   000034   AE..         MOV     R6,?V0 + 4
-   \   000036   AF..         MOV     R7,?V0 + 5
-    421              }
-   \   000038   EE           MOV     A,R6
-   \   000039   4F           ORL     A,R7
-   \   00003A   70D4         JNZ     ??Button_ProcessEvent_2
-    422              return (events ^ SYS_EVENT_MSG);
-   \   00003C   AA..         MOV     R2,?V0 + 0
-   \   00003E   E5..         MOV     A,?V0 + 1
-   \   000040   6480         XRL     A,#0x80
-   \   000042   FB           MOV     R3,A
-   \   000043   8004         SJMP    ??Button_ProcessEvent_4
-    423          	}
-    424            return 0;
+   \   000029   12....       LCALL   ?Subroutine3 & 0xFFFF
+   \                     ??CrossCallReturnLabel_3:
+   \   00002C   70E1         JNZ     ??Button_ProcessEvent_2
+    426              return (events ^ SYS_EVENT_MSG);
+   \   00002E   EE           MOV     A,R6
+   \   00002F   FA           MOV     R2,A
+   \   000030   EF           MOV     A,R7
+   \   000031   6480         XRL     A,#0x80
+   \                     ??Button_ProcessEvent_3:
+   \   000033   FB           MOV     R3,A
+   \   000034   8017         SJMP    ??Button_ProcessEvent_4
+    427          	}
+    428          	// for test!
+    429          	if(events & CLOSE_LIGHT_EVT)
    \                     ??Button_ProcessEvent_0:
-   \   000045   7A00         MOV     R2,#0x0
-   \   000047   7B00         MOV     R3,#0x0
+   \   000036   EE           MOV     A,R6
+   \   000037   5405         ANL     A,#0x5
+   \   000039   600E         JZ      ??Button_ProcessEvent_5
+    430          	{
+    431          		HalLedSet(HAL_LED_ALL, HAL_LED_MODE_ON);
+   \   00003B                ; Setup parameters for call to function HalLedSet
+   \   00003B   7A01         MOV     R2,#0x1
+   \   00003D   790F         MOV     R1,#0xf
+   \   00003F   12....       LCALL   ??HalLedSet?relay
+    432          		return (events ^ CLOSE_LIGHT_EVT);
+   \   000042   EE           MOV     A,R6
+   \   000043   6405         XRL     A,#0x5
+   \   000045   FA           MOV     R2,A
+   \   000046   EF           MOV     A,R7
+   \   000047   80EA         SJMP    ??Button_ProcessEvent_3
+    433          	}
+    434            return 0;
+   \                     ??Button_ProcessEvent_5:
+   \   000049   7A00         MOV     R2,#0x0
+   \   00004B   7B00         MOV     R3,#0x0
    \                     ??Button_ProcessEvent_4:
-   \   000049   80..         SJMP    ?Subroutine1
-    425          }
-    426          
-    427          
-    428          /*********************************************************************
-    429           * Event Generation Functions
-    430           */
-    431          
-    432          /*********************************************************************
-    433           * @fn      Button_HandleKeys
-    434           *
-    435           * @brief   Handles all key events for this device.
-    436           *
-    437           * @param   shift - true if in shift/alt.
-    438           * @param   keys - bit field for key events. Valid entries:
-    439           *                 HAL_KEY_SW_4
-    440           *                 HAL_KEY_SW_3
-    441           *                 HAL_KEY_SW_2
-    442           *                 HAL_KEY_SW_1
-    443           *
-    444           * @return  none
-    445           */
+   \   00004D   80..         SJMP    ?Subroutine1
+    435          }
+    436          
+    437          
+    438          /*********************************************************************
+    439           * Event Generation Functions
+    440           */
+    441          
+    442          /*********************************************************************
+    443           * @fn      Button_HandleKeys
+    444           *
+    445           * @brief   Handles all key events for this device.
+    446           *
+    447           * @param   shift - true if in shift/alt.
+    448           * @param   keys - bit field for key events. Valid entries:
+    449           *                 HAL_KEY_SW_4
+    450           *                 HAL_KEY_SW_3
+    451           *                 HAL_KEY_SW_2
+    452           *                 HAL_KEY_SW_1
+    453           *
+    454           * @return  none
+    455           */
 
    \                                 In  segment BANKED_CODE, align 1, keep-with-next
-    446          void Button_HandleKeys( byte keys )
+    456          void Button_HandleKeys( byte shift, byte keys )
    \                     Button_HandleKeys:
-    447          {
+    457          {
    \   000000   74F7         MOV     A,#-0x9
    \   000002   12....       LCALL   ?BANKED_ENTER_XDATA
    \   000005                ; Saved register size: 9
    \   000005                ; Auto size: 0
-   \   000005   E9           MOV     A,R1
+   \   000005   EA           MOV     A,R2
    \   000006   FE           MOV     R6,A
-    448          	
-    449          	// Shift is used to make each button/switch dual purpose.
-    450          	if ( keys_shift )
+    458          	
+    459          	// Shift is used to make each button/switch dual purpose.
+    460          	if ( keys_shift )
    \   000007   90....       MOV     DPTR,#keys_shift
    \   00000A   E0           MOVX    A,@DPTR
-   \   00000B   6026         JZ      ??Button_HandleKeys_0
-    451          	{
-    452          		// Allow Binding
-    453          		if ( keys & HAL_KEY_SW_1 )
+   \   00000B   6018         JZ      ??Button_HandleKeys_0
+    461          	{
+    462          		// Allow Binding
+    463          		if ( keys & HAL_KEY_SW_1 )
    \   00000D   EE           MOV     A,R6
    \   00000E   A2E0         MOV     C,0xE0 /* A   */.0
-   \   000010   5021         JNC     ??Button_HandleKeys_0
-    454          		{
-    455          			zb_AllowBind(10);
+   \   000010   501F         JNC     ??Button_HandleKeys_1
+    464          		{
+    465          			zb_AllowBind(10);
    \   000012                ; Setup parameters for call to function zb_AllowBind
    \   000012   790A         MOV     R1,#0xa
    \   000014   12....       LCALL   ??zb_AllowBind?relay
-    456          			HalLedSet(HAL_LED_1, HAL_LED_MODE_BLINK);
+    466          			HalLedSet(HAL_LED_1, HAL_LED_MODE_OFF);
    \   000017                ; Setup parameters for call to function HalLedSet
-   \   000017   7A02         MOV     R2,#0x2
+   \   000017   7A00         MOV     R2,#0x0
    \   000019   7901         MOV     R1,#0x1
    \   00001B   12....       LCALL   ??HalLedSet?relay
-    457          			osal_start_timerEx(Sys_TaskID, CLOSE_BIND_EVT, 10000);
-   \   00001E                ; Setup parameters for call to function osal_start_timerEx
-   \   00001E   7C10         MOV     R4,#0x10
-   \   000020   7D27         MOV     R5,#0x27
-   \   000022   7A03         MOV     R2,#0x3
-   \   000024   7B00         MOV     R3,#0x0
-   \   000026   90....       MOV     DPTR,#Sys_TaskID
-   \   000029   E0           MOVX    A,@DPTR
-   \   00002A   F9           MOV     R1,A
-   \   00002B   12....       LCALL   ??osal_start_timerEx?relay
-    458          			
-    459          			keys_shift = 0;
-   \   00002E   90....       MOV     DPTR,#keys_shift
-   \   000031   E4           CLR     A
-   \   000032   F0           MOVX    @DPTR,A
-    460          		}
-    461          		if ( keys & HAL_KEY_SW_2 )
-    462          		{
-    463          		}
-    464          		if ( keys & HAL_KEY_SW_3 )
-    465          		{
-    466          		}
-    467          		if ( keys & HAL_KEY_SW_4 )
-    468          		{
-    469          		}
-    470          	}
-    471          	else
-    472          	{
-    473          		if ( keys & HAL_KEY_SW_1 )
-    474          		{
-    475          		}
-    476          
-    477          		if ( keys & HAL_KEY_SW_2 )
-    478          		{/*
-    479          			HalLedSet ( HAL_LED_4, HAL_LED_MODE_OFF );
-    480          
-    481          			// 想绑定另一个端点
-    482          			dstAddr.addrMode = Addr16Bit;
-    483          			dstAddr.addr.shortAddr = 0x0000; 
-    484          			ZDP_EndDeviceBindReq( &dstAddr, NLME_GetShortAddr(), 
-    485          														Button_epDesc.endPoint,
-    486          														SENSORSYS_PROFID,
-    487          														SENSORSYS_MAX_CLUSTERS, (cId_t *)Button_ClusterList,
-    488          														SENSORSYS_MAX_CLUSTERS, (cId_t *)Button_ClusterList,
-    489          														FALSE );*/
-    490          		}
-    491          
-    492          		if ( keys & HAL_KEY_SW_3 )
-    493          		{
-    494          		}
-    495          		
-    496          		if ( keys & HAL_KEY_SW_4 )
-    497          		{
-    498          		/*	HalLedSet ( HAL_LED_4, HAL_LED_MODE_OFF );
-    499          			dstAddr.addrMode = AddrBroadcast;
-    500          			dstAddr.addr.shortAddr = NWK_BROADCAST_SHORTADDR;
-    501          			ZDP_MatchDescReq( &dstAddr, NWK_BROADCAST_SHORTADDR,
-    502          												SENSORSYS_PROFID,
-    503          												SENSORSYS_MAX_CLUSTERS, (cId_t *)Button_ClusterList,
-    504          												SENSORSYS_MAX_CLUSTERS, (cId_t *)Button_ClusterList,
-    505          												FALSE );
-    506          		*/
-    507          		}
-    508          	}
-    509          }
+    467          			// osal_start_timerEx(Sys_TaskID, CLOSE_BIND_EVT, 10000);
+    468          			
+    469          			keys_shift = 0;
+   \   00001E   90....       MOV     DPTR,#keys_shift
+   \   000021   E4           CLR     A
+   \   000022   F0           MOVX    @DPTR,A
+   \   000023   800C         SJMP    ??Button_HandleKeys_1
+    470          		}
+    471          		if ( keys & HAL_KEY_SW_2 )
+    472          		{
+    473          		}
+    474          		if ( keys & HAL_KEY_SW_3 )
+    475          		{
+    476          		}
+    477          		if ( keys & HAL_KEY_SW_4 )
+    478          		{
+    479          		}
+    480          	}
+    481          	else
+    482          	{
+    483          		if ( keys & HAL_KEY_SW_1 )
    \                     ??Button_HandleKeys_0:
-   \   000033                REQUIRE ?Subroutine0
-   \   000033                ; // Fall through to label ?Subroutine0
-    510          
-    511          
-    512          /*********************************************************************
-    513           * LOCAL FUNCTIONS
-    514           */
-    515          
-    516          /*********************************************************************
-    517           * @fn      Sys_MessageMSGCB
-    518           *
-    519           * @brief   Data message processor callback.  This function processes
-    520           *          any incoming data - probably from other devices.  So, based
-    521           *          on cluster ID, perform the intended action.
-    522           *
-    523           * @param   none
-    524           *
-    525           * @return  none
-    526           */
+   \   000025   EE           MOV     A,R6
+   \   000026   A2E0         MOV     C,0xE0 /* A   */.0
+   \   000028   5007         JNC     ??Button_HandleKeys_1
+    484          		{
+    485          			HalLedSet(HAL_LED_2, HAL_LED_MODE_ON);
+   \   00002A                ; Setup parameters for call to function HalLedSet
+   \   00002A   7A01         MOV     R2,#0x1
+   \   00002C   7902         MOV     R1,#0x2
+   \   00002E   12....       LCALL   ??HalLedSet?relay
+    486          		}
+    487          
+    488          		if ( keys & HAL_KEY_SW_2 )
+    489          		{/*
+    490          			HalLedSet ( HAL_LED_4, HAL_LED_MODE_OFF );
+    491          
+    492          			// 想绑定另一个端点
+    493          			dstAddr.addrMode = Addr16Bit;
+    494          			dstAddr.addr.shortAddr = 0x0000; 
+    495          			ZDP_EndDeviceBindReq( &dstAddr, NLME_GetShortAddr(), 
+    496          														Button_epDesc.endPoint,
+    497          														SENSORSYS_PROFID,
+    498          														SENSORSYS_MAX_CLUSTERS, (cId_t *)Button_ClusterList,
+    499          														SENSORSYS_MAX_CLUSTERS, (cId_t *)Button_ClusterList,
+    500          														FALSE );*/
+    501          		}
+    502          
+    503          		if ( keys & HAL_KEY_SW_3 )
+    504          		{
+    505          		}
+    506          		
+    507          		if ( keys & HAL_KEY_SW_4 )
+    508          		{
+    509          		/*	HalLedSet ( HAL_LED_4, HAL_LED_MODE_OFF );
+    510          			dstAddr.addrMode = AddrBroadcast;
+    511          			dstAddr.addr.shortAddr = NWK_BROADCAST_SHORTADDR;
+    512          			ZDP_MatchDescReq( &dstAddr, NWK_BROADCAST_SHORTADDR,
+    513          												SENSORSYS_PROFID,
+    514          												SENSORSYS_MAX_CLUSTERS, (cId_t *)Button_ClusterList,
+    515          												SENSORSYS_MAX_CLUSTERS, (cId_t *)Button_ClusterList,
+    516          												FALSE );
+    517          		*/
+    518          		}
+    519          	}
+    520          }
+   \                     ??Button_HandleKeys_1:
+   \   000031                REQUIRE ?Subroutine0
+   \   000031                ; // Fall through to label ?Subroutine0
+    521          
+    522          
+    523          /*********************************************************************
+    524           * LOCAL FUNCTIONS
+    525           */
+    526          
+    527          /*********************************************************************
+    528           * @fn      Sys_MessageMSGCB
+    529           *
+    530           * @brief   Data message processor callback.  This function processes
+    531           *          any incoming data - probably from other devices.  So, based
+    532           *          on cluster ID, perform the intended action.
+    533           *
+    534           * @param   none
+    535           *
+    536           * @return  none
+    537           */
 
    \                                 In  segment BANKED_CODE, align 1, keep-with-next
-    527          void Sys_MessageMSGCB( afIncomingMSGPacket_t *pkt, byte task_id )
+    538          void Sys_MessageMSGCB( afIncomingMSGPacket_t *pkt, byte task_id )
    \                     Sys_MessageMSGCB:
-    528          {
+    539          {
    \   000000   74F5         MOV     A,#-0xb
    \   000002   12....       LCALL   ?BANKED_ENTER_XDATA
    \   000005                ; Saved register size: 11
@@ -1094,7 +1135,7 @@ D:\ProgramData\Hardware\zigbee\Projects\zstack\Samples\SensorSys\Source\SensorSy
    \   00000B   FE           MOV     R6,A
    \   00000C   EB           MOV     A,R3
    \   00000D   FF           MOV     R7,A
-    529          	switch ( pkt->clusterId )
+    540          	switch ( pkt->clusterId )
    \   00000E   8E82         MOV     DPL,R6
    \   000010   8F83         MOV     DPH,R7
    \   000012   A3           INC     DPTR
@@ -1108,14 +1149,14 @@ D:\ProgramData\Hardware\zigbee\Projects\zstack\Samples\SensorSys\Source\SensorSy
    \   00001C   E0           MOVX    A,@DPTR
    \                     ??Sys_MessageMSGCB_0:
    \   00001D   706B         JNZ     ??Sys_MessageMSGCB_1
-    530          	{
-    531          		case SYS_CLUSTERID:
-    532              {
-    533          			char flag[4];
-    534          			osal_memcpy( flag, pkt->cmd.Data, 4 );
+    541          	{
+    542          		case SYS_CLUSTERID:
+    543              {
+    544          			char flag[4];
+    545          			osal_memcpy( flag, pkt->cmd.Data, 4 );
    \   00001F                ; Setup parameters for call to function osal_memcpy
-   \   00001F   12....       LCALL   ?Subroutine2 & 0xFFFF
-   \                     ??CrossCallReturnLabel_0:
+   \   00001F   12....       LCALL   ?Subroutine4 & 0xFFFF
+   \                     ??CrossCallReturnLabel_4:
    \   000022   F5..         MOV     ?V0 + 0,A
    \   000024   A3           INC     DPTR
    \   000025   E0           MOVX    A,@DPTR
@@ -1132,7 +1173,7 @@ D:\ProgramData\Hardware\zigbee\Projects\zstack\Samples\SensorSys\Source\SensorSy
    \   00003D   12....       LCALL   ??osal_memcpy?relay
    \   000040   7403         MOV     A,#0x3
    \   000042   12....       LCALL   ?DEALLOC_XSTACK8
-    535          			if( osal_memcmp( flag, "bind", 4) )
+    546          			if( osal_memcmp( flag, "bind", 4) )
    \   000045                ; Setup parameters for call to function osal_memcmp
    \   000045   75....       MOV     ?V0 + 0,#`?<Constant "bind">` & 0xff
    \   000048   75....       MOV     ?V0 + 1,#(`?<Constant "bind">` >> 8) & 0xff
@@ -1150,10 +1191,10 @@ D:\ProgramData\Hardware\zigbee\Projects\zstack\Samples\SensorSys\Source\SensorSy
    \   000064   12....       LCALL   ?DEALLOC_XSTACK8
    \   000067   E9           MOV     A,R1
    \   000068   6020         JZ      ??Sys_MessageMSGCB_1
-    536          			{
-    537          				if( pkt->cmd.Data[4] & MY_DEVICE )
-   \   00006A   12....       LCALL   ?Subroutine2 & 0xFFFF
-   \                     ??CrossCallReturnLabel_1:
+    547          			{
+    548          				if( pkt->cmd.Data[4] & MY_DEVICE )
+   \   00006A   12....       LCALL   ?Subroutine4 & 0xFFFF
+   \                     ??CrossCallReturnLabel_5:
    \   00006D   F8           MOV     R0,A
    \   00006E   A3           INC     DPTR
    \   00006F   E0           MOVX    A,@DPTR
@@ -1166,26 +1207,26 @@ D:\ProgramData\Hardware\zigbee\Projects\zstack\Samples\SensorSys\Source\SensorSy
    \   000078   E0           MOVX    A,@DPTR
    \   000079   A2E0         MOV     C,0xE0 /* A   */.0
    \   00007B   500D         JNC     ??Sys_MessageMSGCB_1
-    538          				{
-    539          					HalLedSet(HAL_LED_1, HAL_LED_MODE_OFF);		// Set Red LED ON
+    549          				{
+    550          					HalLedSet(HAL_LED_2, HAL_LED_MODE_OFF);		// Set Red LED ON
    \   00007D                ; Setup parameters for call to function HalLedSet
    \   00007D   7A00         MOV     R2,#0x0
-   \   00007F   7901         MOV     R1,#0x1
+   \   00007F   7902         MOV     R1,#0x2
    \   000081   12....       LCALL   ??HalLedSet?relay
-    540          			//		osal_start_timerEx(Sys_TaskID, CLOSE_BIND_EVT, 5000);		// Bind operation 5s timeout
-    541          					keys_shift = 1;
+    551          			//		osal_start_timerEx(Sys_TaskID, CLOSE_BIND_EVT, 5000);		// Bind operation 5s timeout
+    552          					keys_shift = 1;
    \   000084   90....       MOV     DPTR,#keys_shift
    \   000087   7401         MOV     A,#0x1
    \   000089   F0           MOVX    @DPTR,A
-    542          				}
-    543          			}
-    544          #if defined( WIN32 )
-    545          			WPRINTSTR( pkt->cmd.Data );
-    546          #endif
-    547          			break;
-    548              }
-    549          	}
-    550          }
+    553          				}
+    554          			}
+    555          #if defined( WIN32 )
+    556          			WPRINTSTR( pkt->cmd.Data );
+    557          #endif
+    558          			break;
+    559              }
+    560          	}
+    561          }
    \                     ??Sys_MessageMSGCB_1:
    \   00008A   7404         MOV     A,#0x4
    \   00008C   12....       LCALL   ?DEALLOC_XSTACK8
@@ -1193,7 +1234,7 @@ D:\ProgramData\Hardware\zigbee\Projects\zstack\Samples\SensorSys\Source\SensorSy
    \   000091   02....       LJMP    ?BANKED_LEAVE_XDATA
 
    \                                 In  segment BANKED_CODE, align 1, keep-with-next
-   \                     ?Subroutine2:
+   \                     ?Subroutine4:
    \   000000   EE           MOV     A,R6
    \   000001   2422         ADD     A,#0x22
    \   000003   F582         MOV     DPL,A
@@ -1202,214 +1243,214 @@ D:\ProgramData\Hardware\zigbee\Projects\zstack\Samples\SensorSys\Source\SensorSy
    \   000008   F583         MOV     DPH,A
    \   00000A   E0           MOVX    A,@DPTR
    \   00000B   22           RET
-    551          
-    552          /*********************************************************************
-    553           * @fn      Sys_SendMessage
-    554           *
-    555           * @brief   Send message.
-    556           *
-    557           * @param   none
-    558           *
-    559           * @return  none
-    560           *//*
-    561          void Sys_SendMessage( void )
-    562          {
-    563          	char theMessageData[] = "";
-    564          
-    565          	if ( AF_DataRequest( &Button_DstAddr, &Button_epDesc,
-    566          											 button_CLUSTERID,
-    567          											 (byte)osal_strlen( theMessageData ) + 1,
-    568          											 (byte *)&theMessageData,
-    569          											 &SensorSys_TransID,
-    570          											 AF_DISCV_ROUTE, AF_DEFAULT_RADIUS ) == afStatus_SUCCESS )
-    571          	{
-    572          		// Successfully requested to be sent.
-    573          	}
-    574          	else
-    575          	{
-    576          		// Error occurred in request to send.
-    577          	}
-    578          }
-    579          */
-    580          /******************************************************************************
-    581           * @fn          zb_ReceiveDataIndication
-    582           * 
-    583           * @brief       The zb_ReceiveDataIndication callback function is called
-    584           *              asynchronously by the ZigBee stack to notify the application
-    585           *              when data is received from a peer device.
-    586           *
-    587           * @param       source - The short address of the peer device that sent the data
-    588           *              command - The commandId associated with the data
-    589           *              len - The number of bytes in the pData parameter
-    590           *              pData - The data sent by the peer device
-    591           *
-    592           * @return      none
-    593           */
+    562          
+    563          /*********************************************************************
+    564           * @fn      Sys_SendMessage
+    565           *
+    566           * @brief   Send message.
+    567           *
+    568           * @param   none
+    569           *
+    570           * @return  none
+    571           *//*
+    572          void Sys_SendMessage( void )
+    573          {
+    574          	char theMessageData[] = "";
+    575          
+    576          	if ( AF_DataRequest( &Button_DstAddr, &Button_epDesc,
+    577          											 button_CLUSTERID,
+    578          											 (byte)osal_strlen( theMessageData ) + 1,
+    579          											 (byte *)&theMessageData,
+    580          											 &Sys_TransID,
+    581          											 AF_DISCV_ROUTE, AF_DEFAULT_RADIUS ) == afStatus_SUCCESS )
+    582          	{
+    583          		// Successfully requested to be sent.
+    584          	}
+    585          	else
+    586          	{
+    587          		// Error occurred in request to send.
+    588          	}
+    589          }
+    590          */
+    591          /******************************************************************************
+    592           * @fn          zb_ReceiveDataIndication
+    593           * 
+    594           * @brief       The zb_ReceiveDataIndication callback function is called
+    595           *              asynchronously by the ZigBee stack to notify the application
+    596           *              when data is received from a peer device.
+    597           *
+    598           * @param       source - The short address of the peer device that sent the data
+    599           *              command - The commandId associated with the data
+    600           *              len - The number of bytes in the pData parameter
+    601           *              pData - The data sent by the peer device
+    602           *
+    603           * @return      none
+    604           */
 
    \                                 In  segment BANKED_CODE, align 1, keep-with-next
-    594          void zb_ReceiveDataIndication( uint16 source, uint16 command, uint16 len, uint8 *pData  )
+    605          void zb_ReceiveDataIndication( uint16 source, uint16 command, uint16 len, uint8 *pData  )
    \                     zb_ReceiveDataIndication:
-    595          {
+    606          {
    \   000000   C082         PUSH    DPL
    \   000002   C083         PUSH    DPH
    \   000004                ; Saved register size: 2
    \   000004                ; Auto size: 0
-    596            if (command == BUTTON_CMD_ID)
+    607            if (command == BUTTON_CMD_ID)
    \   000004   7401         MOV     A,#0x1
    \   000006   6C           XRL     A,R4
    \   000007   7001         JNZ     ??zb_ReceiveDataIndication_0
    \   000009   ED           MOV     A,R5
    \                     ??zb_ReceiveDataIndication_0:
    \   00000A   7007         JNZ     ??zb_ReceiveDataIndication_1
-    597            {
-    598              // Received application command to toggle the LED
-    599              HalLedSet(HAL_LED_2, HAL_LED_MODE_BLINK);
+    608            {
+    609              // Received application command to toggle the LED
+    610              HalLedSet(HAL_LED_2, HAL_LED_MODE_ON);
    \   00000C                ; Setup parameters for call to function HalLedSet
-   \   00000C   7A02         MOV     R2,#0x2
+   \   00000C   7A01         MOV     R2,#0x1
    \   00000E   7902         MOV     R1,#0x2
    \   000010   12....       LCALL   ??HalLedSet?relay
-    600            }
-    601          }
+    611            }
+    612          }
    \                     ??zb_ReceiveDataIndication_1:
    \   000013   D083         POP     DPH
    \   000015   D082         POP     DPL
    \   000017   02....       LJMP    ?BRET
-    602          /*********************************************************************
-    603          *********************************************************************/
-    604          /******************************************************************************
-    605           * @fn          zb_StartConfirm
-    606           *
-    607           * @brief       The zb_StartConfirm callback is called by the ZigBee stack
-    608           *              after a start request operation completes
-    609           *
-    610           * @param       status - The status of the start operation.  Status of
-    611           *                       ZB_SUCCESS indicates the start operation completed
-    612           *                       successfully.  Else the status is an error code.
-    613           *
-    614           * @return      none
-    615           */
+    613          /*********************************************************************
+    614          *********************************************************************/
+    615          /******************************************************************************
+    616           * @fn          zb_StartConfirm
+    617           *
+    618           * @brief       The zb_StartConfirm callback is called by the ZigBee stack
+    619           *              after a start request operation completes
+    620           *
+    621           * @param       status - The status of the start operation.  Status of
+    622           *                       ZB_SUCCESS indicates the start operation completed
+    623           *                       successfully.  Else the status is an error code.
+    624           *
+    625           * @return      none
+    626           */
 
    \                                 In  segment BANKED_CODE, align 1, keep-with-next
-    616          void zb_StartConfirm( uint8 status )
+    627          void zb_StartConfirm( uint8 status )
    \                     zb_StartConfirm:
-    617          {
+    628          {
    \   000000   74F7         MOV     A,#-0x9
    \   000002   12....       LCALL   ?BANKED_ENTER_XDATA
    \   000005                ; Saved register size: 9
    \   000005                ; Auto size: 0
    \   000005   E9           MOV     A,R1
-    618            if ( status == ZB_SUCCESS )
+    629            if ( status == ZB_SUCCESS )
    \   000006   7008         JNZ     ??zb_StartConfirm_0
-    619            {
-    620              myAppState = APP_START;
+    630            {
+    631              myAppState = APP_START;
    \   000008   90....       MOV     DPTR,#myAppState
    \   00000B   7401         MOV     A,#0x1
    \   00000D   F0           MOVX    @DPTR,A
    \   00000E   8007         SJMP    ??zb_StartConfirm_1
-    621            }
-    622            else
-    623            {
-    624              // Try again later with a delay
-    625              
-    626              HalLedSet(HAL_LED_1, HAL_LED_MODE_BLINK);
+    632            }
+    633            else
+    634            {
+    635              // Try again later with a delay
+    636              
+    637              HalLedSet(HAL_LED_1, HAL_LED_MODE_BLINK);
    \                     ??zb_StartConfirm_0:
    \   000010                ; Setup parameters for call to function HalLedSet
    \   000010   7A02         MOV     R2,#0x2
    \   000012   7901         MOV     R1,#0x1
    \   000014   12....       LCALL   ??HalLedSet?relay
-    627            }
-    628          }
+    638            }
+    639          }
    \                     ??zb_StartConfirm_1:
    \   000017   02....       LJMP    ?Subroutine0 & 0xFFFF
-    629          /******************************************************************************
-    630           * @fn          zb_SendDataConfirm
-    631           *
-    632           * @brief       The zb_SendDataConfirm callback function is called by the
-    633           *              ZigBee after a send data operation completes
-    634           *
-    635           * @param       handle - The handle identifying the data transmission.
-    636           *              status - The status of the operation.
-    637           *
-    638           * @return      none
-    639           */
-
-   \                                 In  segment BANKED_CODE, align 1, keep-with-next
-    640          void zb_SendDataConfirm( uint8 handle, uint8 status )
-   \                     zb_SendDataConfirm:
-    641          {
-   \   000000                ; Saved register size: 0
-   \   000000                ; Auto size: 0
-    642          }
-   \   000000   02....       LJMP    ?BRET
-    643          /******************************************************************************
-    644           * @fn          zb_BindConfirm
+    640          /******************************************************************************
+    641           * @fn          zb_SendDataConfirm
+    642           *
+    643           * @brief       The zb_SendDataConfirm callback function is called by the
+    644           *              ZigBee after a send data operation completes
     645           *
-    646           * @brief       The zb_BindConfirm callback is called by the ZigBee stack
-    647           *              after a bind operation completes.
+    646           * @param       handle - The handle identifying the data transmission.
+    647           *              status - The status of the operation.
     648           *
-    649           * @param       commandId - The command ID of the binding being confirmed.
-    650           *              status - The status of the bind operation.
-    651           *
-    652           * @return      none
-    653           */
+    649           * @return      none
+    650           */
 
    \                                 In  segment BANKED_CODE, align 1, keep-with-next
-    654          void zb_BindConfirm( uint16 commandId, uint8 status )
-   \                     zb_BindConfirm:
-    655          {
+    651          void zb_SendDataConfirm( uint8 handle, uint8 status )
+   \                     zb_SendDataConfirm:
+    652          {
    \   000000                ; Saved register size: 0
    \   000000                ; Auto size: 0
-    656          }
+    653          }
    \   000000   02....       LJMP    ?BRET
-    657          /******************************************************************************
-    658           * @fn          zb_AllowBindConfirm
+    654          /******************************************************************************
+    655           * @fn          zb_BindConfirm
+    656           *
+    657           * @brief       The zb_BindConfirm callback is called by the ZigBee stack
+    658           *              after a bind operation completes.
     659           *
-    660           * @brief       Indicates when another device attempted to bind to this device
-    661           *
-    662           * @param
-    663           *
-    664           * @return      none
-    665           */
+    660           * @param       commandId - The command ID of the binding being confirmed.
+    661           *              status - The status of the bind operation.
+    662           *
+    663           * @return      none
+    664           */
 
    \                                 In  segment BANKED_CODE, align 1, keep-with-next
-    666          void zb_AllowBindConfirm( uint16 source )
-   \                     zb_AllowBindConfirm:
-    667          {
+    665          void zb_BindConfirm( uint16 commandId, uint8 status )
+   \                     zb_BindConfirm:
+    666          {
    \   000000                ; Saved register size: 0
    \   000000                ; Auto size: 0
-    668          }
+    667          }
    \   000000   02....       LJMP    ?BRET
-    669          /******************************************************************************
-    670           * @fn          zb_FindDeviceConfirm
-    671           *
-    672           * @brief       The zb_FindDeviceConfirm callback function is called by the
-    673           *              ZigBee stack when a find device operation completes.
+    668          /******************************************************************************
+    669           * @fn          zb_AllowBindConfirm
+    670           *
+    671           * @brief       Indicates when another device attempted to bind to this device
+    672           *
+    673           * @param
     674           *
-    675           * @param       searchType - The type of search that was performed.
-    676           *              searchKey - Value that the search was executed on.
-    677           *              result - The result of the search.
-    678           *
-    679           * @return      none
-    680           */
+    675           * @return      none
+    676           */
 
    \                                 In  segment BANKED_CODE, align 1, keep-with-next
-    681          void zb_FindDeviceConfirm( uint8 searchType, uint8 *searchKey, uint8 *result )
-   \                     zb_FindDeviceConfirm:
-    682          {
+    677          void zb_AllowBindConfirm( uint16 source )
+   \                     zb_AllowBindConfirm:
+    678          {
    \   000000                ; Saved register size: 0
    \   000000                ; Auto size: 0
-    683          }
+    679          }
    \   000000   02....       LJMP    ?BRET
-    684          
+    680          /******************************************************************************
+    681           * @fn          zb_FindDeviceConfirm
+    682           *
+    683           * @brief       The zb_FindDeviceConfirm callback function is called by the
+    684           *              ZigBee stack when a find device operation completes.
+    685           *
+    686           * @param       searchType - The type of search that was performed.
+    687           *              searchKey - Value that the search was executed on.
+    688           *              result - The result of the search.
+    689           *
+    690           * @return      none
+    691           */
 
    \                                 In  segment BANKED_CODE, align 1, keep-with-next
-    685          void zb_HandleOsalEvent( uint16 event )
-   \                     zb_HandleOsalEvent:
-    686          {
+    692          void zb_FindDeviceConfirm( uint8 searchType, uint8 *searchKey, uint8 *result )
+   \                     zb_FindDeviceConfirm:
+    693          {
    \   000000                ; Saved register size: 0
    \   000000                ; Auto size: 0
-    687          
-    688          }
+    694          }
+   \   000000   02....       LJMP    ?BRET
+    695          
+
+   \                                 In  segment BANKED_CODE, align 1, keep-with-next
+    696          void zb_HandleOsalEvent( uint16 event )
+   \                     zb_HandleOsalEvent:
+    697          {
+   \   000000                ; Saved register size: 0
+   \   000000                ; Auto size: 0
+    698          
+    699          }
    \   000000   02....       LJMP    ?BRET
 
    \                                 In  segment XDATA_ID, align 1, keep-with-next
@@ -1495,21 +1536,22 @@ D:\ProgramData\Hardware\zigbee\Projects\zstack\Samples\SensorSys\Source\SensorSy
      Button_HandleKeys              0      0     23
        -> zb_AllowBind              0      0     18
        -> HalLedSet                 0      0     18
-       -> osal_start_timerEx        0      0     18
+       -> HalLedSet                 0      0     18
      Button_Init                    0      0      9
        -> afRegister                0      0     18
-       -> RegisterForKeys           0      0     18
        -> ZDO_RegisterForZDOMsg     0      0     18
+       -> HalLedSet                 0      0     18
+       -> HalLedSet                 0      0     18
+       -> HalLedSet                 0      0     18
      Button_ProcessEvent            0      0     14
        -> osal_msg_receive          0      0     28
        -> Button_HandleKeys         0      0     28
        -> osal_msg_deallocate       0      0     28
        -> osal_msg_receive          0      0     28
+       -> HalLedSet                 0      0     28
      Sys_Init                       0      0      9
        -> afRegister                0      0     18
-       -> HalLedSet                 0      0     18
-       -> HalLedSet                 0      0     18
-       -> HalLedSet                 0      0     18
+       -> RegisterForKeys           0      0     18
      Sys_MessageMSGCB               0      0     32
        -> osal_memcpy               0      0     36
        -> osal_memcmp               0      0     36
@@ -1520,6 +1562,7 @@ D:\ProgramData\Hardware\zigbee\Projects\zstack\Samples\SensorSys\Source\SensorSy
        -> osal_msg_deallocate       0      0     28
        -> osal_msg_receive          0      0     28
        -> Sys_MessageMSGCB          0      0     28
+       -> Button_HandleKeys         0      0     28
        -> HalLedSet                 0      0     28
        -> HalLedSet                 0      0     28
      zb_AllowBindConfirm            0      0      0
@@ -1550,19 +1593,21 @@ D:\ProgramData\Hardware\zigbee\Projects\zstack\Samples\SensorSys\Source\SensorSy
      keys_shift                          1
      Sys_TaskID                          1
      Button_TaskID                       1
-     SensorSys_NwkState                  1
-     SensorSys_TransID                   1
+     Sys_NwkState                        1
+     Sys_TransID                         1
      Broadcast_DstAddr                  12
      Button_DstAddr                     12
-     Sys_Init                           90
+     Sys_Init                           75
      ?Subroutine0                        5
-     Button_Init                        88
-     Sys_ProcessEvent                  152
+     Button_Init                        95
+     Sys_ProcessEvent                  153
      ?Subroutine1                        5
-     Button_ProcessEvent                75
-     Button_HandleKeys                  51
+     ?Subroutine3                       12
+     ?Subroutine2                       19
+     Button_ProcessEvent                79
+     Button_HandleKeys                  49
      Sys_MessageMSGCB                  148
-     ?Subroutine2                       12
+     ?Subroutine4                       12
      zb_ReceiveDataIndication           26
      zb_StartConfirm                    26
      zb_SendDataConfirm                  3
@@ -1587,14 +1632,14 @@ D:\ProgramData\Hardware\zigbee\Projects\zstack\Samples\SensorSys\Source\SensorSy
      ?<Constant "bind">                  5
 
  
- 693 bytes in segment BANKED_CODE
+ 719 bytes in segment BANKED_CODE
   78 bytes in segment BANK_RELAYS
   10 bytes in segment XDATA_I
   10 bytes in segment XDATA_ID
   55 bytes in segment XDATA_ROM_C
   42 bytes in segment XDATA_Z
  
- 781 bytes of CODE  memory
+ 807 bytes of CODE  memory
   55 bytes of CONST memory
   52 bytes of XDATA memory
 
