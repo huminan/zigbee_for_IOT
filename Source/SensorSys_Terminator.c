@@ -177,6 +177,7 @@ endPointDesc_t Button_epDesc;
  */
 static uint8 myAppState = APP_INIT;
 static uint8 keys_shift = 0;
+static uint8 type_join;
 
 byte Sys_TaskID;
 byte Button_TaskID;   // Task ID for internal task/event processing
@@ -194,6 +195,7 @@ afAddrType_t Button_DstAddr;
  * LOCAL FUNCTIONS
  */
 void Sys_Init( byte task_id );
+void Sensor_AllowBind ( uint8 timeout );
 void Button_Init( byte task_id );
 UINT16 Button_ProcessEvent( byte task_id, UINT16 events );
 void Button_HandleKeys( byte shift, byte keys );
@@ -385,6 +387,11 @@ UINT16 Sys_ProcessEvent( byte task_id, UINT16 events )
 		return (events ^ SYS_EVENT_MSG);
 	}
 
+	if(events & ALLOW_BIND_TIMER)
+	{
+		afSetMatch(type_join, FALSE);
+		return (events ^ ALLOW_BIND_TIMER);
+	}
 	if(events & CLOSE_BIND_EVT)
 	{
 		HalLedSet(HAL_LED_1, HAL_LED_MODE_ON);
@@ -462,11 +469,19 @@ void Button_HandleKeys( byte shift, byte keys )
 		// Allow Binding
 		if ( keys & HAL_KEY_SW_1 )
 		{
-			zb_AllowBind(10);
-			HalLedSet(HAL_LED_1, HAL_LED_MODE_OFF);
+			if(type_join)
+			{
+				Sensor_AllowBind(10);
+				HalLedSet(HAL_LED_1, HAL_LED_MODE_OFF);
 			// osal_start_timerEx(Sys_TaskID, CLOSE_BIND_EVT, 10000);
 			
-			keys_shift = 0;
+				keys_shift = 0;
+				type_join = 0;
+			}
+			else
+			{
+				// wrong endpoint the presend send to
+			}
 		}
 		if ( keys & HAL_KEY_SW_2 )
 		{
@@ -547,6 +562,7 @@ void Sys_MessageMSGCB( afIncomingMSGPacket_t *pkt, byte task_id )
 			{
 				if( pkt->cmd.Data[4] & MY_DEVICE )
 				{
+					type_join = pkt->cmd.Data[5];
 					HalLedSet(HAL_LED_2, HAL_LED_MODE_OFF);		// Set Red LED ON
 			//		osal_start_timerEx(Sys_TaskID, CLOSE_BIND_EVT, 5000);		// Bind operation 5s timeout
 					keys_shift = 1;
@@ -696,4 +712,46 @@ void zb_FindDeviceConfirm( uint8 searchType, uint8 *searchKey, uint8 *result )
 void zb_HandleOsalEvent( uint16 event )
 {
 
+}
+
+/******************************************************************************
+ * @fn          Sensor_AllowBind
+ *
+ * @brief       The zb_AllowBind function puts the device into the
+ *              Allow Binding Mode for a given period of time.  A peer device
+ *              can establish a binding to a device in the Allow Binding Mode
+ *              by calling zb_BindDevice with a destination address of NULL
+ *
+ * @param       timeout - The number of seconds to remain in the allow binding
+ *                        mode.  Valid values range from 1 through 65.
+ *                        If 0, the Allow Bind mode will be set false without TO
+ *                        If greater than 64, the Allow Bind mode will be true
+ *
+ * @return      ZB_SUCCESS if the device entered the allow bind mode, else
+ *              an error code.
+ */
+
+void Sensor_AllowBind ( uint8 timeout )
+{
+
+  //HalLedSet(HAL_LED_1, HAL_LED_MODE_FLASH);
+  osal_stop_timerEx(Sys_TaskID, ALLOW_BIND_TIMER);
+
+  if ( timeout == 0 )
+  {
+    afSetMatch(type_join, FALSE);
+  }
+  else
+  {
+    afSetMatch(type_join, TRUE);
+    if ( timeout != 0xFF )
+    {
+      if ( timeout > 64 )
+      {
+        timeout = 64;
+      }
+      osal_start_timerEx(Sys_TaskID, ALLOW_BIND_TIMER, timeout*1000);
+    }
+  }
+  return;
 }

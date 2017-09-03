@@ -192,6 +192,7 @@ afAddrType_t Button_DstAddr;
 
 static uint8 sysSeqNumber = 0;    // 在端点间数据交流时被使用zb_SendDataRequest
 
+static uint16 button_bindInProgress;
 /*********************************************************************
  * LOCAL FUNCTIONS
  */
@@ -203,6 +204,9 @@ void Sys_ProcessZDOMsgs( zdoIncomingMsg_t *inMsg, byte task_id );
 void Button_HandleKeys( byte shift, byte keys );
 void Sys_MessageMSGCB( afIncomingMSGPacket_t *pckt, byte task_id );
 void Sys_SendPreBindMessage( byte type_id );
+
+uint8 typeID2pointID(char type);
+
 
 /*********************************************************************
  * NETWORK LAYER CALLBACKS
@@ -469,7 +473,7 @@ void Sys_ProcessZDOMsgs( zdoIncomingMsg_t *inMsg , byte task_id )
       break;
 
     case Match_Desc_rsp:
-      {
+      { 
         zAddrType_t dstAddr;
         ZDO_ActiveEndpointRsp_t *pRsp = ZDO_ParseEPListRsp( inMsg );
         if ( pRsp )
@@ -506,6 +510,50 @@ void Sys_ProcessZDOMsgs( zdoIncomingMsg_t *inMsg , byte task_id )
             }
           }
           osal_mem_free( pRsp );
+        }
+      }
+      break;
+  }
+}
+
+
+void Button_ProcessZDOMsgs( zdoIncomingMsg_t *inMsg )
+{
+  switch ( inMsg->clusterID )
+  {
+    case NWK_addr_rsp:
+      {
+        // Send find device callback to application
+        ZDO_NwkIEEEAddrResp_t *pNwkAddrRsp = ZDO_ParseAddrRsp( inMsg );
+        SAPI_FindDeviceConfirm( ZB_IEEE_SEARCH, (uint8*)&pNwkAddrRsp->nwkAddr, pNwkAddrRsp->extAddr );
+      }
+      break;
+
+    case Match_Desc_rsp:
+      {
+        zAddrType_t dstAddr;
+        ZDO_ActiveEndpointRsp_t *pRsp = ZDO_ParseEPListRsp( inMsg );
+
+        if ( button_bindInProgress != 0xffff )
+        {
+          // Create a binding table entry
+          dstAddr.addrMode = Addr16Bit;
+          dstAddr.addr.shortAddr = pRsp->nwkAddr;
+
+          if ( APSME_BindRequest( sapi_epDesc.simpleDesc->EndPoint,
+                     button_bindInProgress, &dstAddr, pRsp->epList[0] ) == ZSuccess )
+          {
+            osal_stop_timerEx(sapi_TaskID,  ZB_BIND_TIMER);
+            osal_start_timerEx( ZDAppTaskID, ZDO_NWK_UPDATE_NV, 250 );
+
+            // Find IEEE addr
+            ZDP_IEEEAddrReq( pRsp->nwkAddr, ZDP_ADDR_REQTYPE_SINGLE, 0, 0 );             
+            // Send bind confirm callback to application
+#if ( SAPI_CB_FUNC )
+            zb_BindConfirm( button_bindInProgress, ZB_SUCCESS );
+#endif
+            button_bindInProgress = 0xffff;
+          }
         }
       }
       break;
@@ -622,13 +670,16 @@ void Sys_MessageMSGCB( afIncomingMSGPacket_t *pkt, byte task_id )
 void Sys_SendPreBindMessage( byte type_id )
 {
   afAddrType_t dstAddr;
+  uint8 endPoint_ID;
 
   dstAddr.addr.shortAddr = 0xFFFF;
   dstAddr.addrMode = (afAddrMode_t)AddrBroadcast;
   dstAddr.endPoint = Sys_epDesc.simpleDesc->EndPoint;
 
-  char theMessageData[5] = "bind";
+  char theMessageData[6] = "bind";
   theMessageData[4] = type_id;
+  endPoint_ID = typeID2pointID(type_id);
+  theMessageData[5] = endPoint_ID;
 
   if ( AF_DataRequest( &dstAddr, &Sys_epDesc,
                        SYS_CLUSTERID,
@@ -769,4 +820,106 @@ void zb_ReceiveDataIndication( uint16 source, uint16 command, uint16 len, uint8 
 void zb_HandleOsalEvent( uint16 event )
 {
 
+}
+
+uint8 typeID2pointID(char type)
+{
+  uint8 rst = 0;
+  for(char i = 0; i < 8; i++)
+  {
+    if(type)
+    {
+      rst++;
+      type = type >> 1;
+    }
+  }
+}
+
+/******************************************************************************
+ * @fn          zb_BindDevice
+ *
+ * @brief       The zb_BindDevice function establishes or removes a ‘binding? *              between two devices.  Once bound, an application can send
+ *              messages to a device by referencing the commandId for the
+ *              binding.
+ *
+ * @param       create - TRUE to create a binding, FALSE to remove a binding
+ *              commandId - The identifier of the binding
+ *              pDestination - The 64-bit IEEE address of the device to bind to
+ *
+ * @return      The status of the bind operation is returned in the
+ *              zb_BindConfirm callback.
+ */
+void Sensor_BindDevice ( uint8 create, uint16 commandId, uint8 *pDestination )
+{
+  zAddrType_t destination;
+  uint8 ret = ZB_ALREADY_IN_PROGRESS;
+
+  if ( create )
+  {
+    if (sapi_bindInProgress == 0xffff)
+    {
+      if ( pDestination )
+      {
+        destination.addrMode = Addr64Bit;
+        osal_cpyExtAddr( destination.addr.extAddr, pDestination );
+
+        ret = APSME_BindRequest( sapi_epDesc.endPoint, commandId,
+                                            &destination, sapi_epDesc.endPoint );
+
+        if ( ret == ZSuccess )
+        {
+          // Find nwk addr
+          ZDP_NwkAddrReq(pDestination, ZDP_ADDR_REQTYPE_SINGLE, 0, 0 );
+          osal_start_timerEx( ZDAppTaskID, ZDO_NWK_UPDATE_NV, 250 );
+        }
+      }
+      else
+      {
+        ret = ZB_INVALID_PARAMETER;
+        destination.addrMode = Addr16Bit;
+        destination.addr.shortAddr = NWK_BROADCAST_SHORTADDR;
+        if ( ZDO_AnyClusterMatches( 1, &commandId, sapi_epDesc.simpleDesc->AppNumOutClusters,
+                                                sapi_epDesc.simpleDesc->pAppOutClusterList ) )
+        {
+          // Try to match with a device in the allow bind mode
+          ret = ZDP_MatchDescReq( &destination, NWK_BROADCAST_SHORTADDR,
+              sapi_epDesc.simpleDesc->AppProfId, 1, &commandId, 0, (cId_t *)NULL, 0 );
+        }
+        else if ( ZDO_AnyClusterMatches( 1, &commandId, sapi_epDesc.simpleDesc->AppNumInClusters,
+                                                sapi_epDesc.simpleDesc->pAppInClusterList ) )
+        {
+          ret = ZDP_MatchDescReq( &destination, NWK_BROADCAST_SHORTADDR,
+              sapi_epDesc.simpleDesc->AppProfId, 0, (cId_t *)NULL, 1, &commandId, 0 );
+        }
+
+        if ( ret == ZB_SUCCESS )
+        {
+          // Set a timer to make sure bind completes
+#if ( ZG_BUILD_RTR_TYPE )
+          osal_start_timerEx(sapi_TaskID, ZB_BIND_TIMER, AIB_MaxBindingTime);
+#else
+          // AIB_MaxBindingTime is not defined for an End Device
+          osal_start_timerEx(sapi_TaskID, ZB_BIND_TIMER, zgApsDefaultMaxBindingTime);
+#endif
+          sapi_bindInProgress = commandId;
+          return; // dont send cback event
+        }
+      }
+    }
+
+    SAPI_SendCback( SAPICB_BIND_CNF, ret, commandId );
+  }
+  else
+  {
+    // Remove local bindings for the commandId
+    BindingEntry_t *pBind;
+
+    // Loop through bindings an remove any that match the cluster
+    while ( pBind = bindFind( sapi_epDesc.simpleDesc->EndPoint, commandId, 0 ) )
+    {
+      bindRemoveEntry(pBind);
+    }
+    osal_start_timerEx( ZDAppTaskID, ZDO_NWK_UPDATE_NV, 250 );
+  }
+  return;
 }
