@@ -31,3 +31,21 @@ allowbind 怎么取消
 		解决方法：先看看 C：zb_binddevice(button_cmd_id这个东西用来作什么的)
 				 应使 T 识别 button_cmd_id 来调用不同的 allowbind 函数（使用函数指针）来绑定不同的端点
 					或在预绑定中调节
+
+Terminator 的 Sys_ProcessEvent 也进不去了...
+	找到错误所在了：在sapi中进行了 ZB_ENTRY_EVENT 之后便无法使用
+		ZDOInitDevice 查看是否这个函数调用之后出现问题
+		ps: 加入网络成功了，但是...不知道发生了什么
+
+Terminator 在启动之后会一直循环一个闪烁 LED1 的动作
+		   此时只能识别按键1
+
+	与sapi无关
+
+	可能是板子的底层出问题了，明天换另一个试试
+	--板子没有问题
+
+	在Sys的 ZDO_CHANGE 中定义了延时事件就会出现问题无法启动COOR网络
+	但是不适用于END
+
+	可能问题出在了初始化设备为ENDDEVICE设备上，在INIT中

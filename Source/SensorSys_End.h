@@ -39,8 +39,8 @@
 #include <stdio.h>
 #include <string.h>
 
-#ifndef SENSORSYS_H
-#define SENSORSYS_H
+#ifndef END_H
+#define END_H
 
 #ifdef __cplusplus
 extern "C"
@@ -55,6 +55,9 @@ extern "C"
 /*********************************************************************
  * CONSTANTS
  */
+#define MY_DEVICE   BUTTON_TYPE_ID
+
+
 #define APP_INIT                           0
 #define APP_START                          1
 
@@ -77,9 +80,12 @@ extern "C"
 // Application Events (OSAL) - These are bit weighted definitions.
 #define SYS_SEND_MSG_EVT       0x0001
 #define MATCH_BIND_EVT         0x0002
-#define CLOSE_BIND_EVT         0x0003
-#define CLOSE_LIGHT_EVT        0x0005
-#define CONFIG_OPTION_EVT      0x0004
+#define CLOSE_BIND_EVT         0x0004
+#define CLOSE_LIGHT_EVT        0x0008
+#define CONFIG_OPTION_EVT      0x0010
+
+#define ALLOW_BIND_TIMER       0x0040
+
 
 // Cluster IDs
 #define SYS_MAX_CLUSTERS       1
@@ -101,15 +107,16 @@ extern "C"
 /*********************************************************************
  * MACROS
  */
+extern byte Sys_TaskID;
+extern byte Button_TaskID;
+extern uint8 ZDAppTaskID;
+extern endPointDesc_t Button_epDesc;
 
 /*********************************************************************
  * FUNCTIONS
  */
 
-
-
-extern uint8 ZDAppTaskID;
-
+extern void Sensor_AllowBind ( uint8 timeout );
 
 /*
  * Task Initialization for the Generic Application
@@ -121,6 +128,9 @@ extern void Button_Init( byte task_id );
  */
 extern UINT16 Sys_ProcessEvent( byte task_id, UINT16 events );
 extern UINT16 Button_ProcessEvent( byte task_id, UINT16 events );
+
+extern void osalAddTasks( void );
+
 /*********************************************************************
 *********************************************************************/
 

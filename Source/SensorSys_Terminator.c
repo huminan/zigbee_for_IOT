@@ -60,14 +60,12 @@
 /*********************************************************************
  * INCLUDES
  */
-#include "OSAL.h"
 #include "AF.h"
-#include "ZDApp.h"
 #include "ZDObject.h"
 #include "ZDProfile.h"
 #include "sapi.h"
 
-#include "SensorSys.h"
+#include "SensorSys_End.h"
 #include "DebugTrace.h"
 
 #if !defined( WIN32 )
@@ -78,6 +76,14 @@
 #include "hal_led.h"
 #include "hal_key.h"
 #include "hal_uart.h"
+
+#include "nwk.h"
+#include "APS.h"
+#include "ZDApp.h"
+#include "OSAL.h"
+#include "OSAL_Tasks.h"
+#include "ZComDef.h"
+#include "hal_drivers.h"
 
 /*********************************************************************
  * MACROS
@@ -90,7 +96,6 @@
 /*********************************************************************
  * TYPEDEFS
  */
-#define MY_DEVICE		BUTTON_TYPE_ID
 
 /*********************************************************************
  * GLOBAL VARIABLES
@@ -102,13 +107,6 @@ uint8 AppTitle[]="SensorAPP"; //应用程序名称
 const cId_t Sys_ClusterList[SYS_MAX_CLUSTERS] =
 {
   SYS_CLUSTERID
-};
-
-// Button 端点的簇ID
-// This list should be filled with Application specific Cluster IDs.
-const cId_t Button_ClusterList[BUTTON_MAX_CLUSTERS] =
-{
-	BUTTON_CLUSTERID
 };
 
 const cId_t Zb_ClusterList[ZB_MAX_CLUSTERS] =
@@ -130,20 +128,6 @@ const SimpleDescriptionFormat_t Sys_SimpleDesc =
 	(cId_t *)Sys_ClusterList   //  byte *pAppInClusterList;
 };
 
-// Button 端点简单描述符
-const SimpleDescriptionFormat_t Button_SimpleDesc =
-{
-	BUTTON_ENDPOINT,           //  int Endpoint;
-	SYS_PROFID,                //  uint16 AppProfId[2];
-	SYS_DEVICEID,              //  uint16 AppDeviceId[2];
-	SYS_DEVICE_VERSION,        //  int   AppDevVer:4;
-	SYS_FLAGS,                 //  int   AppFlags:4;
-	BUTTON_MAX_CLUSTERS,          //  byte  AppNumInClusters;
-	(cId_t *)Button_ClusterList,  //  byte *pAppInClusterList;
-	BUTTON_MAX_CLUSTERS,          //  byte  AppNumInClusters;
-	(cId_t *)Button_ClusterList   //  byte *pAppInClusterList;
-};
-
 const SimpleDescriptionFormat_t zb_SimpleDesc =
 {
 	ZB_ENDPOINT,           //  int Endpoint;
@@ -162,7 +146,6 @@ const SimpleDescriptionFormat_t zb_SimpleDesc =
 // in the structure here and make it a "const" (in code space).  The
 // way it's defined in this sample app it is define in RAM.
 endPointDesc_t Sys_epDesc;
-endPointDesc_t Button_epDesc;
 
 /*********************************************************************
  * EXTERNAL VARIABLES
@@ -175,31 +158,30 @@ endPointDesc_t Button_epDesc;
 /*********************************************************************
  * LOCAL VARIABLES
  */
-static uint8 myAppState = APP_INIT;
+uint8 myAppState = APP_INIT;
 static uint8 keys_shift = 0;
 static uint8 type_join;
 
 byte Sys_TaskID;
-byte Button_TaskID;   // Task ID for internal task/event processing
-										// This variable will be received when
-										// Button_Init() is called.
 
 devStates_t Sys_NwkState;   // 节点现在的网络状态
 
 byte Sys_TransID;  // 数据包的发送ID，每发一个自增1
 
-afAddrType_t Broadcast_DstAddr;
-afAddrType_t Button_DstAddr;
+// afAddrType_t Broadcast_DstAddr;
 
 /*********************************************************************
  * LOCAL FUNCTIONS
  */
 void Sys_Init( byte task_id );
-void Sensor_AllowBind ( uint8 timeout );
-void Button_Init( byte task_id );
-UINT16 Button_ProcessEvent( byte task_id, UINT16 events );
-void Button_HandleKeys( byte shift, byte keys );
+
 UINT16 Sys_ProcessEvent( byte task_id, UINT16 events );
+
+void Sensor_AllowBind ( uint8 timeout );
+
+// Just because the error of the Button_TaskID 
+void Button_HandleKeys( byte shift, byte keys );
+
 void Sys_MessageMSGCB( afIncomingMSGPacket_t *pckt, byte task_id );
 // void Sys_SendMessage( byte task_id );
 void zb_ReceiveDataIndication( uint16 source, uint16 command, uint16 len, uint8 *pData  );
@@ -234,9 +216,9 @@ void Sys_Init( byte task_id )
   // If the hardware is application specific - add it here.
   // If the hardware is other parts of the device add it in main().
 
-  Broadcast_DstAddr.addrMode = (afAddrMode_t)AddrBroadcast;
-  Broadcast_DstAddr.endPoint = SYS_ENDPOINT;
-  Broadcast_DstAddr.addr.shortAddr = 0xFFFF;
+  // Broadcast_DstAddr.addrMode = (afAddrMode_t)AddrBroadcast;
+  // Broadcast_DstAddr.endPoint = SYS_ENDPOINT;
+  // Broadcast_DstAddr.addr.shortAddr = 0xFFFF;
 
   // Fill out the endpoint description.
   Sys_epDesc.endPoint = SYS_ENDPOINT;
@@ -247,60 +229,11 @@ void Sys_Init( byte task_id )
 
   // Register the endpoint description with the AF
   afRegister( &Sys_epDesc );
-	RegisterForKeys( task_id ); 
 
   // Set device as Enddevice
   zgDeviceLogicalType = ZG_DEVICETYPE_ENDDEVICE;
 
   // To Update the display...
-}
-
-/*********************************************************************
- * @fn      Button_Init
- *
- * @brief   Initialization function for the Generic App Task.
- *          This is called during initialization and should contain
- *          any application specific initialization (ie. hardware
- *          initialization/setup, table initialization, power up
- *          notificaiton ... ).
- *
- * @param   task_id - the ID assigned by OSAL.  This ID should be
- *                    used to send messages and set timers.
- *
- * @return  none
- */
-void Button_Init( byte task_id )
-{
-	Button_TaskID = task_id;
-	Sys_TransID = 0;            // added to main()
-
-	// Device hardware initialization can be added here or in main() (Zmain.c).
-	// If the hardware is application specific - add it here.
-	// If the hardware is other parts of the device add it in main().
-
-	Button_DstAddr.addrMode = (afAddrMode_t)AddrNotPresent;
-	Button_DstAddr.endPoint = 0;
-	Button_DstAddr.addr.shortAddr = 0;
-
-	// Fill out the endpoint description.
-	Button_epDesc.endPoint = BUTTON_ENDPOINT;
-	Button_epDesc.task_id = &Button_TaskID;
-	Button_epDesc.simpleDesc
-						= (SimpleDescriptionFormat_t *)&Button_SimpleDesc;
-	Button_epDesc.latencyReq = noLatencyReqs;
-
-	// Register the endpoint description with the AF
-	afRegister( &Button_epDesc );
-
-	// Register for all key events - This app will handle all key events
-	// RegisterForKeys( Button_TaskID ); !!!!!!!!!!!!!!!!!!!!!
- 
-	//	ZDO_RegisterForZDOMsg( Button_TaskID, End_Device_Bind_rsp );
-	ZDO_RegisterForZDOMsg( Button_TaskID, Match_Desc_rsp );
-
-	HalLedSet ( HAL_LED_1, HAL_LED_MODE_ON );
-  HalLedSet ( HAL_LED_2, HAL_LED_MODE_ON );
-  HalLedSet ( HAL_LED_3, HAL_LED_MODE_ON );
 }
 
 /*********************************************************************
@@ -357,20 +290,13 @@ UINT16 Sys_ProcessEvent( byte task_id, UINT16 events )
 					Sys_MessageMSGCB( MSGpkt, task_id );
 					break;
 
-				case KEY_CHANGE:
-    			Button_HandleKeys( ((keyChange_t *)MSGpkt)->state, ((keyChange_t *)MSGpkt)->keys );
-      		break;
-
-
 				case ZDO_STATE_CHANGE:      // 设备网络状态改变
 					Sys_NwkState = (devStates_t)(MSGpkt->hdr.status);
 					if ( (Sys_NwkState == DEV_ROUTER)
 							|| (Sys_NwkState == DEV_END_DEVICE) )
 					{
-						if(myAppState == APP_INIT)
-							osal_start_timerEx( task_id, CLOSE_LIGHT_EVT, 1000);	// 1s 后关了所有的灯
+						;
 					}
-
 					break;
 
 				default:
@@ -400,138 +326,13 @@ UINT16 Sys_ProcessEvent( byte task_id, UINT16 events )
 
 	if(events & CLOSE_LIGHT_EVT)
 	{
-		HalLedSet(HAL_LED_ALL, HAL_LED_MODE_ON);
+	  HalLedSet ( HAL_LED_1, HAL_LED_MODE_ON );
+	  HalLedSet ( HAL_LED_2, HAL_LED_MODE_ON );
+	  HalLedSet ( HAL_LED_3, HAL_LED_MODE_ON );
 		return (events ^ CLOSE_LIGHT_EVT);
 	}
 	// Discard unknown events
 	return 0;
-}
-
-
-UINT16 Button_ProcessEvent( byte task_id, UINT16 events )
-{
-	afIncomingMSGPacket_t *MSGpkt = NULL;
-	(void)task_id;  // Intentionally unreferenced parameter
-
-	if ( events & SYS_EVENT_MSG )
-	{
-    MSGpkt = (afIncomingMSGPacket_t *)osal_msg_receive( task_id );
-    while ( MSGpkt )
-    {
-      switch ( MSGpkt->hdr.event )
-      {
-      	case KEY_CHANGE:
-      		Button_HandleKeys( ((keyChange_t *)MSGpkt)->state, ((keyChange_t *)MSGpkt)->keys );
-      	break;
-      }
-      // Release the memory
-      osal_msg_deallocate( (uint8 *)MSGpkt );
-
-      // Next
-      MSGpkt = (afIncomingMSGPacket_t *)osal_msg_receive( Button_TaskID );
-    }
-    return (events ^ SYS_EVENT_MSG);
-	}
-	// for test!
-	if(events & CLOSE_LIGHT_EVT)
-	{
-		HalLedSet(HAL_LED_ALL, HAL_LED_MODE_ON);
-		return (events ^ CLOSE_LIGHT_EVT);
-	}
-  return 0;
-}
-
-
-/*********************************************************************
- * Event Generation Functions
- */
-
-/*********************************************************************
- * @fn      Button_HandleKeys
- *
- * @brief   Handles all key events for this device.
- *
- * @param   shift - true if in shift/alt.
- * @param   keys - bit field for key events. Valid entries:
- *                 HAL_KEY_SW_4
- *                 HAL_KEY_SW_3
- *                 HAL_KEY_SW_2
- *                 HAL_KEY_SW_1
- *
- * @return  none
- */
-void Button_HandleKeys( byte shift, byte keys )
-{
-	
-	// Shift is used to make each button/switch dual purpose.
-	if ( keys_shift )
-	{
-		// Allow Binding
-		if ( keys & HAL_KEY_SW_1 )
-		{
-			if(type_join)
-			{
-				Sensor_AllowBind(10);
-				HalLedSet(HAL_LED_1, HAL_LED_MODE_OFF);
-			// osal_start_timerEx(Sys_TaskID, CLOSE_BIND_EVT, 10000);
-			
-				keys_shift = 0;
-				type_join = 0;
-			}
-			else
-			{
-				// wrong endpoint the presend send to
-			}
-		}
-		if ( keys & HAL_KEY_SW_2 )
-		{
-		}
-		if ( keys & HAL_KEY_SW_3 )
-		{
-		}
-		if ( keys & HAL_KEY_SW_4 )
-		{
-		}
-	}
-	else
-	{
-		if ( keys & HAL_KEY_SW_1 )
-		{
-			HalLedSet(HAL_LED_2, HAL_LED_MODE_ON);
-		}
-
-		if ( keys & HAL_KEY_SW_2 )
-		{/*
-			HalLedSet ( HAL_LED_4, HAL_LED_MODE_OFF );
-
-			// 想绑定另一个端点
-			dstAddr.addrMode = Addr16Bit;
-			dstAddr.addr.shortAddr = 0x0000; 
-			ZDP_EndDeviceBindReq( &dstAddr, NLME_GetShortAddr(), 
-														Button_epDesc.endPoint,
-														SENSORSYS_PROFID,
-														SENSORSYS_MAX_CLUSTERS, (cId_t *)Button_ClusterList,
-														SENSORSYS_MAX_CLUSTERS, (cId_t *)Button_ClusterList,
-														FALSE );*/
-		}
-
-		if ( keys & HAL_KEY_SW_3 )
-		{
-		}
-		
-		if ( keys & HAL_KEY_SW_4 )
-		{
-		/*	HalLedSet ( HAL_LED_4, HAL_LED_MODE_OFF );
-			dstAddr.addrMode = AddrBroadcast;
-			dstAddr.addr.shortAddr = NWK_BROADCAST_SHORTADDR;
-			ZDP_MatchDescReq( &dstAddr, NWK_BROADCAST_SHORTADDR,
-												SENSORSYS_PROFID,
-												SENSORSYS_MAX_CLUSTERS, (cId_t *)Button_ClusterList,
-												SENSORSYS_MAX_CLUSTERS, (cId_t *)Button_ClusterList,
-												FALSE );
-		*/
-		}
-	}
 }
 
 
@@ -574,6 +375,48 @@ void Sys_MessageMSGCB( afIncomingMSGPacket_t *pkt, byte task_id )
 			break;
     }
 	}
+}
+
+/******************************************************************************
+ * @fn          Sensor_AllowBind
+ *
+ * @brief       The zb_AllowBind function puts the device into the
+ *              Allow Binding Mode for a given period of time.  A peer device
+ *              can establish a binding to a device in the Allow Binding Mode
+ *              by calling zb_BindDevice with a destination address of NULL
+ *
+ * @param       timeout - The number of seconds to remain in the allow binding
+ *                        mode.  Valid values range from 1 through 65.
+ *                        If 0, the Allow Bind mode will be set false without TO
+ *                        If greater than 64, the Allow Bind mode will be true
+ *
+ * @return      ZB_SUCCESS if the device entered the allow bind mode, else
+ *              an error code.
+ */
+
+void Sensor_AllowBind ( uint8 timeout )
+{
+
+  //HalLedSet(HAL_LED_1, HAL_LED_MODE_FLASH);
+  osal_stop_timerEx(Sys_TaskID, ALLOW_BIND_TIMER);
+
+  if ( timeout == 0 )
+  {
+    afSetMatch(type_join, FALSE);
+  }
+  else
+  {
+    afSetMatch(type_join, TRUE);
+    if ( timeout != 0xFF )
+    {
+      if ( timeout > 64 )
+      {
+        timeout = 64;
+      }
+      osal_start_timerEx(Sys_TaskID, ALLOW_BIND_TIMER, timeout*1000);
+    }
+  }
+  return;
 }
 
 /*********************************************************************
@@ -648,9 +491,6 @@ void zb_StartConfirm( uint8 status )
   }
   else
   {
-    // Try again later with a delay
-    
-    HalLedSet(HAL_LED_1, HAL_LED_MODE_BLINK);
   }
 }
 /******************************************************************************
@@ -714,44 +554,53 @@ void zb_HandleOsalEvent( uint16 event )
 
 }
 
-/******************************************************************************
- * @fn          Sensor_AllowBind
+// The order in this table must be identical to the task initialization calls below in osalInitTask.
+
+const pTaskEventHandlerFn tasksArr[] = {
+  macEventLoop,
+  nwk_event_loop,
+  Hal_ProcessEvent,
+#if defined( MT_TASK )
+  MT_ProcessEvent,
+#endif
+  APS_event_loop,
+  ZDApp_event_loop,
+
+  Sys_ProcessEvent,
+  Button_ProcessEvent,
+  SAPI_ProcessEvent
+};
+
+const uint8 tasksCnt = sizeof( tasksArr ) / sizeof( tasksArr[0] );
+uint16 *tasksEvents;
+
+
+
+/*********************************************************************
+ * @fn      osalInitTasks
  *
- * @brief       The zb_AllowBind function puts the device into the
- *              Allow Binding Mode for a given period of time.  A peer device
- *              can establish a binding to a device in the Allow Binding Mode
- *              by calling zb_BindDevice with a destination address of NULL
+ * @brief   This function invokes the initialization function for each task.
  *
- * @param       timeout - The number of seconds to remain in the allow binding
- *                        mode.  Valid values range from 1 through 65.
- *                        If 0, the Allow Bind mode will be set false without TO
- *                        If greater than 64, the Allow Bind mode will be true
+ * @param   void
  *
- * @return      ZB_SUCCESS if the device entered the allow bind mode, else
- *              an error code.
+ * @return  none
  */
-
-void Sensor_AllowBind ( uint8 timeout )
+void osalInitTasks( void )
 {
+  uint8 taskID = 0;
 
-  //HalLedSet(HAL_LED_1, HAL_LED_MODE_FLASH);
-  osal_stop_timerEx(Sys_TaskID, ALLOW_BIND_TIMER);
+  tasksEvents = (uint16 *)osal_mem_alloc( sizeof( uint16 ) * tasksCnt);
+  osal_memset( tasksEvents, 0, (sizeof( uint16 ) * tasksCnt));
 
-  if ( timeout == 0 )
-  {
-    afSetMatch(type_join, FALSE);
-  }
-  else
-  {
-    afSetMatch(type_join, TRUE);
-    if ( timeout != 0xFF )
-    {
-      if ( timeout > 64 )
-      {
-        timeout = 64;
-      }
-      osal_start_timerEx(Sys_TaskID, ALLOW_BIND_TIMER, timeout*1000);
-    }
-  }
-  return;
+  macTaskInit( taskID++ );
+  nwk_init( taskID++ );
+  Hal_Init( taskID++ );
+#if defined( MT_TASK )
+  MT_TaskInit( taskID++ );
+#endif
+  APS_Init( taskID++ );
+  ZDApp_Init( taskID++ );
+  Sys_Init( taskID++ );
+  Button_Init( taskID++ );
+  SAPI_Init( taskID );
 }
