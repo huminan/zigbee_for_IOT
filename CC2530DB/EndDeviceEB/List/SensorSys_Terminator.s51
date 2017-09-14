@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //                                                                            /
-// IAR C/C++ Compiler V8.10.3.10338/W32 for 8051        06/Sep/2017  22:46:21 /
+// IAR C/C++ Compiler V8.10.3.10338/W32 for 8051        08/Sep/2017  21:42:45 /
 // Copyright 2004-2011 IAR Systems AB.                                        /
 //                                                                            /
 //    Core               =  plain                                             /
@@ -229,9 +229,9 @@
         ARGFRAME XSTACK, 0, STACK
         PUBLIC zb_SimpleDesc
         PUBLIC zb_StartConfirm
-        FUNCTION zb_StartConfirm,021203H
+        FUNCTION zb_StartConfirm,0203H
         ARGFRAME XSTACK, 0, STACK
-        LOCFRAME XSTACK, 9, STACK
+        LOCFRAME ISTACK, 2, STACK
         
         CFI Names cfiNames0
         CFI StackFrame CFA_SP SP IDATA
@@ -639,7 +639,6 @@ zb_StartConfirm     SYMBOL "zb_StartConfirm"
         FUNCTION ??osal_start_timerEx?relay,00H
         EXTERN ??osal_stop_timerEx?relay
         FUNCTION ??osal_stop_timerEx?relay,00H
-        EXTERN zgDeviceLogicalType
 
 // D:\ProgramData\Hardware\zigbee\Projects\zstack\Samples\SensorSys\Source\SensorSys_Terminator.c
 //    1 /**************************************************************************************************
@@ -1027,13 +1026,10 @@ Sys_Init:
         MOV     R2,#Sys_epDesc & 0xff
         MOV     R3,#(Sys_epDesc >> 8) & 0xff
         LCALL   ??afRegister?relay
+        CFI EndBlock cfiBlock0
 //  232 
 //  233   // Set device as Enddevice
-//  234   zgDeviceLogicalType = ZG_DEVICETYPE_ENDDEVICE;
-        MOV     DPTR,#zgDeviceLogicalType
-        MOV     A,#0x2
-        MOVX    @DPTR,A
-        CFI EndBlock cfiBlock0
+//  234   //zgDeviceLogicalType = ZG_DEVICETYPE_ENDDEVICE;
 //  235 
 //  236   // To Update the display...
 //  237 }
@@ -2124,174 +2120,147 @@ zb_StartConfirm:
         CFI Function zb_StartConfirm
         CODE
 //  487 {
-        FUNCALL zb_StartConfirm, HalLedSet
-        LOCFRAME ISTACK, 0, STACK
-        LOCFRAME PSTACK, 0, STACK
-        LOCFRAME XSTACK, 9, STACK
-        LOCFRAME IOVERLAY, 0, STATIC
-        LOCFRAME DOVERLAY, 0, STATIC
-        ARGFRAME ISTACK, 0, STACK
-        ARGFRAME PSTACK, 0, STACK
-        ARGFRAME XSTACK, 9, STACK
-        ARGFRAME IOVERLAY, 0, STATIC
-        ARGFRAME DOVERLAY, 0, STATIC
-        MOV     A,#-0x9
-        LCALL   ?BANKED_ENTER_XDATA
-        CFI DPH0 load(1, XDATA, add(CFA_XSP16, literal(-1)))
-        CFI DPL0 load(1, XDATA, add(CFA_XSP16, literal(-2)))
-        CFI ?BRET_EXT load(1, XDATA, add(CFA_XSP16, literal(-3)))
-        CFI ?RET_HIGH load(1, XDATA, add(CFA_XSP16, literal(-4)))
-        CFI ?RET_LOW load(1, XDATA, add(CFA_XSP16, literal(-5)))
-        CFI R7 load(1, XDATA, add(CFA_XSP16, literal(-6)))
-        CFI V0 load(1, XDATA, add(CFA_XSP16, literal(-7)))
-        CFI VB load(1, XDATA, add(CFA_XSP16, literal(-8)))
-        CFI R6 load(1, XDATA, add(CFA_XSP16, literal(-9)))
-        CFI CFA_SP SP+0
-        CFI CFA_XSP16 add(XSP16, 9)
-        ; Saved register size: 9
+        PUSH    DPL
+        CFI DPL0 Frame(CFA_SP, 4)
+        CFI CFA_SP SP+-4
+        PUSH    DPH
+        CFI DPH0 Frame(CFA_SP, 5)
+        CFI CFA_SP SP+-5
+        ; Saved register size: 2
         ; Auto size: 0
-        MOV     A,R1
 //  488   if ( status == ZB_SUCCESS )
+        MOV     A,R1
         JNZ     ??zb_StartConfirm_0
 //  489   {
 //  490     myAppState = APP_START;
         MOV     DPTR,#myAppState
         MOV     A,#0x1
         MOVX    @DPTR,A
-        SJMP    ??zb_StartConfirm_1
 //  491   }
 //  492   else
 //  493   {
-//  494     // Try again later with a delay
-//  495     
-//  496     HalLedSet(HAL_LED_1, HAL_LED_MODE_BLINK);
+//  494   }
+//  495 }
 ??zb_StartConfirm_0:
-        ; Setup parameters for call to function HalLedSet
-        MOV     R2,#0x2
-        MOV     R1,#0x1
-        LCALL   ??HalLedSet?relay
-//  497   }
-//  498 }
-??zb_StartConfirm_1:
-        LJMP    ?Subroutine0 & 0xFFFF
+        SJMP    ?Subroutine1
         CFI EndBlock cfiBlock24
-//  499 /******************************************************************************
-//  500  * @fn          zb_SendDataConfirm
+//  496 /******************************************************************************
+//  497  * @fn          zb_SendDataConfirm
+//  498  *
+//  499  * @brief       The zb_SendDataConfirm callback function is called by the
+//  500  *              ZigBee after a send data operation completes
 //  501  *
-//  502  * @brief       The zb_SendDataConfirm callback function is called by the
-//  503  *              ZigBee after a send data operation completes
+//  502  * @param       handle - The handle identifying the data transmission.
+//  503  *              status - The status of the operation.
 //  504  *
-//  505  * @param       handle - The handle identifying the data transmission.
-//  506  *              status - The status of the operation.
-//  507  *
-//  508  * @return      none
-//  509  */
+//  505  * @return      none
+//  506  */
 
         RSEG BANKED_CODE:CODE:NOROOT(0)
-//  510 void zb_SendDataConfirm( uint8 handle, uint8 status )
+//  507 void zb_SendDataConfirm( uint8 handle, uint8 status )
 zb_SendDataConfirm:
         CFI Block cfiBlock25 Using cfiCommon0
         CFI Function zb_SendDataConfirm
         CODE
-//  511 {
+//  508 {
         ; Saved register size: 0
         ; Auto size: 0
-//  512 }
+//  509 }
         LJMP    ?BRET
         CFI EndBlock cfiBlock25
-//  513 /******************************************************************************
-//  514  * @fn          zb_BindConfirm
+//  510 /******************************************************************************
+//  511  * @fn          zb_BindConfirm
+//  512  *
+//  513  * @brief       The zb_BindConfirm callback is called by the ZigBee stack
+//  514  *              after a bind operation completes.
 //  515  *
-//  516  * @brief       The zb_BindConfirm callback is called by the ZigBee stack
-//  517  *              after a bind operation completes.
+//  516  * @param       commandId - The command ID of the binding being confirmed.
+//  517  *              status - The status of the bind operation.
 //  518  *
-//  519  * @param       commandId - The command ID of the binding being confirmed.
-//  520  *              status - The status of the bind operation.
-//  521  *
-//  522  * @return      none
-//  523  */
+//  519  * @return      none
+//  520  */
 
         RSEG BANKED_CODE:CODE:NOROOT(0)
-//  524 void zb_BindConfirm( uint16 commandId, uint8 status )
+//  521 void zb_BindConfirm( uint16 commandId, uint8 status )
 zb_BindConfirm:
         CFI Block cfiBlock26 Using cfiCommon0
         CFI Function zb_BindConfirm
         CODE
-//  525 {
+//  522 {
         ; Saved register size: 0
         ; Auto size: 0
-//  526 }
+//  523 }
         LJMP    ?BRET
         CFI EndBlock cfiBlock26
-//  527 /******************************************************************************
-//  528  * @fn          zb_AllowBindConfirm
-//  529  *
-//  530  * @brief       Indicates when another device attempted to bind to this device
-//  531  *
-//  532  * @param
-//  533  *
-//  534  * @return      none
-//  535  */
+//  524 /******************************************************************************
+//  525  * @fn          zb_AllowBindConfirm
+//  526  *
+//  527  * @brief       Indicates when another device attempted to bind to this device
+//  528  *
+//  529  * @param
+//  530  *
+//  531  * @return      none
+//  532  */
 
         RSEG BANKED_CODE:CODE:NOROOT(0)
-//  536 void zb_AllowBindConfirm( uint16 source )
+//  533 void zb_AllowBindConfirm( uint16 source )
 zb_AllowBindConfirm:
         CFI Block cfiBlock27 Using cfiCommon0
         CFI Function zb_AllowBindConfirm
         CODE
-//  537 {
+//  534 {
         ; Saved register size: 0
         ; Auto size: 0
-//  538 }
+//  535 }
         LJMP    ?BRET
         CFI EndBlock cfiBlock27
-//  539 /******************************************************************************
-//  540  * @fn          zb_FindDeviceConfirm
+//  536 /******************************************************************************
+//  537  * @fn          zb_FindDeviceConfirm
+//  538  *
+//  539  * @brief       The zb_FindDeviceConfirm callback function is called by the
+//  540  *              ZigBee stack when a find device operation completes.
 //  541  *
-//  542  * @brief       The zb_FindDeviceConfirm callback function is called by the
-//  543  *              ZigBee stack when a find device operation completes.
-//  544  *
-//  545  * @param       searchType - The type of search that was performed.
-//  546  *              searchKey - Value that the search was executed on.
-//  547  *              result - The result of the search.
-//  548  *
-//  549  * @return      none
-//  550  */
+//  542  * @param       searchType - The type of search that was performed.
+//  543  *              searchKey - Value that the search was executed on.
+//  544  *              result - The result of the search.
+//  545  *
+//  546  * @return      none
+//  547  */
 
         RSEG BANKED_CODE:CODE:NOROOT(0)
-//  551 void zb_FindDeviceConfirm( uint8 searchType, uint8 *searchKey, uint8 *result )
+//  548 void zb_FindDeviceConfirm( uint8 searchType, uint8 *searchKey, uint8 *result )
 zb_FindDeviceConfirm:
         CFI Block cfiBlock28 Using cfiCommon0
         CFI Function zb_FindDeviceConfirm
         CODE
-//  552 {
+//  549 {
         ; Saved register size: 0
         ; Auto size: 0
-//  553 }
+//  550 }
         LJMP    ?BRET
         CFI EndBlock cfiBlock28
-//  554 
+//  551 
 
         RSEG BANKED_CODE:CODE:NOROOT(0)
-//  555 void zb_HandleOsalEvent( uint16 event )
+//  552 void zb_HandleOsalEvent( uint16 event )
 zb_HandleOsalEvent:
         CFI Block cfiBlock29 Using cfiCommon0
         CFI Function zb_HandleOsalEvent
         CODE
-//  556 {
+//  553 {
         ; Saved register size: 0
         ; Auto size: 0
-//  557 
-//  558 }
+//  554 
+//  555 }
         LJMP    ?BRET
         CFI EndBlock cfiBlock29
-//  559 
-//  560 // The order in this table must be identical to the task initialization calls below in osalInitTask.
-//  561 
+//  556 
+//  557 // The order in this table must be identical to the task initialization calls below in osalInitTask.
+//  558 
 
         RSEG XDATA_ROM_C:CONST:REORDER:NOROOT(0)
         DATA8
-//  562 const pTaskEventHandlerFn tasksArr[] = {
+//  559 const pTaskEventHandlerFn tasksArr[] = {
 tasksArr:
         DATA16
         DW ??macEventLoop?relay
@@ -2302,53 +2271,53 @@ tasksArr:
         DW ??Sys_ProcessEvent?relay
         DW ??Button_ProcessEvent?relay
         DW ??SAPI_ProcessEvent?relay
-//  563   macEventLoop,
-//  564   nwk_event_loop,
-//  565   Hal_ProcessEvent,
-//  566 #if defined( MT_TASK )
-//  567   MT_ProcessEvent,
-//  568 #endif
-//  569   APS_event_loop,
-//  570   ZDApp_event_loop,
-//  571 
-//  572   Sys_ProcessEvent,
-//  573   Button_ProcessEvent,
-//  574   SAPI_ProcessEvent
-//  575 };
-//  576 
+//  560   macEventLoop,
+//  561   nwk_event_loop,
+//  562   Hal_ProcessEvent,
+//  563 #if defined( MT_TASK )
+//  564   MT_ProcessEvent,
+//  565 #endif
+//  566   APS_event_loop,
+//  567   ZDApp_event_loop,
+//  568 
+//  569   Sys_ProcessEvent,
+//  570   Button_ProcessEvent,
+//  571   SAPI_ProcessEvent
+//  572 };
+//  573 
 
         RSEG XDATA_ROM_C:CONST:REORDER:NOROOT(0)
         DATA8
-//  577 const uint8 tasksCnt = sizeof( tasksArr ) / sizeof( tasksArr[0] );
+//  574 const uint8 tasksCnt = sizeof( tasksArr ) / sizeof( tasksArr[0] );
 tasksCnt:
         DB 8
 
         RSEG XDATA_Z:XDATA:NOROOT(0)
         DATA16
-//  578 uint16 *tasksEvents;
+//  575 uint16 *tasksEvents;
 tasksEvents:
         DS 2
         REQUIRE __INIT_XDATA_Z
-//  579 
-//  580 
-//  581 
-//  582 /*********************************************************************
-//  583  * @fn      osalInitTasks
-//  584  *
-//  585  * @brief   This function invokes the initialization function for each task.
-//  586  *
-//  587  * @param   void
-//  588  *
-//  589  * @return  none
-//  590  */
+//  576 
+//  577 
+//  578 
+//  579 /*********************************************************************
+//  580  * @fn      osalInitTasks
+//  581  *
+//  582  * @brief   This function invokes the initialization function for each task.
+//  583  *
+//  584  * @param   void
+//  585  *
+//  586  * @return  none
+//  587  */
 
         RSEG BANKED_CODE:CODE:NOROOT(0)
-//  591 void osalInitTasks( void )
+//  588 void osalInitTasks( void )
 osalInitTasks:
         CFI Block cfiBlock30 Using cfiCommon0
         CFI Function osalInitTasks
         CODE
-//  592 {
+//  589 {
         FUNCALL osalInitTasks, osal_mem_alloc
         LOCFRAME ISTACK, 2, STACK
         LOCFRAME PSTACK, 0, STACK
@@ -2467,9 +2436,9 @@ osalInitTasks:
         CFI CFA_SP SP+-5
         ; Saved register size: 2
         ; Auto size: 0
-//  593   uint8 taskID = 0;
-//  594 
-//  595   tasksEvents = (uint16 *)osal_mem_alloc( sizeof( uint16 ) * tasksCnt);
+//  590   uint8 taskID = 0;
+//  591 
+//  592   tasksEvents = (uint16 *)osal_mem_alloc( sizeof( uint16 ) * tasksCnt);
         ; Setup parameters for call to function osal_mem_alloc
         MOV     R2,#0x10
         MOV     R3,#0x0
@@ -2480,49 +2449,49 @@ osalInitTasks:
         INC     DPTR
         MOV     A,R3
         MOVX    @DPTR,A
-//  596   osal_memset( tasksEvents, 0, (sizeof( uint16 ) * tasksCnt));
+//  593   osal_memset( tasksEvents, 0, (sizeof( uint16 ) * tasksCnt));
         ; Setup parameters for call to function osal_memset
         MOV     R4,#0x10
         MOV     R5,#0x0
         MOV     R1,#0x0
         LCALL   ??osal_memset?relay
-//  597 
-//  598   macTaskInit( taskID++ );
+//  594 
+//  595   macTaskInit( taskID++ );
         ; Setup parameters for call to function macTaskInit
         MOV     R1,#0x0
         LCALL   ??macTaskInit?relay
-//  599   nwk_init( taskID++ );
+//  596   nwk_init( taskID++ );
         ; Setup parameters for call to function nwk_init
         MOV     R1,#0x1
         LCALL   ??nwk_init?relay
-//  600   Hal_Init( taskID++ );
+//  597   Hal_Init( taskID++ );
         ; Setup parameters for call to function Hal_Init
         MOV     R1,#0x2
         LCALL   ??Hal_Init?relay
-//  601 #if defined( MT_TASK )
-//  602   MT_TaskInit( taskID++ );
-//  603 #endif
-//  604   APS_Init( taskID++ );
+//  598 #if defined( MT_TASK )
+//  599   MT_TaskInit( taskID++ );
+//  600 #endif
+//  601   APS_Init( taskID++ );
         ; Setup parameters for call to function APS_Init
         MOV     R1,#0x3
         LCALL   ??APS_Init?relay
-//  605   ZDApp_Init( taskID++ );
+//  602   ZDApp_Init( taskID++ );
         ; Setup parameters for call to function ZDApp_Init
         MOV     R1,#0x4
         LCALL   ??ZDApp_Init?relay
-//  606   Sys_Init( taskID++ );
+//  603   Sys_Init( taskID++ );
         ; Setup parameters for call to function Sys_Init
         MOV     R1,#0x5
         LCALL   ??Sys_Init?relay
-//  607   Button_Init( taskID++ );
+//  604   Button_Init( taskID++ );
         ; Setup parameters for call to function Button_Init
         MOV     R1,#0x6
         LCALL   ??Button_Init?relay
-//  608   SAPI_Init( taskID );
+//  605   SAPI_Init( taskID );
         ; Setup parameters for call to function SAPI_Init
         MOV     R1,#0x7
         LCALL   ??SAPI_Init?relay
-//  609 }
+//  606 }
         SJMP    ?Subroutine1
         CFI EndBlock cfiBlock30
 
@@ -2609,14 +2578,14 @@ osalInitTasks:
 
         END
 // 
-// 612 bytes in segment BANKED_CODE
+// 595 bytes in segment BANKED_CODE
 //  72 bytes in segment BANK_RELAYS
 //  10 bytes in segment XDATA_I
 //  10 bytes in segment XDATA_ID
 //  56 bytes in segment XDATA_ROM_C
 //  14 bytes in segment XDATA_Z
 // 
-// 694 bytes of CODE  memory
+// 677 bytes of CODE  memory
 //  56 bytes of CONST memory
 //  24 bytes of XDATA memory
 //

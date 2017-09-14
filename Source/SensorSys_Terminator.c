@@ -231,7 +231,7 @@ void Sys_Init( byte task_id )
   afRegister( &Sys_epDesc );
 
   // Set device as Enddevice
-  zgDeviceLogicalType = ZG_DEVICETYPE_ENDDEVICE;
+  //zgDeviceLogicalType = ZG_DEVICETYPE_ENDDEVICE;
 
   // To Update the display...
 }

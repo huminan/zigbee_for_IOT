@@ -611,7 +611,10 @@ void zb_ReceiveDataIndication( uint16 source, uint16 command, uint16 len, uint8 
 
 void zb_HandleOsalEvent( uint16 event )
 {
-
+  if ( event & MY_START_EVT )
+  {
+    zb_StartRequest();
+  }
 }
 
 uint8 typeID2pointID(char type)

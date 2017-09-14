@@ -1,6 +1,6 @@
 ###############################################################################
 #                                                                             #
-# IAR C/C++ Compiler V8.10.3.10338/W32 for 8051         06/Sep/2017  22:46:12 #
+# IAR C/C++ Compiler V8.10.3.10338/W32 for 8051         08/Sep/2017  21:42:43 #
 # Copyright 2004-2011 IAR Systems AB.                                         #
 #                                                                             #
 #    Core               =  plain                                              #
@@ -505,136 +505,177 @@ D:\ProgramData\Hardware\zigbee\Projects\zstack\Samples\SensorSys\Source\Button_E
    \   000000   74F7         MOV     A,#-0x9
    \   000002   12....       LCALL   ?BANKED_ENTER_XDATA
    \   000005                ; Saved register size: 9
-   \   000005                ; Auto size: 0
-   \   000005   EA           MOV     A,R2
-   \   000006   FE           MOV     R6,A
-    196          	
-    197          	// Shift is used to make each button/switch dual purpose.
-    198          	if ( keys_shift )
-   \   000007   90....       MOV     DPTR,#keys_shift
-   \   00000A   E0           MOVX    A,@DPTR
-   \   00000B   6022         JZ      ??Button_HandleKeys_0
-    199          	{
-    200          		// Allow Binding
-    201          		if ( keys & HAL_KEY_SW_1 )
-   \   00000D   EE           MOV     A,R6
-   \   00000E   A2E0         MOV     C,0xE0 /* A   */.0
-   \   000010   5040         JNC     ??Button_HandleKeys_1
-    202          		{
-    203          			if(type_join)
-   \   000012   90....       MOV     DPTR,#type_join
-   \   000015   E0           MOVX    A,@DPTR
-   \   000016   603A         JZ      ??Button_HandleKeys_1
-    204          			{
-    205          				Sensor_AllowBind(10);
-   \   000018                ; Setup parameters for call to function Sensor_AllowBind
-   \   000018   790A         MOV     R1,#0xa
-   \   00001A   12....       LCALL   ??Sensor_AllowBind?relay
-    206          				HalLedSet(HAL_LED_1, HAL_LED_MODE_OFF);
-   \   00001D                ; Setup parameters for call to function HalLedSet
-   \   00001D   7A00         MOV     R2,#0x0
-   \   00001F   7901         MOV     R1,#0x1
-   \   000021   12....       LCALL   ??HalLedSet?relay
-    207          			// osal_start_timerEx(Sys_TaskID, CLOSE_BIND_EVT, 10000);
-    208          			
-    209          				keys_shift = 0;
-   \   000024   90....       MOV     DPTR,#keys_shift
-   \   000027   E4           CLR     A
-   \   000028   F0           MOVX    @DPTR,A
-    210          				type_join = 0;
-   \   000029   90....       MOV     DPTR,#type_join
-   \   00002C   F0           MOVX    @DPTR,A
-   \   00002D   8023         SJMP    ??Button_HandleKeys_1
-    211          			}
-    212          			else
-    213          			{
-    214          				// wrong endpoint the presend send to
-    215          			}
-    216          		}
-    217          		if ( keys & HAL_KEY_SW_2 )
-    218          		{
-    219          		}
-    220          		if ( keys & HAL_KEY_SW_3 )
-    221          		{
-    222          		}
-    223          		if ( keys & HAL_KEY_SW_4 )
-    224          		{
-    225          		}
-    226          	}
-    227          	else
-    228          	{
-    229          		if ( keys & HAL_KEY_SW_1 )
+   \   000005                ; Auto size: 2
+   \   000005   74FE         MOV     A,#-0x2
+   \   000007   12....       LCALL   ?ALLOC_XSTACK8
+   \   00000A   EA           MOV     A,R2
+   \   00000B   FE           MOV     R6,A
+    196          	uint8 startOptions;
+    197          	uint8 logicalType;
+    198          	// Shift is used to make each button/switch dual purpose.
+    199          	if ( keys_shift )
+   \   00000C   90....       MOV     DPTR,#keys_shift
+   \   00000F   E0           MOVX    A,@DPTR
+   \   000010   6022         JZ      ??Button_HandleKeys_0
+    200          	{
+    201          		// Allow Binding
+    202          		if ( keys & HAL_KEY_SW_1 )
+   \   000012   EE           MOV     A,R6
+   \   000013   A2E0         MOV     C,0xE0 /* A   */.0
+   \   000015   506F         JNC     ??Button_HandleKeys_1
+    203          		{
+    204          			if(type_join)
+   \   000017   90....       MOV     DPTR,#type_join
+   \   00001A   E0           MOVX    A,@DPTR
+   \   00001B   6069         JZ      ??Button_HandleKeys_1
+    205          			{
+    206          				Sensor_AllowBind(10);
+   \   00001D                ; Setup parameters for call to function Sensor_AllowBind
+   \   00001D   790A         MOV     R1,#0xa
+   \   00001F   12....       LCALL   ??Sensor_AllowBind?relay
+    207          				HalLedSet(HAL_LED_1, HAL_LED_MODE_OFF);
+   \   000022                ; Setup parameters for call to function HalLedSet
+   \   000022   7A00         MOV     R2,#0x0
+   \   000024   7901         MOV     R1,#0x1
+   \   000026   12....       LCALL   ??HalLedSet?relay
+    208          			// osal_start_timerEx(Sys_TaskID, CLOSE_BIND_EVT, 10000);
+    209          			
+    210          				keys_shift = 0;
+   \   000029   90....       MOV     DPTR,#keys_shift
+   \   00002C   E4           CLR     A
+   \   00002D   F0           MOVX    @DPTR,A
+    211          				type_join = 0;
+   \   00002E   90....       MOV     DPTR,#type_join
+   \   000031   F0           MOVX    @DPTR,A
+   \   000032   8052         SJMP    ??Button_HandleKeys_1
+    212          			}
+    213          			else
+    214          			{
+    215          				// wrong endpoint the presend send to
+    216          			}
+    217          		}
+    218          		if ( keys & HAL_KEY_SW_2 )
+    219          		{
+    220          		}
+    221          		if ( keys & HAL_KEY_SW_3 )
+    222          		{
+    223          		}
+    224          		if ( keys & HAL_KEY_SW_4 )
+    225          		{
+    226          		}
+    227          	}
+    228          	else
+    229          	{
+    230          		if ( keys & HAL_KEY_SW_1 )
    \                     ??Button_HandleKeys_0:
-   \   00002F   EE           MOV     A,R6
-   \   000030   A2E0         MOV     C,0xE0 /* A   */.0
-   \   000032   501E         JNC     ??Button_HandleKeys_1
-    230          		{
-    231          			if(myAppState == APP_INIT)
-   \   000034   90....       MOV     DPTR,#myAppState
-   \   000037   E0           MOVX    A,@DPTR
-   \   000038   700E         JNZ     ??Button_HandleKeys_2
-    232          				osal_set_event(sapi_TaskID, ZB_ENTRY_EVENT);
-   \   00003A                ; Setup parameters for call to function osal_set_event
-   \   00003A   7A00         MOV     R2,#0x0
-   \   00003C   7B10         MOV     R3,#0x10
-   \   00003E   90....       MOV     DPTR,#sapi_TaskID
-   \   000041   E0           MOVX    A,@DPTR
-   \   000042   F9           MOV     R1,A
-   \   000043   12....       LCALL   ??osal_set_event?relay
-   \   000046   800A         SJMP    ??Button_HandleKeys_1
-    233          			else
-    234          			{
-    235          				HalLedSet ( HAL_LED_1, HAL_LED_MODE_ON );
-   \                     ??Button_HandleKeys_2:
-   \   000048                ; Setup parameters for call to function HalLedSet
-   \   000048   12....       LCALL   ?Subroutine1 & 0xFFFF
-    236          	 			HalLedSet ( HAL_LED_2, HAL_LED_MODE_ON );
-    237          				HalLedSet ( HAL_LED_3, HAL_LED_MODE_ON );
-    238          				HalLedSet ( HAL_LED_4, HAL_LED_MODE_ON );
-   \                     ??CrossCallReturnLabel_1:
-   \   00004B                ; Setup parameters for call to function HalLedSet
+   \   000034   EE           MOV     A,R6
+   \   000035   A2E0         MOV     C,0xE0 /* A   */.0
+   \   000037   504D         JNC     ??Button_HandleKeys_1
+    231          		{
+    232          			if ( myAppState == APP_INIT )
+   \   000039   90....       MOV     DPTR,#myAppState
+   \   00003C   E0           MOVX    A,@DPTR
+   \   00003D   703D         JNZ     ??Button_HandleKeys_2
+    233          		    {
+    234          		        // In the init state, keys are used to indicate the logical mode.
+    235          		        // The Switch device is always an end-device
+    236          		        logicalType = ZG_DEVICETYPE_ENDDEVICE;
+   \   00003F   7401         MOV     A,#0x1
+   \   000041   12....       LCALL   ?XSTACK_DISP0_8
+   \   000044   7402         MOV     A,#0x2
+   \   000046   F0           MOVX    @DPTR,A
+    237          		        zb_WriteConfiguration(ZCD_NV_LOGICAL_TYPE, sizeof(uint8), &logicalType);
+   \   000047                ; Setup parameters for call to function zb_WriteConfiguration
+   \   000047   AC82         MOV     R4,DPL
+   \   000049   AD83         MOV     R5,DPH
    \   00004B   7A01         MOV     R2,#0x1
-   \   00004D   7908         MOV     R1,#0x8
-   \   00004F   12....       LCALL   ??HalLedSet?relay
-    239          			}
-    240          		}
-    241          
-    242          		if ( keys & HAL_KEY_SW_2 )
-    243          		{
-    244          		/*
-    245          			HalLedSet ( HAL_LED_4, HAL_LED_MODE_OFF );
-    246          
-    247          			// 想绑定另一个端点
-    248          			dstAddr.addrMode = Addr16Bit;
-    249          			dstAddr.addr.shortAddr = 0x0000; 
-    250          			ZDP_EndDeviceBindReq( &dstAddr, NLME_GetShortAddr(), 
-    251          														Button_epDesc.endPoint,
-    252          														SENSORSYS_PROFID,
-    253          														SENSORSYS_MAX_CLUSTERS, (cId_t *)Button_ClusterList,
-    254          														SENSORSYS_MAX_CLUSTERS, (cId_t *)Button_ClusterList,
-    255          														FALSE );*/
-    256          		}
-    257          
-    258          		if ( keys & HAL_KEY_SW_3 )
-    259          		{
-    260          		}
-    261          		
-    262          		if ( keys & HAL_KEY_SW_4 )
-    263          		{
-    264          		/*	HalLedSet ( HAL_LED_4, HAL_LED_MODE_OFF );
-    265          			dstAddr.addrMode = AddrBroadcast;
-    266          			dstAddr.addr.shortAddr = NWK_BROADCAST_SHORTADDR;
-    267          			ZDP_MatchDescReq( &dstAddr, NWK_BROADCAST_SHORTADDR,
-    268          												SENSORSYS_PROFID,
-    269          												SENSORSYS_MAX_CLUSTERS, (cId_t *)Button_ClusterList,
-    270          												SENSORSYS_MAX_CLUSTERS, (cId_t *)Button_ClusterList,
-    271          												FALSE );
-    272          		*/
-    273          		}
-    274          	}
-    275          }
+   \   00004D   7987         MOV     R1,#-0x79
+   \   00004F   12....       LCALL   ??zb_WriteConfiguration?relay
+    238          
+    239          		        // Do more configuration if necessary and then restart device with auto-start bit set
+    240          
+    241          		        zb_ReadConfiguration( ZCD_NV_STARTUP_OPTION, sizeof(uint8), &startOptions );
+   \   000052                ; Setup parameters for call to function zb_ReadConfiguration
+   \   000052   85..82       MOV     DPL,?XSP + 0
+   \   000055   85..83       MOV     DPH,?XSP + 1
+   \   000058   AC82         MOV     R4,DPL
+   \   00005A   AD83         MOV     R5,DPH
+   \   00005C   7A01         MOV     R2,#0x1
+   \   00005E   7903         MOV     R1,#0x3
+   \   000060   12....       LCALL   ??zb_ReadConfiguration?relay
+    242          		        startOptions = ZCD_STARTOPT_AUTO_START;
+   \   000063   85..82       MOV     DPL,?XSP + 0
+   \   000066   85..83       MOV     DPH,?XSP + 1
+   \   000069   7404         MOV     A,#0x4
+   \   00006B   F0           MOVX    @DPTR,A
+    243          		        zb_WriteConfiguration( ZCD_NV_STARTUP_OPTION, sizeof(uint8), &startOptions );
+   \   00006C                ; Setup parameters for call to function zb_WriteConfiguration
+   \   00006C   AC82         MOV     R4,DPL
+   \   00006E   AD83         MOV     R5,DPH
+   \   000070   7A01         MOV     R2,#0x1
+   \   000072   7903         MOV     R1,#0x3
+   \   000074   12....       LCALL   ??zb_WriteConfiguration?relay
+    244          		        zb_SystemReset();
+   \   000077                ; Setup parameters for call to function zb_SystemReset
+   \   000077   12....       LCALL   ??zb_SystemReset?relay
+   \   00007A   800A         SJMP    ??Button_HandleKeys_1
+    245          
+    246              		}
+    247          			else
+    248          			{
+    249          				HalLedSet ( HAL_LED_1, HAL_LED_MODE_ON );
+   \                     ??Button_HandleKeys_2:
+   \   00007C                ; Setup parameters for call to function HalLedSet
+   \   00007C   12....       LCALL   ?Subroutine1 & 0xFFFF
+    250          	 			HalLedSet ( HAL_LED_2, HAL_LED_MODE_ON );
+    251          				HalLedSet ( HAL_LED_3, HAL_LED_MODE_ON );
+    252          				HalLedSet ( HAL_LED_4, HAL_LED_MODE_ON );
+   \                     ??CrossCallReturnLabel_1:
+   \   00007F                ; Setup parameters for call to function HalLedSet
+   \   00007F   7A01         MOV     R2,#0x1
+   \   000081   7908         MOV     R1,#0x8
+   \   000083   12....       LCALL   ??HalLedSet?relay
+    253          			}
+    254          		}
+    255          
+    256          		if ( keys & HAL_KEY_SW_2 )
+    257          		{
+    258          		/*
+    259          			HalLedSet ( HAL_LED_4, HAL_LED_MODE_OFF );
+    260          
+    261          			// 想绑定另一个端点
+    262          			dstAddr.addrMode = Addr16Bit;
+    263          			dstAddr.addr.shortAddr = 0x0000; 
+    264          			ZDP_EndDeviceBindReq( &dstAddr, NLME_GetShortAddr(), 
+    265          														Button_epDesc.endPoint,
+    266          														SENSORSYS_PROFID,
+    267          														SENSORSYS_MAX_CLUSTERS, (cId_t *)Button_ClusterList,
+    268          														SENSORSYS_MAX_CLUSTERS, (cId_t *)Button_ClusterList,
+    269          														FALSE );*/
+    270          		}
+    271          
+    272          		if ( keys & HAL_KEY_SW_3 )
+    273          		{
+    274          		}
+    275          		
+    276          		if ( keys & HAL_KEY_SW_4 )
+    277          		{
+    278          		/*	HalLedSet ( HAL_LED_4, HAL_LED_MODE_OFF );
+    279          			dstAddr.addrMode = AddrBroadcast;
+    280          			dstAddr.addr.shortAddr = NWK_BROADCAST_SHORTADDR;
+    281          			ZDP_MatchDescReq( &dstAddr, NWK_BROADCAST_SHORTADDR,
+    282          												SENSORSYS_PROFID,
+    283          												SENSORSYS_MAX_CLUSTERS, (cId_t *)Button_ClusterList,
+    284          												SENSORSYS_MAX_CLUSTERS, (cId_t *)Button_ClusterList,
+    285          												FALSE );
+    286          		*/
+    287          		}
+    288          	}
+    289          }
    \                     ??Button_HandleKeys_1:
-   \   000052   02....       LJMP    ?Subroutine0 & 0xFFFF
+   \   000086   7402         MOV     A,#0x2
+   \   000088   12....       LCALL   ?DEALLOC_XSTACK8
+   \   00008B   02....       LJMP    ?Subroutine0 & 0xFFFF
 
    \                                 In  segment BANK_RELAYS, align 1
    \                     ??Button_Init?relay:
@@ -655,14 +696,17 @@ D:\ProgramData\Hardware\zigbee\Projects\zstack\Samples\SensorSys\Source\Button_E
 
      Function                   ISTACK PSTACK XSTACK
      --------                   ------ ------ ------
-     Button_HandleKeys              0      0     23
-       -> Sensor_AllowBind          0      0     18
-       -> HalLedSet                 0      0     18
-       -> osal_set_event            0      0     18
-       -> HalLedSet                 0      0     18
-       -> HalLedSet                 0      0     18
-       -> HalLedSet                 0      0     18
-       -> HalLedSet                 0      0     18
+     Button_HandleKeys              0      0     25
+       -> Sensor_AllowBind          0      0     22
+       -> HalLedSet                 0      0     22
+       -> zb_WriteConfiguration     0      0     22
+       -> zb_ReadConfiguration      0      0     22
+       -> zb_WriteConfiguration     0      0     22
+       -> zb_SystemReset            0      0     22
+       -> HalLedSet                 0      0     22
+       -> HalLedSet                 0      0     22
+       -> HalLedSet                 0      0     22
+       -> HalLedSet                 0      0     22
      Button_Init                    0      0      9
        -> afRegister                0      0     18
        -> RegisterForKeys           0      0     18
@@ -692,18 +736,18 @@ D:\ProgramData\Hardware\zigbee\Projects\zstack\Samples\SensorSys\Source\Button_E
      ?Subroutine0                   5
      ?Subroutine1                  22
      Button_ProcessEvent           86
-     Button_HandleKeys             85
+     Button_HandleKeys            142
      ??Button_Init?relay            6
      ??Button_ProcessEvent?relay    6
      ??Button_HandleKeys?relay      6
 
  
- 276 bytes in segment BANKED_CODE
+ 333 bytes in segment BANKED_CODE
   18 bytes in segment BANK_RELAYS
   16 bytes in segment XDATA_ROM_C
   21 bytes in segment XDATA_Z
  
- 294 bytes of CODE  memory
+ 351 bytes of CODE  memory
   16 bytes of CONST memory
   21 bytes of XDATA memory
 

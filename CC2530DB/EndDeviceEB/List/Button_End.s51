@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //                                                                            /
-// IAR C/C++ Compiler V8.10.3.10338/W32 for 8051        06/Sep/2017  22:46:12 /
+// IAR C/C++ Compiler V8.10.3.10338/W32 for 8051        08/Sep/2017  21:42:43 /
 // Copyright 2004-2011 IAR Systems AB.                                        /
 //                                                                            /
 //    Core               =  plain                                             /
@@ -136,10 +136,14 @@
         RSEG PSTACK:XDATA:NOROOT(0)
         RSEG XSTACK:XDATA:NOROOT(0)
 
+        EXTERN ?ALLOC_XSTACK8
         EXTERN ?BANKED_ENTER_XDATA
         EXTERN ?BANKED_LEAVE_XDATA
         EXTERN ?BDISPATCH
+        EXTERN ?DEALLOC_XSTACK8
         EXTERN ?V0
+        EXTERN ?XSP
+        EXTERN ?XSTACK_DISP0_8
         EXTERN __INIT_XDATA_Z
 
         PUBLIC ??Button_HandleKeys?relay
@@ -155,7 +159,7 @@
         ARGFRAME XSTACK, 14, STACK
         ARGFRAME IOVERLAY, 0, STATIC
         ARGFRAME DOVERLAY, 0, STATIC
-        LOCFRAME XSTACK, 9, STACK
+        LOCFRAME XSTACK, 11, STACK
         PUBLIC Button_Init
         FUNCTION Button_Init,021203H
         ARGFRAME XSTACK, 0, STACK
@@ -330,7 +334,9 @@ HalLedSet           SYMBOL "HalLedSet"
 osal_msg_receive    SYMBOL "osal_msg_receive"
 osal_msg_deallocate SYMBOL "osal_msg_deallocate"
 Sensor_AllowBind    SYMBOL "Sensor_AllowBind"
-osal_set_event      SYMBOL "osal_set_event"
+zb_WriteConfiguration SYMBOL "zb_WriteConfiguration"
+zb_ReadConfiguration SYMBOL "zb_ReadConfiguration"
+zb_SystemReset      SYMBOL "zb_SystemReset"
 ??HalLedSet?relay   SYMBOL "?relay", HalLedSet
 ??RegisterForKeys?relay SYMBOL "?relay", RegisterForKeys
 ??Sensor_AllowBind?relay SYMBOL "?relay", Sensor_AllowBind
@@ -338,7 +344,9 @@ osal_set_event      SYMBOL "osal_set_event"
 ??afRegister?relay  SYMBOL "?relay", afRegister
 ??osal_msg_deallocate?relay SYMBOL "?relay", osal_msg_deallocate
 ??osal_msg_receive?relay SYMBOL "?relay", osal_msg_receive
-??osal_set_event?relay SYMBOL "?relay", osal_set_event
+??zb_ReadConfiguration?relay SYMBOL "?relay", zb_ReadConfiguration
+??zb_SystemReset?relay SYMBOL "?relay", zb_SystemReset
+??zb_WriteConfiguration?relay SYMBOL "?relay", zb_WriteConfiguration
 Button_HandleKeys   SYMBOL "Button_HandleKeys"
 ??Button_HandleKeys?relay SYMBOL "?relay", Button_HandleKeys
 Button_Init         SYMBOL "Button_Init"
@@ -371,7 +379,7 @@ Button_ProcessEvent SYMBOL "Button_ProcessEvent"
         FUNCTION HalLedSet,0202H
         ARGFRAME ISTACK, 0, STACK
         ARGFRAME PSTACK, 0, STACK
-        ARGFRAME XSTACK, 9, STACK
+        ARGFRAME XSTACK, 11, STACK
         ARGFRAME IOVERLAY, 0, STATIC
         ARGFRAME DOVERLAY, 0, STATIC
         EXTERN osal_msg_receive
@@ -392,14 +400,28 @@ Button_ProcessEvent SYMBOL "Button_ProcessEvent"
         FUNCTION Sensor_AllowBind,0202H
         ARGFRAME ISTACK, 0, STACK
         ARGFRAME PSTACK, 0, STACK
-        ARGFRAME XSTACK, 9, STACK
+        ARGFRAME XSTACK, 11, STACK
         ARGFRAME IOVERLAY, 0, STATIC
         ARGFRAME DOVERLAY, 0, STATIC
-        EXTERN osal_set_event
-        FUNCTION osal_set_event,0202H
+        EXTERN zb_WriteConfiguration
+        FUNCTION zb_WriteConfiguration,0202H
         ARGFRAME ISTACK, 0, STACK
         ARGFRAME PSTACK, 0, STACK
-        ARGFRAME XSTACK, 9, STACK
+        ARGFRAME XSTACK, 11, STACK
+        ARGFRAME IOVERLAY, 0, STATIC
+        ARGFRAME DOVERLAY, 0, STATIC
+        EXTERN zb_ReadConfiguration
+        FUNCTION zb_ReadConfiguration,0202H
+        ARGFRAME ISTACK, 0, STACK
+        ARGFRAME PSTACK, 0, STACK
+        ARGFRAME XSTACK, 11, STACK
+        ARGFRAME IOVERLAY, 0, STATIC
+        ARGFRAME DOVERLAY, 0, STATIC
+        EXTERN zb_SystemReset
+        FUNCTION zb_SystemReset,0202H
+        ARGFRAME ISTACK, 0, STACK
+        ARGFRAME PSTACK, 0, STACK
+        ARGFRAME XSTACK, 11, STACK
         ARGFRAME IOVERLAY, 0, STATIC
         ARGFRAME DOVERLAY, 0, STATIC
         EXTERN ??HalLedSet?relay
@@ -416,10 +438,13 @@ Button_ProcessEvent SYMBOL "Button_ProcessEvent"
         FUNCTION ??osal_msg_deallocate?relay,00H
         EXTERN ??osal_msg_receive?relay
         FUNCTION ??osal_msg_receive?relay,00H
-        EXTERN ??osal_set_event?relay
-        FUNCTION ??osal_set_event?relay,00H
+        EXTERN ??zb_ReadConfiguration?relay
+        FUNCTION ??zb_ReadConfiguration?relay,00H
+        EXTERN ??zb_SystemReset?relay
+        FUNCTION ??zb_SystemReset?relay,00H
+        EXTERN ??zb_WriteConfiguration?relay
+        FUNCTION ??zb_WriteConfiguration?relay,00H
         EXTERN myAppState
-        EXTERN sapi_TaskID
 
 // D:\ProgramData\Hardware\zigbee\Projects\zstack\Samples\SensorSys\Source\Button_End.c
 //    1 #include "OSAL.h"
@@ -966,78 +991,111 @@ Button_HandleKeys:
         FUNCALL Button_HandleKeys, Sensor_AllowBind
         LOCFRAME ISTACK, 0, STACK
         LOCFRAME PSTACK, 0, STACK
-        LOCFRAME XSTACK, 9, STACK
+        LOCFRAME XSTACK, 11, STACK
         LOCFRAME IOVERLAY, 0, STATIC
         LOCFRAME DOVERLAY, 0, STATIC
         ARGFRAME ISTACK, 0, STACK
         ARGFRAME PSTACK, 0, STACK
-        ARGFRAME XSTACK, 9, STACK
+        ARGFRAME XSTACK, 11, STACK
         ARGFRAME IOVERLAY, 0, STATIC
         ARGFRAME DOVERLAY, 0, STATIC
         FUNCALL Button_HandleKeys, HalLedSet
         LOCFRAME ISTACK, 0, STACK
         LOCFRAME PSTACK, 0, STACK
-        LOCFRAME XSTACK, 9, STACK
+        LOCFRAME XSTACK, 11, STACK
         LOCFRAME IOVERLAY, 0, STATIC
         LOCFRAME DOVERLAY, 0, STATIC
         ARGFRAME ISTACK, 0, STACK
         ARGFRAME PSTACK, 0, STACK
-        ARGFRAME XSTACK, 9, STACK
+        ARGFRAME XSTACK, 11, STACK
         ARGFRAME IOVERLAY, 0, STATIC
         ARGFRAME DOVERLAY, 0, STATIC
-        FUNCALL Button_HandleKeys, osal_set_event
+        FUNCALL Button_HandleKeys, zb_WriteConfiguration
         LOCFRAME ISTACK, 0, STACK
         LOCFRAME PSTACK, 0, STACK
-        LOCFRAME XSTACK, 9, STACK
+        LOCFRAME XSTACK, 11, STACK
         LOCFRAME IOVERLAY, 0, STATIC
         LOCFRAME DOVERLAY, 0, STATIC
         ARGFRAME ISTACK, 0, STACK
         ARGFRAME PSTACK, 0, STACK
-        ARGFRAME XSTACK, 9, STACK
+        ARGFRAME XSTACK, 11, STACK
+        ARGFRAME IOVERLAY, 0, STATIC
+        ARGFRAME DOVERLAY, 0, STATIC
+        FUNCALL Button_HandleKeys, zb_ReadConfiguration
+        LOCFRAME ISTACK, 0, STACK
+        LOCFRAME PSTACK, 0, STACK
+        LOCFRAME XSTACK, 11, STACK
+        LOCFRAME IOVERLAY, 0, STATIC
+        LOCFRAME DOVERLAY, 0, STATIC
+        ARGFRAME ISTACK, 0, STACK
+        ARGFRAME PSTACK, 0, STACK
+        ARGFRAME XSTACK, 11, STACK
+        ARGFRAME IOVERLAY, 0, STATIC
+        ARGFRAME DOVERLAY, 0, STATIC
+        FUNCALL Button_HandleKeys, zb_WriteConfiguration
+        LOCFRAME ISTACK, 0, STACK
+        LOCFRAME PSTACK, 0, STACK
+        LOCFRAME XSTACK, 11, STACK
+        LOCFRAME IOVERLAY, 0, STATIC
+        LOCFRAME DOVERLAY, 0, STATIC
+        ARGFRAME ISTACK, 0, STACK
+        ARGFRAME PSTACK, 0, STACK
+        ARGFRAME XSTACK, 11, STACK
+        ARGFRAME IOVERLAY, 0, STATIC
+        ARGFRAME DOVERLAY, 0, STATIC
+        FUNCALL Button_HandleKeys, zb_SystemReset
+        LOCFRAME ISTACK, 0, STACK
+        LOCFRAME PSTACK, 0, STACK
+        LOCFRAME XSTACK, 11, STACK
+        LOCFRAME IOVERLAY, 0, STATIC
+        LOCFRAME DOVERLAY, 0, STATIC
+        ARGFRAME ISTACK, 0, STACK
+        ARGFRAME PSTACK, 0, STACK
+        ARGFRAME XSTACK, 11, STACK
         ARGFRAME IOVERLAY, 0, STATIC
         ARGFRAME DOVERLAY, 0, STATIC
         FUNCALL Button_HandleKeys, HalLedSet
         LOCFRAME ISTACK, 0, STACK
         LOCFRAME PSTACK, 0, STACK
-        LOCFRAME XSTACK, 9, STACK
+        LOCFRAME XSTACK, 11, STACK
         LOCFRAME IOVERLAY, 0, STATIC
         LOCFRAME DOVERLAY, 0, STATIC
         ARGFRAME ISTACK, 0, STACK
         ARGFRAME PSTACK, 0, STACK
-        ARGFRAME XSTACK, 9, STACK
+        ARGFRAME XSTACK, 11, STACK
         ARGFRAME IOVERLAY, 0, STATIC
         ARGFRAME DOVERLAY, 0, STATIC
         FUNCALL Button_HandleKeys, HalLedSet
         LOCFRAME ISTACK, 0, STACK
         LOCFRAME PSTACK, 0, STACK
-        LOCFRAME XSTACK, 9, STACK
+        LOCFRAME XSTACK, 11, STACK
         LOCFRAME IOVERLAY, 0, STATIC
         LOCFRAME DOVERLAY, 0, STATIC
         ARGFRAME ISTACK, 0, STACK
         ARGFRAME PSTACK, 0, STACK
-        ARGFRAME XSTACK, 9, STACK
+        ARGFRAME XSTACK, 11, STACK
         ARGFRAME IOVERLAY, 0, STATIC
         ARGFRAME DOVERLAY, 0, STATIC
         FUNCALL Button_HandleKeys, HalLedSet
         LOCFRAME ISTACK, 0, STACK
         LOCFRAME PSTACK, 0, STACK
-        LOCFRAME XSTACK, 9, STACK
+        LOCFRAME XSTACK, 11, STACK
         LOCFRAME IOVERLAY, 0, STATIC
         LOCFRAME DOVERLAY, 0, STATIC
         ARGFRAME ISTACK, 0, STACK
         ARGFRAME PSTACK, 0, STACK
-        ARGFRAME XSTACK, 9, STACK
+        ARGFRAME XSTACK, 11, STACK
         ARGFRAME IOVERLAY, 0, STATIC
         ARGFRAME DOVERLAY, 0, STATIC
         FUNCALL Button_HandleKeys, HalLedSet
         LOCFRAME ISTACK, 0, STACK
         LOCFRAME PSTACK, 0, STACK
-        LOCFRAME XSTACK, 9, STACK
+        LOCFRAME XSTACK, 11, STACK
         LOCFRAME IOVERLAY, 0, STATIC
         LOCFRAME DOVERLAY, 0, STATIC
         ARGFRAME ISTACK, 0, STACK
         ARGFRAME PSTACK, 0, STACK
-        ARGFRAME XSTACK, 9, STACK
+        ARGFRAME XSTACK, 11, STACK
         ARGFRAME IOVERLAY, 0, STATIC
         ARGFRAME DOVERLAY, 0, STATIC
         MOV     A,#-0x9
@@ -1054,135 +1112,178 @@ Button_HandleKeys:
         CFI CFA_SP SP+0
         CFI CFA_XSP16 add(XSP16, 9)
         ; Saved register size: 9
-        ; Auto size: 0
+        ; Auto size: 2
+        MOV     A,#-0x2
+        LCALL   ?ALLOC_XSTACK8
+        CFI CFA_XSP16 add(XSP16, 11)
         MOV     A,R2
         MOV     R6,A
-//  196 	
-//  197 	// Shift is used to make each button/switch dual purpose.
-//  198 	if ( keys_shift )
+//  196 	uint8 startOptions;
+//  197 	uint8 logicalType;
+//  198 	// Shift is used to make each button/switch dual purpose.
+//  199 	if ( keys_shift )
         MOV     DPTR,#keys_shift
         MOVX    A,@DPTR
         JZ      ??Button_HandleKeys_0
-//  199 	{
-//  200 		// Allow Binding
-//  201 		if ( keys & HAL_KEY_SW_1 )
+//  200 	{
+//  201 		// Allow Binding
+//  202 		if ( keys & HAL_KEY_SW_1 )
         MOV     A,R6
         MOV     C,0xE0 /* A   */.0
         JNC     ??Button_HandleKeys_1
-//  202 		{
-//  203 			if(type_join)
+//  203 		{
+//  204 			if(type_join)
         MOV     DPTR,#type_join
         MOVX    A,@DPTR
         JZ      ??Button_HandleKeys_1
-//  204 			{
-//  205 				Sensor_AllowBind(10);
+//  205 			{
+//  206 				Sensor_AllowBind(10);
         ; Setup parameters for call to function Sensor_AllowBind
         MOV     R1,#0xa
         LCALL   ??Sensor_AllowBind?relay
-//  206 				HalLedSet(HAL_LED_1, HAL_LED_MODE_OFF);
+//  207 				HalLedSet(HAL_LED_1, HAL_LED_MODE_OFF);
         ; Setup parameters for call to function HalLedSet
         MOV     R2,#0x0
         MOV     R1,#0x1
         LCALL   ??HalLedSet?relay
-//  207 			// osal_start_timerEx(Sys_TaskID, CLOSE_BIND_EVT, 10000);
-//  208 			
-//  209 				keys_shift = 0;
+//  208 			// osal_start_timerEx(Sys_TaskID, CLOSE_BIND_EVT, 10000);
+//  209 			
+//  210 				keys_shift = 0;
         MOV     DPTR,#keys_shift
         CLR     A
         MOVX    @DPTR,A
-//  210 				type_join = 0;
+//  211 				type_join = 0;
         MOV     DPTR,#type_join
         MOVX    @DPTR,A
         SJMP    ??Button_HandleKeys_1
-//  211 			}
-//  212 			else
-//  213 			{
-//  214 				// wrong endpoint the presend send to
-//  215 			}
-//  216 		}
-//  217 		if ( keys & HAL_KEY_SW_2 )
-//  218 		{
-//  219 		}
-//  220 		if ( keys & HAL_KEY_SW_3 )
-//  221 		{
-//  222 		}
-//  223 		if ( keys & HAL_KEY_SW_4 )
-//  224 		{
-//  225 		}
-//  226 	}
-//  227 	else
-//  228 	{
-//  229 		if ( keys & HAL_KEY_SW_1 )
+//  212 			}
+//  213 			else
+//  214 			{
+//  215 				// wrong endpoint the presend send to
+//  216 			}
+//  217 		}
+//  218 		if ( keys & HAL_KEY_SW_2 )
+//  219 		{
+//  220 		}
+//  221 		if ( keys & HAL_KEY_SW_3 )
+//  222 		{
+//  223 		}
+//  224 		if ( keys & HAL_KEY_SW_4 )
+//  225 		{
+//  226 		}
+//  227 	}
+//  228 	else
+//  229 	{
+//  230 		if ( keys & HAL_KEY_SW_1 )
 ??Button_HandleKeys_0:
         MOV     A,R6
         MOV     C,0xE0 /* A   */.0
         JNC     ??Button_HandleKeys_1
-//  230 		{
-//  231 			if(myAppState == APP_INIT)
+//  231 		{
+//  232 			if ( myAppState == APP_INIT )
         MOV     DPTR,#myAppState
         MOVX    A,@DPTR
         JNZ     ??Button_HandleKeys_2
-//  232 				osal_set_event(sapi_TaskID, ZB_ENTRY_EVENT);
-        ; Setup parameters for call to function osal_set_event
-        MOV     R2,#0x0
-        MOV     R3,#0x10
-        MOV     DPTR,#sapi_TaskID
-        MOVX    A,@DPTR
-        MOV     R1,A
-        LCALL   ??osal_set_event?relay
+//  233 		    {
+//  234 		        // In the init state, keys are used to indicate the logical mode.
+//  235 		        // The Switch device is always an end-device
+//  236 		        logicalType = ZG_DEVICETYPE_ENDDEVICE;
+        MOV     A,#0x1
+        LCALL   ?XSTACK_DISP0_8
+        MOV     A,#0x2
+        MOVX    @DPTR,A
+//  237 		        zb_WriteConfiguration(ZCD_NV_LOGICAL_TYPE, sizeof(uint8), &logicalType);
+        ; Setup parameters for call to function zb_WriteConfiguration
+        MOV     R4,DPL
+        MOV     R5,DPH
+        MOV     R2,#0x1
+        MOV     R1,#-0x79
+        LCALL   ??zb_WriteConfiguration?relay
+//  238 
+//  239 		        // Do more configuration if necessary and then restart device with auto-start bit set
+//  240 
+//  241 		        zb_ReadConfiguration( ZCD_NV_STARTUP_OPTION, sizeof(uint8), &startOptions );
+        ; Setup parameters for call to function zb_ReadConfiguration
+        MOV     DPL,?XSP + 0
+        MOV     DPH,?XSP + 1
+        MOV     R4,DPL
+        MOV     R5,DPH
+        MOV     R2,#0x1
+        MOV     R1,#0x3
+        LCALL   ??zb_ReadConfiguration?relay
+//  242 		        startOptions = ZCD_STARTOPT_AUTO_START;
+        MOV     DPL,?XSP + 0
+        MOV     DPH,?XSP + 1
+        MOV     A,#0x4
+        MOVX    @DPTR,A
+//  243 		        zb_WriteConfiguration( ZCD_NV_STARTUP_OPTION, sizeof(uint8), &startOptions );
+        ; Setup parameters for call to function zb_WriteConfiguration
+        MOV     R4,DPL
+        MOV     R5,DPH
+        MOV     R2,#0x1
+        MOV     R1,#0x3
+        LCALL   ??zb_WriteConfiguration?relay
+//  244 		        zb_SystemReset();
+        ; Setup parameters for call to function zb_SystemReset
+        LCALL   ??zb_SystemReset?relay
         SJMP    ??Button_HandleKeys_1
-//  233 			else
-//  234 			{
-//  235 				HalLedSet ( HAL_LED_1, HAL_LED_MODE_ON );
+//  245 
+//  246     		}
+//  247 			else
+//  248 			{
+//  249 				HalLedSet ( HAL_LED_1, HAL_LED_MODE_ON );
 ??Button_HandleKeys_2:
         ; Setup parameters for call to function HalLedSet
         LCALL   ?Subroutine1 & 0xFFFF
-//  236 	 			HalLedSet ( HAL_LED_2, HAL_LED_MODE_ON );
-//  237 				HalLedSet ( HAL_LED_3, HAL_LED_MODE_ON );
-//  238 				HalLedSet ( HAL_LED_4, HAL_LED_MODE_ON );
+//  250 	 			HalLedSet ( HAL_LED_2, HAL_LED_MODE_ON );
+//  251 				HalLedSet ( HAL_LED_3, HAL_LED_MODE_ON );
+//  252 				HalLedSet ( HAL_LED_4, HAL_LED_MODE_ON );
 ??CrossCallReturnLabel_1:
         ; Setup parameters for call to function HalLedSet
         MOV     R2,#0x1
         MOV     R1,#0x8
         LCALL   ??HalLedSet?relay
-//  239 			}
-//  240 		}
-//  241 
-//  242 		if ( keys & HAL_KEY_SW_2 )
-//  243 		{
-//  244 		/*
-//  245 			HalLedSet ( HAL_LED_4, HAL_LED_MODE_OFF );
-//  246 
-//  247 			// 想绑定另一个端点
-//  248 			dstAddr.addrMode = Addr16Bit;
-//  249 			dstAddr.addr.shortAddr = 0x0000; 
-//  250 			ZDP_EndDeviceBindReq( &dstAddr, NLME_GetShortAddr(), 
-//  251 														Button_epDesc.endPoint,
-//  252 														SENSORSYS_PROFID,
-//  253 														SENSORSYS_MAX_CLUSTERS, (cId_t *)Button_ClusterList,
-//  254 														SENSORSYS_MAX_CLUSTERS, (cId_t *)Button_ClusterList,
-//  255 														FALSE );*/
-//  256 		}
-//  257 
-//  258 		if ( keys & HAL_KEY_SW_3 )
-//  259 		{
-//  260 		}
-//  261 		
-//  262 		if ( keys & HAL_KEY_SW_4 )
-//  263 		{
-//  264 		/*	HalLedSet ( HAL_LED_4, HAL_LED_MODE_OFF );
-//  265 			dstAddr.addrMode = AddrBroadcast;
-//  266 			dstAddr.addr.shortAddr = NWK_BROADCAST_SHORTADDR;
-//  267 			ZDP_MatchDescReq( &dstAddr, NWK_BROADCAST_SHORTADDR,
-//  268 												SENSORSYS_PROFID,
-//  269 												SENSORSYS_MAX_CLUSTERS, (cId_t *)Button_ClusterList,
-//  270 												SENSORSYS_MAX_CLUSTERS, (cId_t *)Button_ClusterList,
-//  271 												FALSE );
-//  272 		*/
-//  273 		}
-//  274 	}
-//  275 }
+//  253 			}
+//  254 		}
+//  255 
+//  256 		if ( keys & HAL_KEY_SW_2 )
+//  257 		{
+//  258 		/*
+//  259 			HalLedSet ( HAL_LED_4, HAL_LED_MODE_OFF );
+//  260 
+//  261 			// 想绑定另一个端点
+//  262 			dstAddr.addrMode = Addr16Bit;
+//  263 			dstAddr.addr.shortAddr = 0x0000; 
+//  264 			ZDP_EndDeviceBindReq( &dstAddr, NLME_GetShortAddr(), 
+//  265 														Button_epDesc.endPoint,
+//  266 														SENSORSYS_PROFID,
+//  267 														SENSORSYS_MAX_CLUSTERS, (cId_t *)Button_ClusterList,
+//  268 														SENSORSYS_MAX_CLUSTERS, (cId_t *)Button_ClusterList,
+//  269 														FALSE );*/
+//  270 		}
+//  271 
+//  272 		if ( keys & HAL_KEY_SW_3 )
+//  273 		{
+//  274 		}
+//  275 		
+//  276 		if ( keys & HAL_KEY_SW_4 )
+//  277 		{
+//  278 		/*	HalLedSet ( HAL_LED_4, HAL_LED_MODE_OFF );
+//  279 			dstAddr.addrMode = AddrBroadcast;
+//  280 			dstAddr.addr.shortAddr = NWK_BROADCAST_SHORTADDR;
+//  281 			ZDP_MatchDescReq( &dstAddr, NWK_BROADCAST_SHORTADDR,
+//  282 												SENSORSYS_PROFID,
+//  283 												SENSORSYS_MAX_CLUSTERS, (cId_t *)Button_ClusterList,
+//  284 												SENSORSYS_MAX_CLUSTERS, (cId_t *)Button_ClusterList,
+//  285 												FALSE );
+//  286 		*/
+//  287 		}
+//  288 	}
+//  289 }
 ??Button_HandleKeys_1:
+        MOV     A,#0x2
+        LCALL   ?DEALLOC_XSTACK8
+        CFI CFA_XSP16 add(XSP16, 9)
         LJMP    ?Subroutine0 & 0xFFFF
         CFI EndBlock cfiBlock3
 
@@ -1215,7 +1316,7 @@ Button_HandleKeys:
         CFI (cfiCond5) DPL0 load(1, XDATA, add(CFA_XSP16, literal(-2)))
         CFI (cfiCond5) DPH0 load(1, XDATA, add(CFA_XSP16, literal(-1)))
         CFI (cfiCond5) CFA_SP SP+0
-        CFI (cfiCond5) CFA_XSP16 add(XSP16, 9)
+        CFI (cfiCond5) CFA_XSP16 add(XSP16, 11)
         CFI Block cfiPicker6 Using cfiCommon1
         CFI (cfiPicker6) NoFunction
         CFI (cfiPicker6) Picker
@@ -1257,12 +1358,12 @@ Button_HandleKeys:
 
         END
 // 
-// 276 bytes in segment BANKED_CODE
+// 333 bytes in segment BANKED_CODE
 //  18 bytes in segment BANK_RELAYS
 //  16 bytes in segment XDATA_ROM_C
 //  21 bytes in segment XDATA_Z
 // 
-// 294 bytes of CODE  memory
+// 351 bytes of CODE  memory
 //  16 bytes of CONST memory
 //  21 bytes of XDATA memory
 //

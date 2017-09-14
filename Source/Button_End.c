@@ -193,7 +193,8 @@ UINT16 Button_ProcessEvent( byte task_id, UINT16 events )
  */
 void Button_HandleKeys( byte shift, byte keys )
 {
-	
+	uint8 startOptions;
+	uint8 logicalType;
 	// Shift is used to make each button/switch dual purpose.
 	if ( keys_shift )
 	{
@@ -228,8 +229,21 @@ void Button_HandleKeys( byte shift, byte keys )
 	{
 		if ( keys & HAL_KEY_SW_1 )
 		{
-			if(myAppState == APP_INIT)
-				osal_set_event(sapi_TaskID, ZB_ENTRY_EVENT);
+			if ( myAppState == APP_INIT )
+		    {
+		        // In the init state, keys are used to indicate the logical mode.
+		        // The Switch device is always an end-device
+		        logicalType = ZG_DEVICETYPE_ENDDEVICE;
+		        zb_WriteConfiguration(ZCD_NV_LOGICAL_TYPE, sizeof(uint8), &logicalType);
+
+		        // Do more configuration if necessary and then restart device with auto-start bit set
+
+		        zb_ReadConfiguration( ZCD_NV_STARTUP_OPTION, sizeof(uint8), &startOptions );
+		        startOptions = ZCD_STARTOPT_AUTO_START;
+		        zb_WriteConfiguration( ZCD_NV_STARTUP_OPTION, sizeof(uint8), &startOptions );
+		        zb_SystemReset();
+
+    		}
 			else
 			{
 				HalLedSet ( HAL_LED_1, HAL_LED_MODE_ON );

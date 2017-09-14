@@ -1,6 +1,6 @@
 ###############################################################################
 #                                                                             #
-# IAR C/C++ Compiler V8.10.3.10338/W32 for 8051         06/Sep/2017  22:46:21 #
+# IAR C/C++ Compiler V8.10.3.10338/W32 for 8051         08/Sep/2017  21:42:45 #
 # Copyright 2004-2011 IAR Systems AB.                                         #
 #                                                                             #
 #    Core               =  plain                                              #
@@ -460,15 +460,12 @@ Warning[Pe550]: variable "keys_shift" was set but never used
    \   000027   12....       LCALL   ??afRegister?relay
     232          
     233            // Set device as Enddevice
-    234            zgDeviceLogicalType = ZG_DEVICETYPE_ENDDEVICE;
-   \   00002A   90....       MOV     DPTR,#zgDeviceLogicalType
-   \   00002D   7402         MOV     A,#0x2
-   \   00002F   F0           MOVX    @DPTR,A
+    234            //zgDeviceLogicalType = ZG_DEVICETYPE_ENDDEVICE;
     235          
     236            // To Update the display...
     237          }
-   \   000030                REQUIRE ?Subroutine0
-   \   000030                ; // Fall through to label ?Subroutine0
+   \   00002A                REQUIRE ?Subroutine0
+   \   00002A                ; // Fall through to label ?Subroutine0
 
    \                                 In  segment BANKED_CODE, align 1, keep-with-next
    \                     ?Subroutine0:
@@ -1050,130 +1047,121 @@ Warning[Pe550]: variable "keys_shift" was set but never used
     486          void zb_StartConfirm( uint8 status )
    \                     zb_StartConfirm:
     487          {
-   \   000000   74F7         MOV     A,#-0x9
-   \   000002   12....       LCALL   ?BANKED_ENTER_XDATA
-   \   000005                ; Saved register size: 9
-   \   000005                ; Auto size: 0
-   \   000005   E9           MOV     A,R1
+   \   000000   C082         PUSH    DPL
+   \   000002   C083         PUSH    DPH
+   \   000004                ; Saved register size: 2
+   \   000004                ; Auto size: 0
     488            if ( status == ZB_SUCCESS )
-   \   000006   7008         JNZ     ??zb_StartConfirm_0
+   \   000004   E9           MOV     A,R1
+   \   000005   7006         JNZ     ??zb_StartConfirm_0
     489            {
     490              myAppState = APP_START;
-   \   000008   90....       MOV     DPTR,#myAppState
-   \   00000B   7401         MOV     A,#0x1
-   \   00000D   F0           MOVX    @DPTR,A
-   \   00000E   8007         SJMP    ??zb_StartConfirm_1
+   \   000007   90....       MOV     DPTR,#myAppState
+   \   00000A   7401         MOV     A,#0x1
+   \   00000C   F0           MOVX    @DPTR,A
     491            }
     492            else
     493            {
-    494              // Try again later with a delay
-    495              
-    496              HalLedSet(HAL_LED_1, HAL_LED_MODE_BLINK);
+    494            }
+    495          }
    \                     ??zb_StartConfirm_0:
-   \   000010                ; Setup parameters for call to function HalLedSet
-   \   000010   7A02         MOV     R2,#0x2
-   \   000012   7901         MOV     R1,#0x1
-   \   000014   12....       LCALL   ??HalLedSet?relay
-    497            }
-    498          }
-   \                     ??zb_StartConfirm_1:
-   \   000017   02....       LJMP    ?Subroutine0 & 0xFFFF
-    499          /******************************************************************************
-    500           * @fn          zb_SendDataConfirm
+   \   00000D   80..         SJMP    ?Subroutine1
+    496          /******************************************************************************
+    497           * @fn          zb_SendDataConfirm
+    498           *
+    499           * @brief       The zb_SendDataConfirm callback function is called by the
+    500           *              ZigBee after a send data operation completes
     501           *
-    502           * @brief       The zb_SendDataConfirm callback function is called by the
-    503           *              ZigBee after a send data operation completes
+    502           * @param       handle - The handle identifying the data transmission.
+    503           *              status - The status of the operation.
     504           *
-    505           * @param       handle - The handle identifying the data transmission.
-    506           *              status - The status of the operation.
-    507           *
-    508           * @return      none
-    509           */
+    505           * @return      none
+    506           */
 
    \                                 In  segment BANKED_CODE, align 1, keep-with-next
-    510          void zb_SendDataConfirm( uint8 handle, uint8 status )
+    507          void zb_SendDataConfirm( uint8 handle, uint8 status )
    \                     zb_SendDataConfirm:
-    511          {
+    508          {
    \   000000                ; Saved register size: 0
    \   000000                ; Auto size: 0
-    512          }
+    509          }
    \   000000   02....       LJMP    ?BRET
-    513          /******************************************************************************
-    514           * @fn          zb_BindConfirm
+    510          /******************************************************************************
+    511           * @fn          zb_BindConfirm
+    512           *
+    513           * @brief       The zb_BindConfirm callback is called by the ZigBee stack
+    514           *              after a bind operation completes.
     515           *
-    516           * @brief       The zb_BindConfirm callback is called by the ZigBee stack
-    517           *              after a bind operation completes.
+    516           * @param       commandId - The command ID of the binding being confirmed.
+    517           *              status - The status of the bind operation.
     518           *
-    519           * @param       commandId - The command ID of the binding being confirmed.
-    520           *              status - The status of the bind operation.
-    521           *
-    522           * @return      none
-    523           */
+    519           * @return      none
+    520           */
 
    \                                 In  segment BANKED_CODE, align 1, keep-with-next
-    524          void zb_BindConfirm( uint16 commandId, uint8 status )
+    521          void zb_BindConfirm( uint16 commandId, uint8 status )
    \                     zb_BindConfirm:
-    525          {
+    522          {
    \   000000                ; Saved register size: 0
    \   000000                ; Auto size: 0
-    526          }
+    523          }
    \   000000   02....       LJMP    ?BRET
-    527          /******************************************************************************
-    528           * @fn          zb_AllowBindConfirm
-    529           *
-    530           * @brief       Indicates when another device attempted to bind to this device
-    531           *
-    532           * @param
-    533           *
-    534           * @return      none
-    535           */
+    524          /******************************************************************************
+    525           * @fn          zb_AllowBindConfirm
+    526           *
+    527           * @brief       Indicates when another device attempted to bind to this device
+    528           *
+    529           * @param
+    530           *
+    531           * @return      none
+    532           */
 
    \                                 In  segment BANKED_CODE, align 1, keep-with-next
-    536          void zb_AllowBindConfirm( uint16 source )
+    533          void zb_AllowBindConfirm( uint16 source )
    \                     zb_AllowBindConfirm:
-    537          {
+    534          {
    \   000000                ; Saved register size: 0
    \   000000                ; Auto size: 0
-    538          }
+    535          }
    \   000000   02....       LJMP    ?BRET
-    539          /******************************************************************************
-    540           * @fn          zb_FindDeviceConfirm
+    536          /******************************************************************************
+    537           * @fn          zb_FindDeviceConfirm
+    538           *
+    539           * @brief       The zb_FindDeviceConfirm callback function is called by the
+    540           *              ZigBee stack when a find device operation completes.
     541           *
-    542           * @brief       The zb_FindDeviceConfirm callback function is called by the
-    543           *              ZigBee stack when a find device operation completes.
-    544           *
-    545           * @param       searchType - The type of search that was performed.
-    546           *              searchKey - Value that the search was executed on.
-    547           *              result - The result of the search.
-    548           *
-    549           * @return      none
-    550           */
+    542           * @param       searchType - The type of search that was performed.
+    543           *              searchKey - Value that the search was executed on.
+    544           *              result - The result of the search.
+    545           *
+    546           * @return      none
+    547           */
 
    \                                 In  segment BANKED_CODE, align 1, keep-with-next
-    551          void zb_FindDeviceConfirm( uint8 searchType, uint8 *searchKey, uint8 *result )
+    548          void zb_FindDeviceConfirm( uint8 searchType, uint8 *searchKey, uint8 *result )
    \                     zb_FindDeviceConfirm:
-    552          {
+    549          {
    \   000000                ; Saved register size: 0
    \   000000                ; Auto size: 0
-    553          }
+    550          }
    \   000000   02....       LJMP    ?BRET
-    554          
+    551          
 
    \                                 In  segment BANKED_CODE, align 1, keep-with-next
-    555          void zb_HandleOsalEvent( uint16 event )
+    552          void zb_HandleOsalEvent( uint16 event )
    \                     zb_HandleOsalEvent:
-    556          {
+    553          {
    \   000000                ; Saved register size: 0
    \   000000                ; Auto size: 0
-    557          
-    558          }
+    554          
+    555          }
    \   000000   02....       LJMP    ?BRET
-    559          
-    560          // The order in this table must be identical to the task initialization calls below in osalInitTask.
-    561          
+    556          
+    557          // The order in this table must be identical to the task initialization calls below in osalInitTask.
+    558          
 
    \                                 In  segment XDATA_ROM_C, align 1
-    562          const pTaskEventHandlerFn tasksArr[] = {
+    559          const pTaskEventHandlerFn tasksArr[] = {
    \                     tasksArr:
    \   000000   ....         DW ??macEventLoop?relay
    \   000002   ....         DW ??nwk_event_loop?relay
@@ -1183,55 +1171,55 @@ Warning[Pe550]: variable "keys_shift" was set but never used
    \   00000A   ....         DW ??Sys_ProcessEvent?relay
    \   00000C   ....         DW ??Button_ProcessEvent?relay
    \   00000E   ....         DW ??SAPI_ProcessEvent?relay
-    563            macEventLoop,
-    564            nwk_event_loop,
-    565            Hal_ProcessEvent,
-    566          #if defined( MT_TASK )
-    567            MT_ProcessEvent,
-    568          #endif
-    569            APS_event_loop,
-    570            ZDApp_event_loop,
-    571          
-    572            Sys_ProcessEvent,
-    573            Button_ProcessEvent,
-    574            SAPI_ProcessEvent
-    575          };
-    576          
+    560            macEventLoop,
+    561            nwk_event_loop,
+    562            Hal_ProcessEvent,
+    563          #if defined( MT_TASK )
+    564            MT_ProcessEvent,
+    565          #endif
+    566            APS_event_loop,
+    567            ZDApp_event_loop,
+    568          
+    569            Sys_ProcessEvent,
+    570            Button_ProcessEvent,
+    571            SAPI_ProcessEvent
+    572          };
+    573          
 
    \                                 In  segment XDATA_ROM_C, align 1
-    577          const uint8 tasksCnt = sizeof( tasksArr ) / sizeof( tasksArr[0] );
+    574          const uint8 tasksCnt = sizeof( tasksArr ) / sizeof( tasksArr[0] );
    \                     tasksCnt:
    \   000000   08           DB 8
 
    \                                 In  segment XDATA_Z, align 1, keep-with-next
-    578          uint16 *tasksEvents;
+    575          uint16 *tasksEvents;
    \                     tasksEvents:
    \   000000                DS 2
    \   000002                REQUIRE __INIT_XDATA_Z
-    579          
-    580          
-    581          
-    582          /*********************************************************************
-    583           * @fn      osalInitTasks
-    584           *
-    585           * @brief   This function invokes the initialization function for each task.
-    586           *
-    587           * @param   void
-    588           *
-    589           * @return  none
-    590           */
+    576          
+    577          
+    578          
+    579          /*********************************************************************
+    580           * @fn      osalInitTasks
+    581           *
+    582           * @brief   This function invokes the initialization function for each task.
+    583           *
+    584           * @param   void
+    585           *
+    586           * @return  none
+    587           */
 
    \                                 In  segment BANKED_CODE, align 1, keep-with-next
-    591          void osalInitTasks( void )
+    588          void osalInitTasks( void )
    \                     osalInitTasks:
-    592          {
+    589          {
    \   000000   C082         PUSH    DPL
    \   000002   C083         PUSH    DPH
    \   000004                ; Saved register size: 2
    \   000004                ; Auto size: 0
-    593            uint8 taskID = 0;
-    594          
-    595            tasksEvents = (uint16 *)osal_mem_alloc( sizeof( uint16 ) * tasksCnt);
+    590            uint8 taskID = 0;
+    591          
+    592            tasksEvents = (uint16 *)osal_mem_alloc( sizeof( uint16 ) * tasksCnt);
    \   000004                ; Setup parameters for call to function osal_mem_alloc
    \   000004   7A10         MOV     R2,#0x10
    \   000006   7B00         MOV     R3,#0x0
@@ -1242,49 +1230,49 @@ Warning[Pe550]: variable "keys_shift" was set but never used
    \   000010   A3           INC     DPTR
    \   000011   EB           MOV     A,R3
    \   000012   F0           MOVX    @DPTR,A
-    596            osal_memset( tasksEvents, 0, (sizeof( uint16 ) * tasksCnt));
+    593            osal_memset( tasksEvents, 0, (sizeof( uint16 ) * tasksCnt));
    \   000013                ; Setup parameters for call to function osal_memset
    \   000013   7C10         MOV     R4,#0x10
    \   000015   7D00         MOV     R5,#0x0
    \   000017   7900         MOV     R1,#0x0
    \   000019   12....       LCALL   ??osal_memset?relay
-    597          
-    598            macTaskInit( taskID++ );
+    594          
+    595            macTaskInit( taskID++ );
    \   00001C                ; Setup parameters for call to function macTaskInit
    \   00001C   7900         MOV     R1,#0x0
    \   00001E   12....       LCALL   ??macTaskInit?relay
-    599            nwk_init( taskID++ );
+    596            nwk_init( taskID++ );
    \   000021                ; Setup parameters for call to function nwk_init
    \   000021   7901         MOV     R1,#0x1
    \   000023   12....       LCALL   ??nwk_init?relay
-    600            Hal_Init( taskID++ );
+    597            Hal_Init( taskID++ );
    \   000026                ; Setup parameters for call to function Hal_Init
    \   000026   7902         MOV     R1,#0x2
    \   000028   12....       LCALL   ??Hal_Init?relay
-    601          #if defined( MT_TASK )
-    602            MT_TaskInit( taskID++ );
-    603          #endif
-    604            APS_Init( taskID++ );
+    598          #if defined( MT_TASK )
+    599            MT_TaskInit( taskID++ );
+    600          #endif
+    601            APS_Init( taskID++ );
    \   00002B                ; Setup parameters for call to function APS_Init
    \   00002B   7903         MOV     R1,#0x3
    \   00002D   12....       LCALL   ??APS_Init?relay
-    605            ZDApp_Init( taskID++ );
+    602            ZDApp_Init( taskID++ );
    \   000030                ; Setup parameters for call to function ZDApp_Init
    \   000030   7904         MOV     R1,#0x4
    \   000032   12....       LCALL   ??ZDApp_Init?relay
-    606            Sys_Init( taskID++ );
+    603            Sys_Init( taskID++ );
    \   000035                ; Setup parameters for call to function Sys_Init
    \   000035   7905         MOV     R1,#0x5
    \   000037   12....       LCALL   ??Sys_Init?relay
-    607            Button_Init( taskID++ );
+    604            Button_Init( taskID++ );
    \   00003A                ; Setup parameters for call to function Button_Init
    \   00003A   7906         MOV     R1,#0x6
    \   00003C   12....       LCALL   ??Button_Init?relay
-    608            SAPI_Init( taskID );
+    605            SAPI_Init( taskID );
    \   00003F                ; Setup parameters for call to function SAPI_Init
    \   00003F   7907         MOV     R1,#0x7
    \   000041   12....       LCALL   ??SAPI_Init?relay
-    609          }
+    606          }
    \   000044   80..         SJMP    ?Subroutine1
 
    \                                 In  segment XDATA_ID, align 1, keep-with-next
@@ -1401,8 +1389,7 @@ Warning[Pe550]: variable "keys_shift" was set but never used
      zb_ReceiveDataIndication     2      0      4
        -> HalLedSet               4      0      0
      zb_SendDataConfirm           0      0      0
-     zb_StartConfirm              0      0      9
-       -> HalLedSet               0      0     18
+     zb_StartConfirm              2      0      0
 
 
    Segment part sizes:
@@ -1421,7 +1408,7 @@ Warning[Pe550]: variable "keys_shift" was set but never used
      Sys_TaskID                          1
      Sys_NwkState                        1
      Sys_TransID                         1
-     Sys_Init                           48
+     Sys_Init                           42
      ?Subroutine0                        5
      Sys_ProcessEvent                  156
      ?Subroutine4                        2
@@ -1433,7 +1420,7 @@ Warning[Pe550]: variable "keys_shift" was set but never used
      Sensor_AllowBind                   75
      zb_ReceiveDataIndication           19
      ?Subroutine1                        7
-     zb_StartConfirm                    26
+     zb_StartConfirm                    15
      zb_SendDataConfirm                  3
      zb_BindConfirm                      3
      zb_AllowBindConfirm                 3
@@ -1459,14 +1446,14 @@ Warning[Pe550]: variable "keys_shift" was set but never used
      ?<Constant "bind">                  5
 
  
- 612 bytes in segment BANKED_CODE
+ 595 bytes in segment BANKED_CODE
   72 bytes in segment BANK_RELAYS
   10 bytes in segment XDATA_I
   10 bytes in segment XDATA_ID
   56 bytes in segment XDATA_ROM_C
   14 bytes in segment XDATA_Z
  
- 694 bytes of CODE  memory
+ 677 bytes of CODE  memory
   56 bytes of CONST memory
   24 bytes of XDATA memory
 
