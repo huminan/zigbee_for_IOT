@@ -1,6 +1,6 @@
 ###############################################################################
 #                                                                             #
-# IAR C/C++ Compiler V8.10.3.10338/W32 for 8051         06/Sep/2017  22:43:22 #
+# IAR C/C++ Compiler V8.10.3.10338/W32 for 8051         29/Dec/2017  20:30:04 #
 # Copyright 2004-2011 IAR Systems AB.                                         #
 #                                                                             #
 #    Core               =  plain                                              #
@@ -230,50 +230,22 @@ D:\ProgramData\Hardware\zigbee\Projects\zstack\Samples\SensorSys\Source\SensorSy
      99          /*********************************************************************
     100           * GLOBAL VARIABLES
     101           */
-
-   \                                 In  segment XDATA_I, align 1, keep-with-next
     102          uint8 AppTitle[]="SensorAPP"; //应用程序名称
-   \                     AppTitle:
-   \   000000                DS 10
-   \   00000A                REQUIRE `?<Initializer for AppTitle>`
-   \   00000A                REQUIRE __INIT_XDATA_I
     103          
     104          // Sys 端点的簇ID
     105          // This list should be filled with Application specific Cluster IDs.
-
-   \                                 In  segment XDATA_ROM_C, align 1
     106          const cId_t Sys_ClusterList[SYS_MAX_CLUSTERS] =
-   \                     Sys_ClusterList:
-   \   000000   0100         DW 1
     107          {
     108            SYS_CLUSTERID
     109          };
     110          
-
-   \                                 In  segment XDATA_ROM_C, align 1
     111          const cId_t Zb_ClusterList[ZB_MAX_CLUSTERS] =
-   \                     Zb_ClusterList:
-   \   000000   0200         DW 2
-   \   000002   0000         DW 0
-   \   000004   0000         DW 0
-   \   000006   0000         DW 0
     112          {
     113            ZB_CLUSTERID
     114          };
     115          
     116          // Sys 端点简单描述符
-
-   \                                 In  segment XDATA_ROM_C, align 1
     117          const SimpleDescriptionFormat_t Sys_SimpleDesc =
-   \                     Sys_SimpleDesc:
-   \   000000   02           DB 2
-   \   000001   040F         DW 3844
-   \   000003   0100         DW 1
-   \   000005   00           DB 0
-   \   000006   01           DB 1
-   \   000007   ....         DW Sys_ClusterList
-   \   000009   00           DB 0
-   \   00000A   0000         DW 0H
     118          {
     119          	SYS_ENDPOINT,           //  int Endpoint;
     120          	SYS_PROFID,                //  uint16 AppProfId[2];
@@ -286,18 +258,7 @@ D:\ProgramData\Hardware\zigbee\Projects\zstack\Samples\SensorSys\Source\SensorSy
     127          	NULL   //  byte *pAppInClusterList;
     128          };
     129          
-
-   \                                 In  segment XDATA_ROM_C, align 1
     130          const SimpleDescriptionFormat_t zb_SimpleDesc =
-   \                     zb_SimpleDesc:
-   \   000000   03           DB 3
-   \   000001   040F         DW 3844
-   \   000003   0100         DW 1
-   \   000005   00           DB 0
-   \   000006   04           DB 4
-   \   000007   ....         DW Zb_ClusterList
-   \   000009   04           DB 4
-   \   00000A   ....         DW Zb_ClusterList
     131          {
     132          	ZB_ENDPOINT,           //  int Endpoint;
     133          	SYS_PROFID,                //  uint16 AppProfId[2];
@@ -314,67 +275,25 @@ D:\ProgramData\Hardware\zigbee\Projects\zstack\Samples\SensorSys\Source\SensorSy
     144          // filled-in in Button_Init().  Another way to go would be to fill
     145          // in the structure here and make it a "const" (in code space).  The
     146          // way it's defined in this sample app it is define in RAM.
-
-   \                                 In  segment XDATA_Z, align 1, keep-with-next
     147          endPointDesc_t Sys_epDesc;
-   \                     Sys_epDesc:
-   \   000000                DS 6
-   \   000006                REQUIRE __INIT_XDATA_Z
     148          
     149          /*********************************************************************
     150           * LOCAL VARIABLES
     151           */
-
-   \                                 In  segment XDATA_Z, align 1, keep-with-next
     152          uint8 myAppState = APP_INIT;
-   \                     myAppState:
-   \   000000                DS 1
-   \   000001                REQUIRE __INIT_XDATA_Z
     153          
-
-   \                                 In  segment XDATA_Z, align 1, keep-with-next
     154          static byte type_join;
-                             ^
-Warning[Pe550]: variable "type_join" was set but never used
-   \                     type_join:
-   \   000000                DS 1
-   \   000001                REQUIRE __INIT_XDATA_Z
     155          
-
-   \                                 In  segment XDATA_Z, align 1, keep-with-next
     156          byte Sys_TaskID;
-   \                     Sys_TaskID:
-   \   000000                DS 1
-   \   000001                REQUIRE __INIT_XDATA_Z
     157          
-
-   \                                 In  segment XDATA_Z, align 1, keep-with-next
     158          devStates_t Sys_NwkState;   // 节点现在的网络状态
-   \                     Sys_NwkState:
-   \   000000                DS 1
-   \   000001                REQUIRE __INIT_XDATA_Z
     159          
     160          
-
-   \                                 In  segment XDATA_Z, align 1, keep-with-next
     161          byte Sys_TransID;  // 数据包的发送ID，每发一个自增1
-   \                     Sys_TransID:
-   \   000000                DS 1
-   \   000001                REQUIRE __INIT_XDATA_Z
     162          
-
-   \                                 In  segment XDATA_Z, align 1, keep-with-next
     163          uint8 sysSeqNumber = 0;    // 在端点间数据交流时被使用zb_SendDataRequest
-   \                     sysSeqNumber:
-   \   000000                DS 1
-   \   000001                REQUIRE __INIT_XDATA_Z
     164          
-
-   \                                 In  segment XDATA_Z, align 1, keep-with-next
     165          uint16 sensor_bindInProgress;
-   \                     sensor_bindInProgress:
-   \   000000                DS 2
-   \   000002                REQUIRE __INIT_XDATA_Z
     166          /*********************************************************************
     167           * LOCAL FUNCTIONS
     168           */
@@ -414,101 +333,30 @@ Warning[Pe550]: variable "type_join" was set but never used
     202           *
     203           * @return  none
     204           */
-
-   \                                 In  segment BANKED_CODE, align 1, keep-with-next
     205          void Sys_Init( byte task_id )
-   \                     Sys_Init:
     206          {
-   \   000000   74F7         MOV     A,#-0x9
-   \   000002   12....       LCALL   ?BANKED_ENTER_XDATA
-   \   000005                ; Saved register size: 9
-   \   000005                ; Auto size: 0
-   \   000005   E9           MOV     A,R1
     207            Sys_TaskID = task_id;
-   \   000006   90....       MOV     DPTR,#Sys_TaskID
-   \   000009   F0           MOVX    @DPTR,A
     208          
     209            // Fill out the endpoint description.
     210            Sys_epDesc.endPoint = SYS_ENDPOINT;
-   \   00000A   90....       MOV     DPTR,#Sys_epDesc
-   \   00000D   7402         MOV     A,#0x2
-   \   00000F   F0           MOVX    @DPTR,A
     211            Sys_epDesc.task_id = &Sys_TaskID;
-   \   000010   A3           INC     DPTR
-   \   000011   74..         MOV     A,#Sys_TaskID & 0xff
-   \   000013   F0           MOVX    @DPTR,A
-   \   000014   A3           INC     DPTR
-   \   000015   74..         MOV     A,#(Sys_TaskID >> 8) & 0xff
-   \   000017   F0           MOVX    @DPTR,A
     212            Sys_epDesc.simpleDesc
     213                      = (SimpleDescriptionFormat_t *)&Sys_SimpleDesc;
-   \   000018   A3           INC     DPTR
-   \   000019   74..         MOV     A,#Sys_SimpleDesc & 0xff
-   \   00001B   F0           MOVX    @DPTR,A
-   \   00001C   A3           INC     DPTR
-   \   00001D   74..         MOV     A,#(Sys_SimpleDesc >> 8) & 0xff
-   \   00001F   F0           MOVX    @DPTR,A
     214            Sys_epDesc.latencyReq = noLatencyReqs;
-   \   000020   A3           INC     DPTR
-   \   000021   E4           CLR     A
-   \   000022   F0           MOVX    @DPTR,A
     215          
     216            // Register the endpoint description with the AF
     217            afRegister( &Sys_epDesc );
-   \   000023                ; Setup parameters for call to function afRegister
-   \   000023   7A..         MOV     R2,#Sys_epDesc & 0xff
-   \   000025   7B..         MOV     R3,#(Sys_epDesc >> 8) & 0xff
-   \   000027   12....       LCALL   ??afRegister?relay
     218          
     219            // Set device as Coordinator
     220            zgDeviceLogicalType = ZG_DEVICETYPE_COORDINATOR;
-   \   00002A   90....       MOV     DPTR,#zgDeviceLogicalType
-   \   00002D   E4           CLR     A
-   \   00002E   F0           MOVX    @DPTR,A
     221          
     222            HalLedSet ( HAL_LED_1, HAL_LED_MODE_ON );
-   \   00002F                ; Setup parameters for call to function HalLedSet
-   \   00002F   12....       LCALL   ?Subroutine2 & 0xFFFF
     223            HalLedSet ( HAL_LED_2, HAL_LED_MODE_ON );
     224            HalLedSet ( HAL_LED_3, HAL_LED_MODE_ON );
     225            HalLedSet ( HAL_LED_4, HAL_LED_MODE_ON );
-   \                     ??CrossCallReturnLabel_0:
-   \   000032                ; Setup parameters for call to function HalLedSet
-   \   000032   7A01         MOV     R2,#0x1
-   \   000034   7908         MOV     R1,#0x8
-   \   000036                REQUIRE ?Subroutine0
-   \   000036                ; // Fall through to label ?Subroutine0
     226            // To Initiallize
     227            // osal_start_timerEx(task_id, CONFIG_OPTION_EVT, 5000);
     228          }
-
-   \                                 In  segment BANKED_CODE, align 1, keep-with-next
-   \                     ?Subroutine0:
-   \   000000   12....       LCALL   ??HalLedSet?relay
-   \   000003                REQUIRE ??Subroutine8_0
-   \   000003                ; // Fall through to label ??Subroutine8_0
-
-   \                                 In  segment BANKED_CODE, align 1, keep-with-next
-   \                     ??Subroutine8_0:
-   \   000000   7F01         MOV     R7,#0x1
-   \   000002   02....       LJMP    ?BANKED_LEAVE_XDATA
-
-   \                                 In  segment BANKED_CODE, align 1, keep-with-next
-   \                     ?Subroutine2:
-   \   000000   7A01         MOV     R2,#0x1
-   \   000002   7901         MOV     R1,#0x1
-   \   000004   12....       LCALL   ??HalLedSet?relay
-   \   000007                ; Setup parameters for call to function HalLedSet
-   \   000007                ; Setup parameters for call to function HalLedSet
-   \   000007   7A01         MOV     R2,#0x1
-   \   000009   7902         MOV     R1,#0x2
-   \   00000B   12....       LCALL   ??HalLedSet?relay
-   \   00000E                ; Setup parameters for call to function HalLedSet
-   \   00000E                ; Setup parameters for call to function HalLedSet
-   \   00000E   7A01         MOV     R2,#0x1
-   \   000010   7904         MOV     R1,#0x4
-   \   000012   12....       LCALL   ??HalLedSet?relay
-   \   000015   22           RET
     229          
     230          /*********************************************************************
     231           * @fn      Sys_ProcessEvent
@@ -523,21 +371,8 @@ Warning[Pe550]: variable "type_join" was set but never used
     240           *
     241           * @return  none
     242           */
-
-   \                                 In  segment BANKED_CODE, align 1, keep-with-next
     243          UINT16 Sys_ProcessEvent( byte task_id, UINT16 events )
-   \                     Sys_ProcessEvent:
     244          {
-   \   000000   74F2         MOV     A,#-0xe
-   \   000002   12....       LCALL   ?BANKED_ENTER_XDATA
-   \   000005                ; Saved register size: 14
-   \   000005                ; Auto size: 2
-   \   000005   74FE         MOV     A,#-0x2
-   \   000007   12....       LCALL   ?ALLOC_XSTACK8
-   \   00000A   EA           MOV     A,R2
-   \   00000B   FE           MOV     R6,A
-   \   00000C   EB           MOV     A,R3
-   \   00000D   FF           MOV     R7,A
     245            afIncomingMSGPacket_t *MSGpkt = NULL;
     246            afDataConfirm_t *afDataConfirm;
     247          
@@ -548,12 +383,8 @@ Warning[Pe550]: variable "type_join" was set but never used
     252            (void)task_id;  // Intentionally unreferenced parameter
     253          
     254            if ( events & SYS_EVENT_MSG )
-   \   00000E   5480         ANL     A,#0x80
-   \   000010   6041         JZ      ??Sys_ProcessEvent_0
     255            {
     256              MSGpkt = (afIncomingMSGPacket_t *)osal_msg_receive( task_id );
-   \   000012                ; Setup parameters for call to function osal_msg_receive
-   \   000012   8012         SJMP    ??Sys_ProcessEvent_1
     257              while ( MSGpkt )
     258              {
     259                switch ( MSGpkt->hdr.event )
@@ -586,11 +417,6 @@ Warning[Pe550]: variable "type_join" was set but never used
     286          
     287                  case ZDO_STATE_CHANGE:
     288                    Sys_NwkState = (devStates_t)(MSGpkt->hdr.status);
-   \                     ??Sys_ProcessEvent_2:
-   \   000014   A3           INC     DPTR
-   \   000015   E0           MOVX    A,@DPTR
-   \   000016   90....       MOV     DPTR,#Sys_NwkState
-   \   000019   F0           MOVX    @DPTR,A
     289                    if ( (Sys_NwkState == DEV_ZB_COORD) )
     290                    {
     291                    //	if(myAppState == APP_INIT)
@@ -606,157 +432,47 @@ Warning[Pe550]: variable "type_join" was set but never used
     301          
     302                // Release the memory
     303                osal_msg_deallocate( (uint8 *)MSGpkt );
-   \                     ??Sys_ProcessEvent_3:
-   \   00001A                ; Setup parameters for call to function osal_msg_deallocate
-   \   00001A   AA..         MOV     R2,?V0 + 0
-   \   00001C   AB..         MOV     R3,?V0 + 1
-   \   00001E   12....       LCALL   ??osal_msg_deallocate?relay
     304          
     305                // Next
     306                MSGpkt = (afIncomingMSGPacket_t *)osal_msg_receive( Sys_TaskID );
-   \   000021                ; Setup parameters for call to function osal_msg_receive
-   \   000021   90....       MOV     DPTR,#Sys_TaskID
-   \   000024   E0           MOVX    A,@DPTR
-   \   000025   F9           MOV     R1,A
-   \                     ??Sys_ProcessEvent_1:
-   \   000026   12....       LCALL   ??osal_msg_receive?relay
-   \   000029   8A..         MOV     ?V0 + 0,R2
-   \   00002B   8B..         MOV     ?V0 + 1,R3
-   \   00002D   E5..         MOV     A,?V0 + 0
-   \   00002F   45..         ORL     A,?V0 + 1
-   \   000031   6018         JZ      ??Sys_ProcessEvent_4
-   \   000033   85..82       MOV     DPL,?V0 + 0
-   \   000036   85..83       MOV     DPH,?V0 + 1
-   \   000039   E0           MOVX    A,@DPTR
-   \   00003A   242F         ADD     A,#0x2f
-   \   00003C   60D6         JZ      ??Sys_ProcessEvent_2
-   \   00003E   24FE         ADD     A,#-0x2
-   \   000040   70D8         JNZ     ??Sys_ProcessEvent_3
-   \   000042                ; Setup parameters for call to function Sys_ProcessZDOMsgs
-   \   000042   AA..         MOV     R2,?V0 + 0
-   \   000044   AB..         MOV     R3,?V0 + 1
-   \   000046   12....       LCALL   ??Sys_ProcessZDOMsgs?relay
-   \   000049   80CF         SJMP    ??Sys_ProcessEvent_3
     307              }
     308              // return unprocessed events
     309              return (events ^ SYS_EVENT_MSG);
-   \                     ??Sys_ProcessEvent_4:
-   \   00004B   EE           MOV     A,R6
-   \   00004C   FA           MOV     R2,A
-   \   00004D   EF           MOV     A,R7
-   \   00004E   6480         XRL     A,#0x80
-   \                     ??Sys_ProcessEvent_5:
-   \   000050   FB           MOV     R3,A
-   \   000051   8072         SJMP    ??Sys_ProcessEvent_6
     310            }
     311          
     312            if( events & CONFIG_OPTION_EVT )
-   \                     ??Sys_ProcessEvent_0:
-   \   000053   EE           MOV     A,R6
-   \   000054   5410         ANL     A,#0x10
-   \   000056   605C         JZ      ??Sys_ProcessEvent_7
     313            {
     314              uint8 logicalType;
     315              uint8 startOptions;
     316              if ( myAppState == APP_INIT  )
-   \   000058   90....       MOV     DPTR,#myAppState
-   \   00005B   E0           MOVX    A,@DPTR
-   \   00005C   704F         JNZ     ??Sys_ProcessEvent_8
     317              {
     318                zb_ReadConfiguration( ZCD_NV_LOGICAL_TYPE, sizeof(uint8), &logicalType );
-   \   00005E                ; Setup parameters for call to function zb_ReadConfiguration
-   \   00005E   85..82       MOV     DPL,?XSP + 0
-   \   000061   85..83       MOV     DPH,?XSP + 1
-   \   000064   AC82         MOV     R4,DPL
-   \   000066   AD83         MOV     R5,DPH
-   \   000068   7A01         MOV     R2,#0x1
-   \   00006A   7987         MOV     R1,#-0x79
-   \   00006C   12....       LCALL   ??zb_ReadConfiguration?relay
     319                if ( logicalType != ZG_DEVICETYPE_ENDDEVICE )
-   \   00006F   85..82       MOV     DPL,?XSP + 0
-   \   000072   85..83       MOV     DPH,?XSP + 1
-   \   000075   E0           MOVX    A,@DPTR
-   \   000076   6402         XRL     A,#0x2
-   \   000078   600D         JZ      ??Sys_ProcessEvent_9
     320                {
     321                  logicalType = ZG_DEVICETYPE_COORDINATOR;
-   \   00007A   E4           CLR     A
-   \   00007B   F0           MOVX    @DPTR,A
     322                  zb_WriteConfiguration(ZCD_NV_LOGICAL_TYPE, sizeof(uint8), &logicalType);
-   \   00007C                ; Setup parameters for call to function zb_WriteConfiguration
-   \   00007C   AC82         MOV     R4,DPL
-   \   00007E   AD83         MOV     R5,DPH
-   \   000080   7A01         MOV     R2,#0x1
-   \   000082   7987         MOV     R1,#-0x79
-   \   000084   12....       LCALL   ??zb_WriteConfiguration?relay
     323                }
     324                // Do more configuration if necessary and then restart device with auto-start bit set
     325                // write endpoint to simple desc...dont pass it in start req..then reset
     326          
     327                zb_ReadConfiguration( ZCD_NV_STARTUP_OPTION, sizeof(uint8), &startOptions );
-   \                     ??Sys_ProcessEvent_9:
-   \   000087                ; Setup parameters for call to function zb_ReadConfiguration
-   \   000087   7401         MOV     A,#0x1
-   \   000089   12....       LCALL   ?XSTACK_DISP0_8
-   \   00008C   AC82         MOV     R4,DPL
-   \   00008E   AD83         MOV     R5,DPH
-   \   000090   7A01         MOV     R2,#0x1
-   \   000092   7903         MOV     R1,#0x3
-   \   000094   12....       LCALL   ??zb_ReadConfiguration?relay
     328                startOptions = ZCD_STARTOPT_AUTO_START;
-   \   000097   7401         MOV     A,#0x1
-   \   000099   12....       LCALL   ?XSTACK_DISP0_8
-   \   00009C   7404         MOV     A,#0x4
-   \   00009E   F0           MOVX    @DPTR,A
     329                zb_WriteConfiguration( ZCD_NV_STARTUP_OPTION, sizeof(uint8), &startOptions );
-   \   00009F                ; Setup parameters for call to function zb_WriteConfiguration
-   \   00009F   AC82         MOV     R4,DPL
-   \   0000A1   AD83         MOV     R5,DPH
-   \   0000A3   7A01         MOV     R2,#0x1
-   \   0000A5   7903         MOV     R1,#0x3
-   \   0000A7   12....       LCALL   ??zb_WriteConfiguration?relay
     330                zb_SystemReset();
-   \   0000AA                ; Setup parameters for call to function zb_SystemReset
-   \   0000AA   12....       LCALL   ??zb_SystemReset?relay
     331              }
     332              return (events ^ CONFIG_OPTION_EVT);
-   \                     ??Sys_ProcessEvent_8:
-   \   0000AD   EE           MOV     A,R6
-   \   0000AE   6410         XRL     A,#0x10
-   \                     ??Sys_ProcessEvent_10:
-   \   0000B0   FA           MOV     R2,A
-   \   0000B1   EF           MOV     A,R7
-   \   0000B2   809C         SJMP    ??Sys_ProcessEvent_5
     333            }
     334          
     335            if(events & CLOSE_LIGHT_EVT)
-   \                     ??Sys_ProcessEvent_7:
-   \   0000B4   EE           MOV     A,R6
-   \   0000B5   5408         ANL     A,#0x8
-   \   0000B7   6008         JZ      ??Sys_ProcessEvent_11
     336            {
     337              HalLedSet ( HAL_LED_1, HAL_LED_MODE_ON );
-   \   0000B9                ; Setup parameters for call to function HalLedSet
-   \   0000B9   12....       LCALL   ?Subroutine2 & 0xFFFF
     338              HalLedSet ( HAL_LED_2, HAL_LED_MODE_ON );
     339              HalLedSet ( HAL_LED_3, HAL_LED_MODE_ON );
     340              return (events ^ CLOSE_LIGHT_EVT);
-   \                     ??CrossCallReturnLabel_1:
-   \   0000BC   EE           MOV     A,R6
-   \   0000BD   6408         XRL     A,#0x8
-   \   0000BF   80EF         SJMP    ??Sys_ProcessEvent_10
     341            }
     342          
     343            // Discard unknown events
     344            return 0;
-   \                     ??Sys_ProcessEvent_11:
-   \   0000C1   7A00         MOV     R2,#0x0
-   \   0000C3   7B00         MOV     R3,#0x0
-   \                     ??Sys_ProcessEvent_6:
-   \   0000C5   7402         MOV     A,#0x2
-   \   0000C7   12....       LCALL   ?DEALLOC_XSTACK8
-   \   0000CA   7F06         MOV     R7,#0x6
-   \   0000CC   02....       LJMP    ?BANKED_LEAVE_XDATA
     345          }
     346          
     347          /*********************************************************************
@@ -772,61 +488,22 @@ Warning[Pe550]: variable "type_join" was set but never used
     357           *
     358           * @return  none
     359           */
-
-   \                                 In  segment BANKED_CODE, align 1, keep-with-next
     360          void Sys_ProcessZDOMsgs( zdoIncomingMsg_t *inMsg /*, byte task_id */)
-   \                     Sys_ProcessZDOMsgs:
     361          {
-   \   000000   C082         PUSH    DPL
-   \   000002   C083         PUSH    DPH
-   \   000004                ; Saved register size: 2
-   \   000004                ; Auto size: 0
     362          
     363            switch ( inMsg->clusterID )
-   \   000004   EA           MOV     A,R2
-   \   000005   240C         ADD     A,#0xc
-   \   000007   F582         MOV     DPL,A
-   \   000009   EB           MOV     A,R3
-   \   00000A   3400         ADDC    A,#0x0
-   \   00000C   F583         MOV     DPH,A
-   \   00000E   E0           MOVX    A,@DPTR
-   \   00000F   6420         XRL     A,#0x20
-   \   000011   7004         JNZ     ??Sys_ProcessZDOMsgs_0
-   \   000013   A3           INC     DPTR
-   \   000014   E0           MOVX    A,@DPTR
-   \   000015   6480         XRL     A,#0x80
-   \                     ??Sys_ProcessZDOMsgs_0:
-   \   000017   701A         JNZ     ??Sys_ProcessZDOMsgs_1
     364            {
     365              case End_Device_Bind_rsp:
     366                if ( ZDO_ParseBindRsp( inMsg ) == ZSuccess )
-   \   000019   EA           MOV     A,R2
-   \   00001A   2413         ADD     A,#0x13
-   \   00001C   F582         MOV     DPL,A
-   \   00001E   EB           MOV     A,R3
-   \   00001F   3400         ADDC    A,#0x0
-   \   000021   F583         MOV     DPH,A
-   \   000023   12....       LCALL   ?Subroutine4 & 0xFFFF
-   \                     ??CrossCallReturnLabel_4:
-   \   000026   7004         JNZ     ??Sys_ProcessZDOMsgs_2
     367                {
     368                  // Light LED
     369                  HalLedSet( HAL_LED_4, HAL_LED_MODE_ON );
-   \   000028                ; Setup parameters for call to function HalLedSet
-   \   000028   7A01         MOV     R2,#0x1
-   \   00002A   8002         SJMP    ??Sys_ProcessZDOMsgs_3
     370                }
     371          #if defined(BLINK_LEDS)
     372                else
     373                {
     374                  // Flash LED to show failure
     375                  HalLedSet ( HAL_LED_4, HAL_LED_MODE_FLASH );
-   \                     ??Sys_ProcessZDOMsgs_2:
-   \   00002C                ; Setup parameters for call to function HalLedSet
-   \   00002C   7A04         MOV     R2,#0x4
-   \                     ??Sys_ProcessZDOMsgs_3:
-   \   00002E   7908         MOV     R1,#0x8
-   \   000030   12....       LCALL   ??HalLedSet?relay
     376                }
     377          #endif
     378                break;
@@ -875,32 +552,6 @@ Warning[Pe550]: variable "type_join" was set but never used
     421                */
     422            }
     423          }
-   \                     ??Sys_ProcessZDOMsgs_1:
-   \   000033                REQUIRE ?Subroutine1
-   \   000033                ; // Fall through to label ?Subroutine1
-
-   \                                 In  segment BANKED_CODE, align 1, keep-with-next
-   \                     ?Subroutine1:
-   \   000000   D083         POP     DPH
-   \   000002   D082         POP     DPL
-   \   000004   02....       LJMP    ?BRET
-
-   \                                 In  segment BANKED_CODE, align 1, keep-with-next
-   \                     ?Subroutine4:
-   \   000000   12....       LCALL   ?Subroutine7 & 0xFFFF
-   \                     ??CrossCallReturnLabel_8:
-   \   000003   E0           MOVX    A,@DPTR
-   \   000004   22           RET
-
-   \                                 In  segment BANKED_CODE, align 1, keep-with-next
-   \                     ?Subroutine7:
-   \   000000   E0           MOVX    A,@DPTR
-   \   000001   F8           MOV     R0,A
-   \   000002   A3           INC     DPTR
-   \   000003   E0           MOVX    A,@DPTR
-   \   000004   F583         MOV     DPH,A
-   \   000006   8882         MOV     DPL,R0
-   \   000008   22           RET
     424          
     425          /*********************************************************************
     426           * LOCAL FUNCTIONS
@@ -917,13 +568,8 @@ Warning[Pe550]: variable "type_join" was set but never used
     437           *
     438           * @return  none
     439           */
-
-   \                                 In  segment BANKED_CODE, align 1, keep-with-next
     440          void Sys_MessageMSGCB( afIncomingMSGPacket_t *pkt, byte task_id )
-   \                     Sys_MessageMSGCB:
     441          {
-   \   000000                ; Saved register size: 0
-   \   000000                ; Auto size: 0
     442            switch ( pkt->clusterId )
     443            {
     444              case BUTTON_CLUSTERID:
@@ -934,7 +580,6 @@ Warning[Pe550]: variable "type_join" was set but never used
     449                break;
     450            }
     451          }
-   \   000000   02....       LJMP    ?BRET
     452          
     453          /*********************************************************************
     454           * @fn      Sys_SendPreBindMessage
@@ -945,66 +590,19 @@ Warning[Pe550]: variable "type_join" was set but never used
     459           *
     460           * @return  none
     461           */
-
-   \                                 In  segment BANKED_CODE, align 1, keep-with-next
     462          void Sys_SendPreBindMessage( byte type_id )
-   \                     Sys_SendPreBindMessage:
     463          {
-   \   000000   74F6         MOV     A,#-0xa
-   \   000002   12....       LCALL   ?BANKED_ENTER_XDATA
-   \   000005                ; Saved register size: 10
-   \   000005                ; Auto size: 18
-   \   000005   74EE         MOV     A,#-0x12
-   \   000007   12....       LCALL   ?ALLOC_XSTACK8
-   \   00000A   E9           MOV     A,R1
-   \   00000B   FE           MOV     R6,A
     464            afAddrType_t dstAddr;
     465            uint8 endPoint_ID;
     466          
     467            dstAddr.addr.shortAddr = 0xFFFF;
-   \   00000C   7406         MOV     A,#0x6
-   \   00000E   12....       LCALL   ?XSTACK_DISP0_8
-   \   000011   74FF         MOV     A,#-0x1
-   \   000013   F0           MOVX    @DPTR,A
-   \   000014   A3           INC     DPTR
-   \   000015   F0           MOVX    @DPTR,A
     468            dstAddr.addrMode = (afAddrMode_t)AddrBroadcast;
-   \   000016   740E         MOV     A,#0xe
-   \   000018   12....       LCALL   ?XSTACK_DISP0_8
-   \   00001B   740F         MOV     A,#0xf
-   \   00001D   F0           MOVX    @DPTR,A
     469            dstAddr.endPoint = Sys_epDesc.simpleDesc->EndPoint;
-   \   00001E   90....       MOV     DPTR,#Sys_epDesc + 3
-   \   000021   12....       LCALL   ?Subroutine4 & 0xFFFF
-   \                     ??CrossCallReturnLabel_5:
-   \   000024   C0E0         PUSH    A
-   \   000026   740F         MOV     A,#0xf
-   \   000028   12....       LCALL   ?XSTACK_DISP0_8
-   \   00002B   D0E0         POP     A
-   \   00002D   F0           MOVX    @DPTR,A
     470          
     471            char theMessageData[6] = "bind";
-   \   00002E   85..82       MOV     DPL,?XSP + 0
-   \   000031   85..83       MOV     DPH,?XSP + 1
-   \   000034   AC82         MOV     R4,DPL
-   \   000036   AD83         MOV     R5,DPH
-   \   000038   7583..       MOV     DPH,#(`?<Constant "bind">` >> 8) & 0xff
-   \   00003B   7582..       MOV     DPL,#`?<Constant "bind">` & 0xff
-   \   00003E   7406         MOV     A,#0x6
-   \   000040   12....       LCALL   ?MOVE_LONG8_XDATA_XDATA
     472            theMessageData[4] = type_id;
-   \   000043   7404         MOV     A,#0x4
-   \   000045   12....       LCALL   ?XSTACK_DISP0_8
-   \   000048   E9           MOV     A,R1
-   \   000049   F0           MOVX    @DPTR,A
     473            endPoint_ID = typeID2pointID(type_id);
     474            theMessageData[5] = endPoint_ID;
-   \   00004A                ; Setup parameters for call to function typeID2pointID
-   \   00004A   12....       LCALL   ??typeID2pointID?relay
-   \   00004D   7405         MOV     A,#0x5
-   \   00004F   12....       LCALL   ?XSTACK_DISP0_8
-   \   000052   E9           MOV     A,R1
-   \   000053   F0           MOVX    @DPTR,A
     475          
     476            if ( AF_DataRequest( &dstAddr, &Sys_epDesc,
     477                                 SYS_CLUSTERID,
@@ -1012,111 +610,23 @@ Warning[Pe550]: variable "type_join" was set but never used
     479                                 (byte *)&theMessageData,
     480                                 &Sys_TransID,
     481                                 AF_DISCV_ROUTE, AF_DEFAULT_RADIUS ) == afStatus_SUCCESS )
-   \   000054                ; Setup parameters for call to function AF_DataRequest
-   \   000054   75..1E       MOV     ?V0 + 0,#0x1e
-   \   000057   78..         MOV     R0,#?V0 + 0
-   \   000059   12....       LCALL   ?PUSH_XSTACK_I_ONE
-   \   00005C   75....       MOV     ?V0 + 0,#Sys_TransID & 0xff
-   \   00005F   75....       MOV     ?V0 + 1,#(Sys_TransID >> 8) & 0xff
-   \   000062   78..         MOV     R0,#?V0 + 0
-   \   000064   12....       LCALL   ?PUSH_XSTACK_I_TWO
-   \   000067   7403         MOV     A,#0x3
-   \   000069   12....       LCALL   ?XSTACK_DISP0_8
-   \   00006C   8582..       MOV     ?V0 + 0,DPL
-   \   00006F   8583..       MOV     ?V0 + 1,DPH
-   \   000072   78..         MOV     R0,#?V0 + 0
-   \   000074   12....       LCALL   ?PUSH_XSTACK_I_TWO
-   \   000077                ; Setup parameters for call to function osal_strlen
-   \   000077   7405         MOV     A,#0x5
-   \   000079   12....       LCALL   ?XSTACK_DISP0_8
-   \   00007C   AA82         MOV     R2,DPL
-   \   00007E   AB83         MOV     R3,DPH
-   \   000080   12....       LCALL   ??osal_strlen?relay
-   \   000083   EA           MOV     A,R2
-   \   000084   2401         ADD     A,#0x1
-   \   000086   F5..         MOV     ?V0 + 0,A
-   \   000088   E4           CLR     A
-   \   000089   3400         ADDC    A,#0x0
-   \   00008B   F5..         MOV     ?V0 + 1,A
-   \   00008D   78..         MOV     R0,#?V0 + 0
-   \   00008F   12....       LCALL   ?PUSH_XSTACK_I_TWO
-   \   000092   75..01       MOV     ?V0 + 0,#0x1
-   \   000095   75..00       MOV     ?V0 + 1,#0x0
-   \   000098   78..         MOV     R0,#?V0 + 0
-   \   00009A   12....       LCALL   ?PUSH_XSTACK_I_TWO
-   \   00009D   7920         MOV     R1,#0x20
-   \   00009F   7C..         MOV     R4,#Sys_epDesc & 0xff
-   \   0000A1   7D..         MOV     R5,#(Sys_epDesc >> 8) & 0xff
-   \   0000A3   740F         MOV     A,#0xf
-   \   0000A5   12....       LCALL   ?XSTACK_DISP0_8
-   \   0000A8   AA82         MOV     R2,DPL
-   \   0000AA   AB83         MOV     R3,DPH
-   \   0000AC   12....       LCALL   ??AF_DataRequest?relay
-   \   0000AF   7409         MOV     A,#0x9
-   \   0000B1   12....       LCALL   ?DEALLOC_XSTACK8
-   \   0000B4   E9           MOV     A,R1
-   \   0000B5   7024         JNZ     ??Sys_SendPreBindMessage_0
     482            {
     483              // Successfully requested to be sent.
     484              // 闪5s灯
     485              HalLedBlink (HAL_LED_1, 1, 50, 5000);
-   \   0000B7                ; Setup parameters for call to function HalLedBlink
-   \   0000B7   7C88         MOV     R4,#-0x78
-   \   0000B9   7D13         MOV     R5,#0x13
-   \   0000BB   7B32         MOV     R3,#0x32
-   \   0000BD   7A01         MOV     R2,#0x1
-   \   0000BF   7901         MOV     R1,#0x1
-   \   0000C1   12....       LCALL   ??HalLedBlink?relay
     486              //if(想要绑定什么就对应的 TypeID)
     487          
     488              type_join = type_id;
-   \   0000C4   EE           MOV     A,R6
-   \   0000C5   90....       MOV     DPTR,#type_join
-   \   0000C8   F0           MOVX    @DPTR,A
     489              if(type_id == BUTTON_TYPE_ID)
-   \   0000C9   7401         MOV     A,#0x1
-   \   0000CB   6E           XRL     A,R6
-   \   0000CC   7014         JNZ     ??Sys_SendPreBindMessage_1
     490                osal_start_timerEx(Button_TaskID, MATCH_BIND_EVT, 5000);
-   \   0000CE                ; Setup parameters for call to function osal_start_timerEx
-   \   0000CE   7C88         MOV     R4,#-0x78
-   \   0000D0   7D13         MOV     R5,#0x13
-   \   0000D2   7A02         MOV     R2,#0x2
-   \   0000D4   7B00         MOV     R3,#0x0
-   \   0000D6   12....       LCALL   ?Subroutine6 & 0xFFFF
     491          
     492            }
-   \                     ??CrossCallReturnLabel_10:
-   \   0000D9   8007         SJMP    ??Sys_SendPreBindMessage_1
     493            else
     494            {
     495              // Error occurred in request to send.
     496              HalLedSet(HAL_LED_1, HAL_LED_MODE_OFF);
-   \                     ??Sys_SendPreBindMessage_0:
-   \   0000DB                ; Setup parameters for call to function HalLedSet
-   \   0000DB   7A00         MOV     R2,#0x0
-   \   0000DD   7901         MOV     R1,#0x1
-   \   0000DF   12....       LCALL   ??HalLedSet?relay
     497            }
     498          }
-   \                     ??Sys_SendPreBindMessage_1:
-   \   0000E2   7412         MOV     A,#0x12
-   \   0000E4   12....       LCALL   ?DEALLOC_XSTACK8
-   \   0000E7   7F02         MOV     R7,#0x2
-   \   0000E9   02....       LJMP    ?BANKED_LEAVE_XDATA
-
-   \                                 In  segment BANKED_CODE, align 1, keep-with-next
-   \                     ?Subroutine6:
-   \   000000   90....       MOV     DPTR,#Button_TaskID
-   \   000003                REQUIRE ??Subroutine9_0
-   \   000003                ; // Fall through to label ??Subroutine9_0
-
-   \                                 In  segment BANKED_CODE, align 1, keep-with-next
-   \                     ??Subroutine9_0:
-   \   000000   E0           MOVX    A,@DPTR
-   \   000001   F9           MOV     R1,A
-   \   000002   12....       LCALL   ??osal_start_timerEx?relay
-   \   000005   22           RET
     499          
     500          /*********************************************************************
     501          *********************************************************************/
@@ -1134,39 +644,19 @@ Warning[Pe550]: variable "type_join" was set but never used
     513           *
     514           * @return      none
     515           */
-
-   \                                 In  segment BANKED_CODE, align 1, keep-with-next
     516          void zb_StartConfirm( uint8 status )
-   \                     zb_StartConfirm:
     517          {
-   \   000000   74F7         MOV     A,#-0x9
-   \   000002   12....       LCALL   ?BANKED_ENTER_XDATA
-   \   000005                ; Saved register size: 9
-   \   000005                ; Auto size: 0
-   \   000005   E9           MOV     A,R1
     518              if ( status == ZB_SUCCESS )
-   \   000006   7008         JNZ     ??zb_StartConfirm_0
     519            {
     520              myAppState = APP_START;
-   \   000008   90....       MOV     DPTR,#myAppState
-   \   00000B   7401         MOV     A,#0x1
-   \   00000D   F0           MOVX    @DPTR,A
-   \   00000E   8007         SJMP    ??zb_StartConfirm_1
     521            }
     522            else
     523            {
     524              // Try again later with a delay
     525          
     526              HalLedSet(HAL_LED_2, HAL_LED_MODE_BLINK);
-   \                     ??zb_StartConfirm_0:
-   \   000010                ; Setup parameters for call to function HalLedSet
-   \   000010   7A02         MOV     R2,#0x2
-   \   000012   7902         MOV     R1,#0x2
-   \   000014   12....       LCALL   ??HalLedSet?relay
     527            }
     528          }
-   \                     ??zb_StartConfirm_1:
-   \   000017   02....       LJMP    ??Subroutine8_0 & 0xFFFF
     529          /******************************************************************************
     530           * @fn          zb_SendDataConfirm
     531           *
@@ -1178,15 +668,9 @@ Warning[Pe550]: variable "type_join" was set but never used
     537           *
     538           * @return      none
     539           */
-
-   \                                 In  segment BANKED_CODE, align 1, keep-with-next
     540          void zb_SendDataConfirm( uint8 handle, uint8 status )
-   \                     zb_SendDataConfirm:
     541          {
-   \   000000                ; Saved register size: 0
-   \   000000                ; Auto size: 0
     542          }
-   \   000000   02....       LJMP    ?BRET
     543          /******************************************************************************
     544           * @fn          zb_BindConfirm
     545           *
@@ -1198,36 +682,18 @@ Warning[Pe550]: variable "type_join" was set but never used
     551           *
     552           * @return      none
     553           */
-
-   \                                 In  segment BANKED_CODE, align 1, keep-with-next
     554          void zb_BindConfirm( uint16 commandId, uint8 status )
-   \                     zb_BindConfirm:
     555          {
-   \   000000   74F7         MOV     A,#-0x9
-   \   000002   12....       LCALL   ?BANKED_ENTER_XDATA
-   \   000005                ; Saved register size: 9
-   \   000005                ; Auto size: 0
-   \   000005   E9           MOV     A,R1
     556            if( status == ZB_SUCCESS)
-   \   000006   7A00         MOV     R2,#0x0
-   \   000008   7004         JNZ     ??zb_BindConfirm_0
     557            {
     558              // Light D2
     559              HalLedSet(HAL_LED_2, HAL_LED_MODE_OFF);
-   \   00000A                ; Setup parameters for call to function HalLedSet
-   \   00000A   7902         MOV     R1,#0x2
-   \   00000C   8002         SJMP    ??zb_BindConfirm_1
     560            }
     561            else
     562            {
     563              // Light D3
     564              HalLedSet(HAL_LED_3, HAL_LED_MODE_OFF);
-   \                     ??zb_BindConfirm_0:
-   \   00000E                ; Setup parameters for call to function HalLedSet
-   \   00000E   7904         MOV     R1,#0x4
     565            }
-   \                     ??zb_BindConfirm_1:
-   \   000010   02....       LJMP    ?Subroutine0 & 0xFFFF
     566          }
     567          /******************************************************************************
     568           * @fn          zb_AllowBindConfirm
@@ -1238,15 +704,9 @@ Warning[Pe550]: variable "type_join" was set but never used
     573           *
     574           * @return      none
     575           */
-
-   \                                 In  segment BANKED_CODE, align 1, keep-with-next
     576          void zb_AllowBindConfirm( uint16 source )
-   \                     zb_AllowBindConfirm:
     577          {
-   \   000000                ; Saved register size: 0
-   \   000000                ; Auto size: 0
     578          }
-   \   000000   02....       LJMP    ?BRET
     579          /******************************************************************************
     580           * @fn          zb_FindDeviceConfirm
     581           *
@@ -1259,15 +719,9 @@ Warning[Pe550]: variable "type_join" was set but never used
     588           *
     589           * @return      none
     590           */
-
-   \                                 In  segment BANKED_CODE, align 1, keep-with-next
     591          void zb_FindDeviceConfirm( uint8 searchType, uint8 *searchKey, uint8 *result )
-   \                     zb_FindDeviceConfirm:
     592          {
-   \   000000                ; Saved register size: 0
-   \   000000                ; Auto size: 0
     593          }
-   \   000000   02....       LJMP    ?BRET
     594          /******************************************************************************
     595           * @fn          zb_ReceiveDataIndication
     596           *
@@ -1282,786 +736,178 @@ Warning[Pe550]: variable "type_join" was set but never used
     605           *
     606           * @return      none
     607           */
-
-   \                                 In  segment BANKED_CODE, align 1, keep-with-next
     608          void zb_ReceiveDataIndication( uint16 source, uint16 command, uint16 len, uint8 *pData  )
-   \                     zb_ReceiveDataIndication:
     609          {
-   \   000000                ; Saved register size: 0
-   \   000000                ; Auto size: 0
     610          }
-   \   000000   02....       LJMP    ?BRET
     611          
-
-   \                                 In  segment BANKED_CODE, align 1, keep-with-next
     612          void zb_HandleOsalEvent( uint16 event )
-   \                     zb_HandleOsalEvent:
     613          {
-   \   000000                ; Saved register size: 0
-   \   000000                ; Auto size: 0
-    614          
-    615          }
-   \   000000   02....       LJMP    ?BRET
-    616          
+    614            if ( event & MY_START_EVT )
+                                ^
+Error[Pe020]: identifier "MY_START_EVT" is undefined
 
-   \                                 In  segment BANKED_CODE, align 1, keep-with-next
-    617          uint8 typeID2pointID(char type)
-   \                     typeID2pointID:
-    618          {
-   \   000000                ; Saved register size: 0
-   \   000000                ; Auto size: 0
-   \   000000   E9           MOV     A,R1
-   \   000001   FA           MOV     R2,A
-    619            uint8 rst = 0;
-   \   000002   7900         MOV     R1,#0x0
-    620            for(char i = 0; i < 8; i++)
-   \   000004   7808         MOV     R0,#0x8
-    621            {
-    622              if(type)
-   \                     ??typeID2pointID_0:
-   \   000006   EA           MOV     A,R2
-   \   000007   6004         JZ      ??typeID2pointID_1
-    623              {
-    624                rst++;
-   \   000009   09           INC     R1
-    625                type = type >> 1;
-   \   00000A   C3           CLR     C
-   \   00000B   13           RRC     A
-   \   00000C   FA           MOV     R2,A
-    626              }
-    627            }
-   \                     ??typeID2pointID_1:
-   \   00000D   18           DEC     R0
-   \   00000E   E8           MOV     A,R0
-   \   00000F   70F5         JNZ     ??typeID2pointID_0
-    628            return rst;
-   \   000011   02....       LJMP    ?BRET
-    629          }
-    630          
-    631          /******************************************************************************
-    632           * @fn          Sensor_BindDevice
-    633           *
-    634           * @brief       The zb_BindDevice function establishes or removes a ‘binding? *              between two devices.  Once bound, an application can send
-    635           *              messages to a device by referencing the commandId for the
-    636           *              binding.
-    637           *
-    638           * @param       create - TRUE to create a binding, FALSE to remove a binding
-    639           *              commandId - The identifier of the binding
-    640           *              pDestination - The 64-bit IEEE address of the device to bind to
-    641           *
-    642           * @return      The status of the bind operation is returned in the
-    643           *              zb_BindConfirm callback.
-    644           */
-
-   \                                 In  segment BANKED_CODE, align 1, keep-with-next
-    645          void Sensor_BindDevice ( uint8 create, uint16 commandId, uint8 *pDestination )
-   \                     Sensor_BindDevice:
-    646          {
-   \   000000   74F4         MOV     A,#-0xc
-   \   000002   12....       LCALL   ?BANKED_ENTER_XDATA
-   \   000005                ; Saved register size: 12
-   \   000005                ; Auto size: 11
-   \   000005   74F5         MOV     A,#-0xb
-   \   000007   12....       LCALL   ?ALLOC_XSTACK8
-   \   00000A   85..82       MOV     DPL,?XSP + 0
-   \   00000D   85..83       MOV     DPH,?XSP + 1
-   \   000010   EA           MOV     A,R2
-   \   000011   F0           MOVX    @DPTR,A
-   \   000012   A3           INC     DPTR
-   \   000013   EB           MOV     A,R3
-   \   000014   F0           MOVX    @DPTR,A
-   \   000015   EC           MOV     A,R4
-   \   000016   FE           MOV     R6,A
-   \   000017   ED           MOV     A,R5
-   \   000018   FF           MOV     R7,A
-    647            zAddrType_t destination;
-    648            uint8 ret = ZB_ALREADY_IN_PROGRESS;
-    649          
-    650            if ( create )
-   \   000019   E9           MOV     A,R1
-   \   00001A   7003         JNZ     $+5
-   \   00001C   02....       LJMP    ??Sensor_BindDevice_0 & 0xFFFF
-    651            {
-    652              if (sensor_bindInProgress == 0xffff)
-   \   00001F   90....       MOV     DPTR,#sensor_bindInProgress
-   \   000022   E0           MOVX    A,@DPTR
-   \   000023   F4           CPL     A
-   \   000024   7003         JNZ     ??Sensor_BindDevice_1
-   \   000026   A3           INC     DPTR
-   \   000027   E0           MOVX    A,@DPTR
-   \   000028   F4           CPL     A
-   \                     ??Sensor_BindDevice_1:
-   \   000029   6003         JZ      $+5
-   \   00002B   02....       LJMP    ??CrossCallReturnLabel_12 & 0xFFFF
-    653              {
-    654                if ( pDestination )
-   \   00002E   EE           MOV     A,R6
-   \   00002F   4F           ORL     A,R7
-   \   000030   604F         JZ      ??Sensor_BindDevice_2
-    655                {
-    656                  destination.addrMode = Addr64Bit;
-   \   000032   740A         MOV     A,#0xa
-   \   000034   12....       LCALL   ?XSTACK_DISP0_8
-   \   000037   7403         MOV     A,#0x3
-   \   000039   F0           MOVX    @DPTR,A
-    657                  osal_cpyExtAddr( destination.addr.extAddr, pDestination );
-   \   00003A                ; Setup parameters for call to function sAddrExtCpy
-   \   00003A   7402         MOV     A,#0x2
-   \   00003C   12....       LCALL   ?XSTACK_DISP0_8
-   \   00003F   AA82         MOV     R2,DPL
-   \   000041   AB83         MOV     R3,DPH
-   \   000043   12....       LCALL   ??sAddrExtCpy?relay
-    658                    // here was sapi_epDesc.endPoint
-    659                  ret = APSME_BindRequest( BUTTON_ENDPOINT, commandId,
-    660                                                      &destination, BUTTON_ENDPOINT );
-    661          
-    662                  if ( ret == ZSuccess )
-   \   000046                ; Setup parameters for call to function APSME_BindRequest
-   \   000046   75..0A       MOV     ?V0 + 1,#0xa
-   \   000049   78..         MOV     R0,#?V0 + 1
-   \   00004B   12....       LCALL   ?PUSH_XSTACK_I_ONE
-   \   00004E   7403         MOV     A,#0x3
-   \   000050   12....       LCALL   ?XSTACK_DISP0_8
-   \   000053   AC82         MOV     R4,DPL
-   \   000055   AD83         MOV     R5,DPH
-   \   000057   7401         MOV     A,#0x1
-   \   000059   12....       LCALL   ?XSTACK_DISP0_8
-   \   00005C   E0           MOVX    A,@DPTR
-   \   00005D   FA           MOV     R2,A
-   \   00005E   A3           INC     DPTR
-   \   00005F   E0           MOVX    A,@DPTR
-   \   000060   FB           MOV     R3,A
-   \   000061   790A         MOV     R1,#0xa
-   \   000063   12....       LCALL   ??APSME_BindRequest?relay
-   \   000066   7401         MOV     A,#0x1
-   \   000068   12....       LCALL   ?DEALLOC_XSTACK8
-   \   00006B   E9           MOV     A,R1
-   \   00006C   6003         JZ      $+5
-   \   00006E   02....       LJMP    ??CrossCallReturnLabel_12 & 0xFFFF
-    663                  {
-    664                    // Find nwk addr
-    665                    ZDP_NwkAddrReq(pDestination, ZDP_ADDR_REQTYPE_SINGLE, 0, 0 );
-   \   000071                ; Setup parameters for call to function ZDP_NwkAddrReq
-   \   000071   7D00         MOV     R5,#0x0
-   \   000073   7C00         MOV     R4,#0x0
-   \   000075   7900         MOV     R1,#0x0
-   \   000077   EE           MOV     A,R6
-   \   000078   FA           MOV     R2,A
-   \   000079   EF           MOV     A,R7
-   \   00007A   FB           MOV     R3,A
-   \   00007B   12....       LCALL   ??ZDP_NwkAddrReq?relay
-    666                    osal_start_timerEx( ZDAppTaskID, ZDO_NWK_UPDATE_NV, 250 );
-   \   00007E                ; Setup parameters for call to function osal_start_timerEx
-   \   00007E   02....       LJMP    ??Sensor_BindDevice_3 & 0xFFFF
-    667                  }
-    668                }
-    669                else
-    670                {
-    671                  ret = ZB_INVALID_PARAMETER;
-    672                  destination.addrMode = Addr16Bit;
-   \                     ??Sensor_BindDevice_2:
-   \   000081   740A         MOV     A,#0xa
-   \   000083   12....       LCALL   ?XSTACK_DISP0_8
-   \   000086   7402         MOV     A,#0x2
-   \   000088   F0           MOVX    @DPTR,A
-    673                  destination.addr.shortAddr = NWK_BROADCAST_SHORTADDR;
-   \   000089   12....       LCALL   ?XSTACK_DISP0_8
-   \   00008C   74FF         MOV     A,#-0x1
-   \   00008E   F0           MOVX    @DPTR,A
-   \   00008F   A3           INC     DPTR
-   \   000090   F0           MOVX    @DPTR,A
-    674                  if ( ZDO_AnyClusterMatches( 1, &commandId, Button_epDesc.simpleDesc->AppNumOutClusters,
-    675                                                          Button_epDesc.simpleDesc->pAppOutClusterList ) )
-   \   000091   90....       MOV     DPTR,#Button_epDesc + 3
-   \   000094   12....       LCALL   ?Subroutine3 & 0xFFFF
-   \                     ??CrossCallReturnLabel_2:
-   \   000097   A3           INC     DPTR
-   \   000098   A3           INC     DPTR
-   \   000099   A3           INC     DPTR
-   \   00009A   12....       LCALL   ?PUSH_XSTACK8_X_TWO
-   \   00009D   8882         MOV     DPL,R0
-   \   00009F   8983         MOV     DPH,R1
-   \   0000A1   A3           INC     DPTR
-   \   0000A2   A3           INC     DPTR
-   \   0000A3   A3           INC     DPTR
-   \   0000A4   A3           INC     DPTR
-   \   0000A5   A3           INC     DPTR
-   \   0000A6   A3           INC     DPTR
-   \   0000A7   A3           INC     DPTR
-   \   0000A8   A3           INC     DPTR
-   \   0000A9   A3           INC     DPTR
-   \   0000AA   E0           MOVX    A,@DPTR
-   \   0000AB   FC           MOV     R4,A
-   \   0000AC   7402         MOV     A,#0x2
-   \   0000AE   12....       LCALL   ?XSTACK_DISP0_8
-   \   0000B1   AA82         MOV     R2,DPL
-   \   0000B3   AB83         MOV     R3,DPH
-   \   0000B5   7901         MOV     R1,#0x1
-   \   0000B7   12....       LCALL   ??ZDO_AnyClusterMatches?relay
-   \   0000BA   7402         MOV     A,#0x2
-   \   0000BC   12....       LCALL   ?DEALLOC_XSTACK8
-   \   0000BF   E9           MOV     A,R1
-   \   0000C0   6031         JZ      ??Sensor_BindDevice_4
-    676                  {
-    677                    // Try to match with a device in the allow bind mode
-    678                    ret = ZDP_MatchDescReq( &destination, NWK_BROADCAST_SHORTADDR,
-    679                        Button_epDesc.simpleDesc->AppProfId, 1, &commandId, 0, (cId_t *)NULL, 0 );
-   \   0000C2                ; Setup parameters for call to function ZDP_MatchDescReq
-   \   0000C2   75..00       MOV     ?V0 + 1,#0x0
-   \   0000C5   78..         MOV     R0,#?V0 + 1
-   \   0000C7   12....       LCALL   ?PUSH_XSTACK_I_ONE
-   \   0000CA   E4           CLR     A
-   \   0000CB   F5..         MOV     ?V0 + 2,A
-   \   0000CD   F5..         MOV     ?V0 + 3,A
-   \   0000CF   78..         MOV     R0,#?V0 + 2
-   \   0000D1   12....       LCALL   ?PUSH_XSTACK_I_TWO
-   \   0000D4   78..         MOV     R0,#?V0 + 1
-   \   0000D6   12....       LCALL   ?PUSH_XSTACK_I_ONE
-   \   0000D9   7404         MOV     A,#0x4
-   \   0000DB   12....       LCALL   ?XSTACK_DISP0_8
-   \   0000DE   8582..       MOV     ?V0 + 2,DPL
-   \   0000E1   8583..       MOV     ?V0 + 3,DPH
-   \   0000E4   78..         MOV     R0,#?V0 + 2
-   \   0000E6   12....       LCALL   ?PUSH_XSTACK_I_TWO
-   \   0000E9   12....       LCALL   ?Subroutine5 & 0xFFFF
-    680                  }
-   \                     ??CrossCallReturnLabel_6:
-   \   0000EC   12....       LCALL   ?PUSH_XSTACK8_X_TWO
-   \   0000EF   7901         MOV     R1,#0x1
-   \   0000F1   8060         SJMP    ??Sensor_BindDevice_5
-    681                  else if ( ZDO_AnyClusterMatches( 1, &commandId, sapi_epDesc.simpleDesc->AppNumInClusters,
-    682                                                          sapi_epDesc.simpleDesc->pAppInClusterList ) )
-   \                     ??Sensor_BindDevice_4:
-   \   0000F3   90....       MOV     DPTR,#sapi_epDesc + 3
-   \   0000F6   12....       LCALL   ?Subroutine3 & 0xFFFF
-   \                     ??CrossCallReturnLabel_3:
-   \   0000F9   12....       LCALL   ?PUSH_XSTACK8_X_TWO
-   \   0000FC   8882         MOV     DPL,R0
-   \   0000FE   8983         MOV     DPH,R1
-   \   000100   A3           INC     DPTR
-   \   000101   A3           INC     DPTR
-   \   000102   A3           INC     DPTR
-   \   000103   A3           INC     DPTR
-   \   000104   A3           INC     DPTR
-   \   000105   A3           INC     DPTR
-   \   000106   E0           MOVX    A,@DPTR
-   \   000107   FC           MOV     R4,A
-   \   000108   7402         MOV     A,#0x2
-   \   00010A   12....       LCALL   ?XSTACK_DISP0_8
-   \   00010D   AA82         MOV     R2,DPL
-   \   00010F   AB83         MOV     R3,DPH
-   \   000111   7901         MOV     R1,#0x1
-   \   000113   12....       LCALL   ??ZDO_AnyClusterMatches?relay
-   \   000116   7402         MOV     A,#0x2
-   \   000118   12....       LCALL   ?DEALLOC_XSTACK8
-   \   00011B   E9           MOV     A,R1
-   \   00011C   7003         JNZ     $+5
-   \   00011E   02....       LJMP    ??CrossCallReturnLabel_12 & 0xFFFF
-    683                  {
-    684                    ret = ZDP_MatchDescReq( &destination, NWK_BROADCAST_SHORTADDR,
-    685                        Button_epDesc.simpleDesc->AppProfId, 0, (cId_t *)NULL, 1, &commandId, 0 );
-   \   000121                ; Setup parameters for call to function ZDP_MatchDescReq
-   \   000121   75..00       MOV     ?V0 + 1,#0x0
-   \   000124   78..         MOV     R0,#?V0 + 1
-   \   000126   12....       LCALL   ?PUSH_XSTACK_I_ONE
-   \   000129   7401         MOV     A,#0x1
-   \   00012B   12....       LCALL   ?XSTACK_DISP0_8
-   \   00012E   8582..       MOV     ?V0 + 2,DPL
-   \   000131   8583..       MOV     ?V0 + 3,DPH
-   \   000134   78..         MOV     R0,#?V0 + 2
-   \   000136   12....       LCALL   ?PUSH_XSTACK_I_TWO
-   \   000139   75..01       MOV     ?V0 + 1,#0x1
-   \   00013C   78..         MOV     R0,#?V0 + 1
-   \   00013E   12....       LCALL   ?PUSH_XSTACK_I_ONE
-   \   000141   E4           CLR     A
-   \   000142   F5..         MOV     ?V0 + 2,A
-   \   000144   F5..         MOV     ?V0 + 3,A
-   \   000146   78..         MOV     R0,#?V0 + 2
-   \   000148   12....       LCALL   ?PUSH_XSTACK_I_TWO
-   \   00014B   12....       LCALL   ?Subroutine5 & 0xFFFF
-    686                  }
-   \                     ??CrossCallReturnLabel_7:
-   \   00014E   12....       LCALL   ?PUSH_XSTACK8_X_TWO
-   \   000151   7900         MOV     R1,#0x0
-   \                     ??Sensor_BindDevice_5:
-   \   000153   7CFF         MOV     R4,#-0x1
-   \   000155   7DFF         MOV     R5,#-0x1
-   \   000157   740A         MOV     A,#0xa
-   \   000159   12....       LCALL   ?XSTACK_DISP0_8
-   \   00015C   AA82         MOV     R2,DPL
-   \   00015E   AB83         MOV     R3,DPH
-   \   000160   12....       LCALL   ??ZDP_MatchDescReq?relay
-   \   000163   7408         MOV     A,#0x8
-   \   000165   12....       LCALL   ?DEALLOC_XSTACK8
-   \   000168   E9           MOV     A,R1
-    687          
-    688                  if ( ret == ZB_SUCCESS )
-   \   000169   704B         JNZ     ??CrossCallReturnLabel_12
-    689                  {
-    690                    // Set a timer to make sure bind completes
-    691          #if ( ZG_BUILD_RTR_TYPE )
-    692                    osal_start_timerEx(Button_TaskID, ZB_BIND_TIMER, AIB_MaxBindingTime);
-   \   00016B                ; Setup parameters for call to function osal_start_timerEx
-   \   00016B   90....       MOV     DPTR,#AIB_MaxBindingTime
-   \   00016E   E0           MOVX    A,@DPTR
-   \   00016F   FC           MOV     R4,A
-   \   000170   A3           INC     DPTR
-   \   000171   E0           MOVX    A,@DPTR
-   \   000172   FD           MOV     R5,A
-   \   000173   7A00         MOV     R2,#0x0
-   \   000175   7B20         MOV     R3,#0x20
-   \   000177   12....       LCALL   ?Subroutine6 & 0xFFFF
-    693          #else
-    694                    // AIB_MaxBindingTime is not defined for an End Device
-    695                    osal_start_timerEx(Button_TaskID, ZB_BIND_TIMER, zgApsDefaultMaxBindingTime);
-    696          #endif
-    697                    sensor_bindInProgress = commandId;
-   \                     ??CrossCallReturnLabel_11:
-   \   00017A   85..82       MOV     DPL,?XSP + 0
-   \   00017D   85..83       MOV     DPH,?XSP + 1
-   \   000180   E0           MOVX    A,@DPTR
-   \   000181   F8           MOV     R0,A
-   \   000182   A3           INC     DPTR
-   \   000183   E0           MOVX    A,@DPTR
-   \   000184   F9           MOV     R1,A
-   \   000185   90....       MOV     DPTR,#sensor_bindInProgress
-   \   000188   E8           MOV     A,R0
-   \   000189   F0           MOVX    @DPTR,A
-   \   00018A   A3           INC     DPTR
-   \   00018B   E9           MOV     A,R1
-   \   00018C   F0           MOVX    @DPTR,A
-    698                    return; // dont send cback event
-   \   00018D   8027         SJMP    ??CrossCallReturnLabel_12
-    699                  }
-    700                }
-    701              }
-    702          
-    703            //  SAPI_SendCback( SAPICB_BIND_CNF, ret, commandId );
-    704            }
-    705            else
-    706            {
-    707              // Remove local bindings for the commandId
-    708              BindingEntry_t *pBind;
-    709          
-    710              // Loop through bindings an remove any that match the cluster
-    711              while ( pBind = bindFind( BUTTON_ENDPOINT, commandId, 0 ) )
-    712              {
-    713                bindRemoveEntry(pBind);
-   \                     ??Sensor_BindDevice_6:
-   \   00018F                ; Setup parameters for call to function bindRemoveEntry
-   \   00018F   12....       LCALL   ??bindRemoveEntry?relay
-    714              }
-   \                     ??Sensor_BindDevice_0:
-   \   000192                ; Setup parameters for call to function bindFind
-   \   000192   7C00         MOV     R4,#0x0
-   \   000194   85..82       MOV     DPL,?XSP + 0
-   \   000197   85..83       MOV     DPH,?XSP + 1
-   \   00019A   E0           MOVX    A,@DPTR
-   \   00019B   FA           MOV     R2,A
-   \   00019C   A3           INC     DPTR
-   \   00019D   E0           MOVX    A,@DPTR
-   \   00019E   FB           MOV     R3,A
-   \   00019F   790A         MOV     R1,#0xa
-   \   0001A1   12....       LCALL   ??bindFind?relay
-   \   0001A4   EA           MOV     A,R2
-   \   0001A5   4B           ORL     A,R3
-   \   0001A6   70E7         JNZ     ??Sensor_BindDevice_6
-    715              osal_start_timerEx( ZDAppTaskID, ZDO_NWK_UPDATE_NV, 250 );
-   \   0001A8                ; Setup parameters for call to function osal_start_timerEx
-   \                     ??Sensor_BindDevice_3:
-   \   0001A8   7CFA         MOV     R4,#-0x6
-   \   0001AA   7D00         MOV     R5,#0x0
-   \   0001AC   7A00         MOV     R2,#0x0
-   \   0001AE   7B02         MOV     R3,#0x2
-   \   0001B0   90....       MOV     DPTR,#ZDAppTaskID
-    716            }
-   \   0001B3   12....       LCALL   ??Subroutine9_0 & 0xFFFF
-   \                     ??CrossCallReturnLabel_12:
-   \   0001B6   740B         MOV     A,#0xb
-   \   0001B8   12....       LCALL   ?DEALLOC_XSTACK8
-   \   0001BB   7F04         MOV     R7,#0x4
-   \   0001BD   02....       LJMP    ?BANKED_LEAVE_XDATA
-    717            return;
-    718          }
-
-   \                                 In  segment BANKED_CODE, align 1, keep-with-next
-   \                     ?Subroutine5:
-   \   000000   90....       MOV     DPTR,#Button_epDesc + 3
-   \   000003   12....       LCALL   ?Subroutine7 & 0xFFFF
-   \                     ??CrossCallReturnLabel_9:
-   \   000006   A3           INC     DPTR
-   \   000007   22           RET
-
-   \                                 In  segment BANKED_CODE, align 1, keep-with-next
-   \                     ?Subroutine3:
-   \   000000   E0           MOVX    A,@DPTR
-   \   000001   F8           MOV     R0,A
-   \   000002   A3           INC     DPTR
-   \   000003   E0           MOVX    A,@DPTR
-   \   000004   F9           MOV     R1,A
-   \   000005                ; Setup parameters for call to function ZDO_AnyClusterMatches
-   \   000005                ; Setup parameters for call to function ZDO_AnyClusterMatches
-   \   000005   8882         MOV     DPL,R0
-   \   000007   8983         MOV     DPH,R1
-   \   000009   A3           INC     DPTR
-   \   00000A   A3           INC     DPTR
-   \   00000B   A3           INC     DPTR
-   \   00000C   A3           INC     DPTR
-   \   00000D   A3           INC     DPTR
-   \   00000E   A3           INC     DPTR
-   \   00000F   A3           INC     DPTR
-   \   000010   22           RET
-    719          
-    720          // The order in this table must be identical to the task initialization calls below in osalInitTask.
-    721          
-
-   \                                 In  segment XDATA_ROM_C, align 1
-    722          const pTaskEventHandlerFn tasksArr[] = {
-   \                     tasksArr:
-   \   000000   ....         DW ??macEventLoop?relay
-   \   000002   ....         DW ??nwk_event_loop?relay
-   \   000004   ....         DW ??Hal_ProcessEvent?relay
-   \   000006   ....         DW ??APS_event_loop?relay
-   \   000008   ....         DW ??ZDApp_event_loop?relay
-   \   00000A   ....         DW ??Sys_ProcessEvent?relay
-   \   00000C   ....         DW ??Button_ProcessEvent?relay
-   \   00000E   ....         DW ??SAPI_ProcessEvent?relay
-    723            macEventLoop,
-    724            nwk_event_loop,
-    725            Hal_ProcessEvent,
-    726          #if defined( MT_TASK )
-    727            MT_ProcessEvent,
-    728          #endif
-    729            APS_event_loop,
-    730            ZDApp_event_loop,
-    731          
-    732            Sys_ProcessEvent,
-    733            Button_ProcessEvent,
-    734            SAPI_ProcessEvent
-    735          };
-    736          
-
-   \                                 In  segment XDATA_ROM_C, align 1
-    737          const uint8 tasksCnt = sizeof( tasksArr ) / sizeof( tasksArr[0] );
-   \                     tasksCnt:
-   \   000000   08           DB 8
-
-   \                                 In  segment XDATA_Z, align 1, keep-with-next
-    738          uint16 *tasksEvents;
-   \                     tasksEvents:
-   \   000000                DS 2
-   \   000002                REQUIRE __INIT_XDATA_Z
+  static byte type_join;
+              ^
+"D:\ProgramData\Hardware\zigbee\Projects\zstack\Samples\SensorSys\Source\SensorSys_Coordinator.c",154  Warning[Pe550]: 
+          variable "type_join" was set but never used
+    615            {
+    616              zb_StartRequest();
+    617            }
+    618          }
+    619          
+    620          uint8 typeID2pointID(char type)
+    621          {
+    622            uint8 rst = 0;
+    623            for(char i = 0; i < 8; i++)
+    624            {
+    625              if(type)
+    626              {
+    627                rst++;
+    628                type = type >> 1;
+    629              }
+    630            }
+    631            return rst;
+    632          }
+    633          
+    634          /******************************************************************************
+    635           * @fn          Sensor_BindDevice
+    636           *
+    637           * @brief       The zb_BindDevice function establishes or removes a ‘binding? *              between two devices.  Once bound, an application can send
+    638           *              messages to a device by referencing the commandId for the
+    639           *              binding.
+    640           *
+    641           * @param       create - TRUE to create a binding, FALSE to remove a binding
+    642           *              commandId - The identifier of the binding
+    643           *              pDestination - The 64-bit IEEE address of the device to bind to
+    644           *
+    645           * @return      The status of the bind operation is returned in the
+    646           *              zb_BindConfirm callback.
+    647           */
+    648          void Sensor_BindDevice ( uint8 create, uint16 commandId, uint8 *pDestination )
+    649          {
+    650            zAddrType_t destination;
+    651            uint8 ret = ZB_ALREADY_IN_PROGRESS;
+    652          
+    653            if ( create )
+    654            {
+    655              if (sensor_bindInProgress == 0xffff)
+    656              {
+    657                if ( pDestination )
+    658                {
+    659                  destination.addrMode = Addr64Bit;
+    660                  osal_cpyExtAddr( destination.addr.extAddr, pDestination );
+    661                    // here was sapi_epDesc.endPoint
+    662                  ret = APSME_BindRequest( BUTTON_ENDPOINT, commandId,
+    663                                                      &destination, BUTTON_ENDPOINT );
+    664          
+    665                  if ( ret == ZSuccess )
+    666                  {
+    667                    // Find nwk addr
+    668                    ZDP_NwkAddrReq(pDestination, ZDP_ADDR_REQTYPE_SINGLE, 0, 0 );
+    669                    osal_start_timerEx( ZDAppTaskID, ZDO_NWK_UPDATE_NV, 250 );
+    670                  }
+    671                }
+    672                else
+    673                {
+    674                  ret = ZB_INVALID_PARAMETER;
+    675                  destination.addrMode = Addr16Bit;
+    676                  destination.addr.shortAddr = NWK_BROADCAST_SHORTADDR;
+    677                  if ( ZDO_AnyClusterMatches( 1, &commandId, Button_epDesc.simpleDesc->AppNumOutClusters,
+    678                                                          Button_epDesc.simpleDesc->pAppOutClusterList ) )
+    679                  {
+    680                    // Try to match with a device in the allow bind mode
+    681                    ret = ZDP_MatchDescReq( &destination, NWK_BROADCAST_SHORTADDR,
+    682                        Button_epDesc.simpleDesc->AppProfId, 1, &commandId, 0, (cId_t *)NULL, 0 );
+    683                  }
+    684                  else if ( ZDO_AnyClusterMatches( 1, &commandId, sapi_epDesc.simpleDesc->AppNumInClusters,
+    685                                                          sapi_epDesc.simpleDesc->pAppInClusterList ) )
+    686                  {
+    687                    ret = ZDP_MatchDescReq( &destination, NWK_BROADCAST_SHORTADDR,
+    688                        Button_epDesc.simpleDesc->AppProfId, 0, (cId_t *)NULL, 1, &commandId, 0 );
+    689                  }
+    690          
+    691                  if ( ret == ZB_SUCCESS )
+    692                  {
+    693                    // Set a timer to make sure bind completes
+    694          #if ( ZG_BUILD_RTR_TYPE )
+    695                    osal_start_timerEx(Button_TaskID, ZB_BIND_TIMER, AIB_MaxBindingTime);
+    696          #else
+    697                    // AIB_MaxBindingTime is not defined for an End Device
+    698                    osal_start_timerEx(Button_TaskID, ZB_BIND_TIMER, zgApsDefaultMaxBindingTime);
+    699          #endif
+    700                    sensor_bindInProgress = commandId;
+    701                    return; // dont send cback event
+    702                  }
+    703                }
+    704              }
+    705          
+    706            //  SAPI_SendCback( SAPICB_BIND_CNF, ret, commandId );
+    707            }
+    708            else
+    709            {
+    710              // Remove local bindings for the commandId
+    711              BindingEntry_t *pBind;
+    712          
+    713              // Loop through bindings an remove any that match the cluster
+    714              while ( pBind = bindFind( BUTTON_ENDPOINT, commandId, 0 ) )
+    715              {
+    716                bindRemoveEntry(pBind);
+    717              }
+    718              osal_start_timerEx( ZDAppTaskID, ZDO_NWK_UPDATE_NV, 250 );
+    719            }
+    720            return;
+    721          }
+    722          
+    723          // The order in this table must be identical to the task initialization calls below in osalInitTask.
+    724          
+    725          const pTaskEventHandlerFn tasksArr[] = {
+    726            macEventLoop,
+    727            nwk_event_loop,
+    728            Hal_ProcessEvent,
+    729          #if defined( MT_TASK )
+    730            MT_ProcessEvent,
+    731          #endif
+    732            APS_event_loop,
+    733            ZDApp_event_loop,
+    734          
+    735            Sys_ProcessEvent,
+    736            Button_ProcessEvent,
+    737            SAPI_ProcessEvent
+    738          };
     739          
-    740          
-    741          
-    742          /*********************************************************************
-    743           * @fn      osalInitTasks
-    744           *
-    745           * @brief   This function invokes the initialization function for each task.
-    746           *
-    747           * @param   void
-    748           *
-    749           * @return  none
-    750           */
-
-   \                                 In  segment BANKED_CODE, align 1, keep-with-next
-    751          void osalInitTasks( void )
-   \                     osalInitTasks:
-    752          {
-   \   000000   C082         PUSH    DPL
-   \   000002   C083         PUSH    DPH
-   \   000004                ; Saved register size: 2
-   \   000004                ; Auto size: 0
-    753            uint8 taskID = 0;
-    754          
-    755            tasksEvents = (uint16 *)osal_mem_alloc( sizeof( uint16 ) * tasksCnt);
-   \   000004                ; Setup parameters for call to function osal_mem_alloc
-   \   000004   7A10         MOV     R2,#0x10
-   \   000006   7B00         MOV     R3,#0x0
-   \   000008   12....       LCALL   ??osal_mem_alloc?relay
-   \   00000B   90....       MOV     DPTR,#tasksEvents
-   \   00000E   EA           MOV     A,R2
-   \   00000F   F0           MOVX    @DPTR,A
-   \   000010   A3           INC     DPTR
-   \   000011   EB           MOV     A,R3
-   \   000012   F0           MOVX    @DPTR,A
-    756            osal_memset( tasksEvents, 0, (sizeof( uint16 ) * tasksCnt));
-   \   000013                ; Setup parameters for call to function osal_memset
-   \   000013   7C10         MOV     R4,#0x10
-   \   000015   7D00         MOV     R5,#0x0
-   \   000017   7900         MOV     R1,#0x0
-   \   000019   12....       LCALL   ??osal_memset?relay
+    740          const uint8 tasksCnt = sizeof( tasksArr ) / sizeof( tasksArr[0] );
+    741          uint16 *tasksEvents;
+    742          
+    743          
+    744          
+    745          /*********************************************************************
+    746           * @fn      osalInitTasks
+    747           *
+    748           * @brief   This function invokes the initialization function for each task.
+    749           *
+    750           * @param   void
+    751           *
+    752           * @return  none
+    753           */
+    754          void osalInitTasks( void )
+    755          {
+    756            uint8 taskID = 0;
     757          
-    758            macTaskInit( taskID++ );
-   \   00001C                ; Setup parameters for call to function macTaskInit
-   \   00001C   7900         MOV     R1,#0x0
-   \   00001E   12....       LCALL   ??macTaskInit?relay
-    759            nwk_init( taskID++ );
-   \   000021                ; Setup parameters for call to function nwk_init
-   \   000021   7901         MOV     R1,#0x1
-   \   000023   12....       LCALL   ??nwk_init?relay
-    760            Hal_Init( taskID++ );
-   \   000026                ; Setup parameters for call to function Hal_Init
-   \   000026   7902         MOV     R1,#0x2
-   \   000028   12....       LCALL   ??Hal_Init?relay
-    761          #if defined( MT_TASK )
-    762            MT_TaskInit( taskID++ );
-    763          #endif
-    764            APS_Init( taskID++ );
-   \   00002B                ; Setup parameters for call to function APS_Init
-   \   00002B   7903         MOV     R1,#0x3
-   \   00002D   12....       LCALL   ??APS_Init?relay
-    765            ZDApp_Init( taskID++ );
-   \   000030                ; Setup parameters for call to function ZDApp_Init
-   \   000030   7904         MOV     R1,#0x4
-   \   000032   12....       LCALL   ??ZDApp_Init?relay
-    766            Sys_Init( taskID++ );
-   \   000035                ; Setup parameters for call to function Sys_Init
-   \   000035   7905         MOV     R1,#0x5
-   \   000037   12....       LCALL   ??Sys_Init?relay
-    767            Button_Init( taskID++ );
-   \   00003A                ; Setup parameters for call to function Button_Init
-   \   00003A   7906         MOV     R1,#0x6
-   \   00003C   12....       LCALL   ??Button_Init?relay
-    768            SAPI_Init( taskID );
-   \   00003F                ; Setup parameters for call to function SAPI_Init
-   \   00003F   7907         MOV     R1,#0x7
-   \   000041   12....       LCALL   ??SAPI_Init?relay
-    769          }
-   \   000044   02....       LJMP    ?Subroutine1 & 0xFFFF
+    758            tasksEvents = (uint16 *)osal_mem_alloc( sizeof( uint16 ) * tasksCnt);
+    759            osal_memset( tasksEvents, 0, (sizeof( uint16 ) * tasksCnt));
+    760          
+    761            macTaskInit( taskID++ );
+    762            nwk_init( taskID++ );
+    763            Hal_Init( taskID++ );
+    764          #if defined( MT_TASK )
+    765            MT_TaskInit( taskID++ );
+    766          #endif
+    767            APS_Init( taskID++ );
+    768            ZDApp_Init( taskID++ );
+    769            Sys_Init( taskID++ );
+    770            Button_Init( taskID++ );
+    771            SAPI_Init( taskID );
+    772          }
 
-   \                                 In  segment XDATA_ID, align 1, keep-with-next
-   \                     `?<Initializer for AppTitle>`:
-   \   000000   53656E73     DB "SensorAPP"
-   \            6F724150
-   \            5000    
-
-   \                                 In  segment BANK_RELAYS, align 1
-   \                     ??Sys_Init?relay:
-   \   000000   12....       LCALL   ?BDISPATCH
-   \   000003   ......       DC24    Sys_Init
-
-   \                                 In  segment BANK_RELAYS, align 1
-   \                     ??Sys_ProcessEvent?relay:
-   \   000000   12....       LCALL   ?BDISPATCH
-   \   000003   ......       DC24    Sys_ProcessEvent
-
-   \                                 In  segment BANK_RELAYS, align 1
-   \                     ??Sys_ProcessZDOMsgs?relay:
-   \   000000   12....       LCALL   ?BDISPATCH
-   \   000003   ......       DC24    Sys_ProcessZDOMsgs
-
-   \                                 In  segment BANK_RELAYS, align 1
-   \                     ??Sys_MessageMSGCB?relay:
-   \   000000   12....       LCALL   ?BDISPATCH
-   \   000003   ......       DC24    Sys_MessageMSGCB
-
-   \                                 In  segment BANK_RELAYS, align 1
-   \                     ??Sys_SendPreBindMessage?relay:
-   \   000000   12....       LCALL   ?BDISPATCH
-   \   000003   ......       DC24    Sys_SendPreBindMessage
-
-   \                                 In  segment BANK_RELAYS, align 1
-   \                     ??zb_StartConfirm?relay:
-   \   000000   12....       LCALL   ?BDISPATCH
-   \   000003   ......       DC24    zb_StartConfirm
-
-   \                                 In  segment BANK_RELAYS, align 1
-   \                     ??zb_SendDataConfirm?relay:
-   \   000000   12....       LCALL   ?BDISPATCH
-   \   000003   ......       DC24    zb_SendDataConfirm
-
-   \                                 In  segment BANK_RELAYS, align 1
-   \                     ??zb_BindConfirm?relay:
-   \   000000   12....       LCALL   ?BDISPATCH
-   \   000003   ......       DC24    zb_BindConfirm
-
-   \                                 In  segment BANK_RELAYS, align 1
-   \                     ??zb_AllowBindConfirm?relay:
-   \   000000   12....       LCALL   ?BDISPATCH
-   \   000003   ......       DC24    zb_AllowBindConfirm
-
-   \                                 In  segment BANK_RELAYS, align 1
-   \                     ??zb_FindDeviceConfirm?relay:
-   \   000000   12....       LCALL   ?BDISPATCH
-   \   000003   ......       DC24    zb_FindDeviceConfirm
-
-   \                                 In  segment BANK_RELAYS, align 1
-   \                     ??zb_ReceiveDataIndication?relay:
-   \   000000   12....       LCALL   ?BDISPATCH
-   \   000003   ......       DC24    zb_ReceiveDataIndication
-
-   \                                 In  segment BANK_RELAYS, align 1
-   \                     ??zb_HandleOsalEvent?relay:
-   \   000000   12....       LCALL   ?BDISPATCH
-   \   000003   ......       DC24    zb_HandleOsalEvent
-
-   \                                 In  segment BANK_RELAYS, align 1
-   \                     ??typeID2pointID?relay:
-   \   000000   12....       LCALL   ?BDISPATCH
-   \   000003   ......       DC24    typeID2pointID
-
-   \                                 In  segment BANK_RELAYS, align 1
-   \                     ??Sensor_BindDevice?relay:
-   \   000000   12....       LCALL   ?BDISPATCH
-   \   000003   ......       DC24    Sensor_BindDevice
-
-   \                                 In  segment BANK_RELAYS, align 1
-   \                     ??osalInitTasks?relay:
-   \   000000   12....       LCALL   ?BDISPATCH
-   \   000003   ......       DC24    osalInitTasks
-
-   \                                 In  segment XDATA_ROM_C, align 1
-   \                     `?<Constant "bind">`:
-   \   000000   62696E64     DB "bind"
-   \            00      
-   \   000005   00           DB 0
-
-   Maximum stack usage in bytes:
-
-     Function                   ISTACK PSTACK XSTACK
-     --------                   ------ ------ ------
-     Sensor_BindDevice              0      0     31
-       -> sAddrExtCpy               0      0     46
-       -> APSME_BindRequest         0      0     48
-       -> ZDP_NwkAddrReq            0      0     46
-       -> osal_start_timerEx        0      0     46
-       -> ZDO_AnyClusterMatches     0      0     50
-       -> ZDP_MatchDescReq          0      0     62
-       -> ZDO_AnyClusterMatches     0      0     50
-       -> ZDP_MatchDescReq          0      0     62
-       -> osal_start_timerEx        0      0     46
-       -> bindRemoveEntry           0      0     46
-       -> bindFind                  0      0     46
-       -> osal_start_timerEx        0      0     46
-     Sys_Init                       0      0      9
-       -> afRegister                0      0     18
-       -> HalLedSet                 0      0     18
-       -> HalLedSet                 0      0     18
-       -> HalLedSet                 0      0     18
-       -> HalLedSet                 0      0     18
-     Sys_MessageMSGCB               0      0      0
-     Sys_ProcessEvent               0      0     16
-       -> osal_msg_receive          0      0     32
-       -> osal_msg_deallocate       0      0     32
-       -> osal_msg_receive          0      0     32
-       -> Sys_ProcessZDOMsgs        0      0     32
-       -> zb_ReadConfiguration      0      0     32
-       -> zb_WriteConfiguration     0      0     32
-       -> zb_ReadConfiguration      0      0     32
-       -> zb_WriteConfiguration     0      0     32
-       -> zb_SystemReset            0      0     32
-       -> HalLedSet                 0      0     32
-       -> HalLedSet                 0      0     32
-       -> HalLedSet                 0      0     32
-     Sys_ProcessZDOMsgs             2      0     16
-       -> HalLedSet                 4      0      0
-       -> HalLedSet                 4      0      0
-     Sys_SendPreBindMessage         2      0     37
-       -> typeID2pointID            0      0     56
-       -> osal_strlen               0      0     66
-       -> AF_DataRequest            0      0     74
-       -> HalLedBlink               0      0     56
-       -> osal_start_timerEx        0      0     56
-       -> HalLedSet                 0      0     56
-     osalInitTasks                  2      0      0
-       -> osal_mem_alloc            4      0      0
-       -> osal_memset               4      0      0
-       -> macTaskInit               4      0      0
-       -> nwk_init                  4      0      0
-       -> Hal_Init                  4      0      0
-       -> APS_Init                  4      0      0
-       -> ZDApp_Init                4      0      0
-       -> Sys_Init                  4      0      0
-       -> Button_Init               4      0      0
-       -> SAPI_Init                 4      0      0
-     typeID2pointID                 0      0     28
-     zb_AllowBindConfirm            0      0      0
-     zb_BindConfirm                 0      0      9
-       -> HalLedSet                 0      0     18
-       -> HalLedSet                 0      0     18
-     zb_FindDeviceConfirm           0      0      0
-     zb_HandleOsalEvent             0      0      0
-     zb_ReceiveDataIndication       0      0      4
-     zb_SendDataConfirm             0      0      0
-     zb_StartConfirm                0      0      9
-       -> HalLedSet                 0      0     18
-
-
-   Segment part sizes:
-
-     Function/Label                   Bytes
-     --------------                   -----
-     AppTitle                           10
-     Sys_ClusterList                     2
-     Zb_ClusterList                      8
-     Sys_SimpleDesc                     12
-     zb_SimpleDesc                      12
-     Sys_epDesc                          6
-     myAppState                          1
-     type_join                           1
-     Sys_TaskID                          1
-     Sys_NwkState                        1
-     Sys_TransID                         1
-     sysSeqNumber                        1
-     sensor_bindInProgress               2
-     Sys_Init                           54
-     ?Subroutine0                        3
-     ??Subroutine8_0                     5
-     ?Subroutine2                       22
-     Sys_ProcessEvent                  207
-     Sys_ProcessZDOMsgs                 51
-     ?Subroutine1                        7
-     ?Subroutine4                        5
-     ?Subroutine7                        9
-     Sys_MessageMSGCB                    3
-     Sys_SendPreBindMessage            236
-     ?Subroutine6                        3
-     ??Subroutine9_0                     6
-     zb_StartConfirm                    26
-     zb_SendDataConfirm                  3
-     zb_BindConfirm                     19
-     zb_AllowBindConfirm                 3
-     zb_FindDeviceConfirm                3
-     zb_ReceiveDataIndication            3
-     zb_HandleOsalEvent                  3
-     typeID2pointID                     20
-     Sensor_BindDevice                 448
-     ?Subroutine5                        8
-     ?Subroutine3                       17
-     tasksArr                           16
-     tasksCnt                            1
-     tasksEvents                         2
-     osalInitTasks                      71
-     ?<Initializer for AppTitle>        10
-     ??Sys_Init?relay                    6
-     ??Sys_ProcessEvent?relay            6
-     ??Sys_ProcessZDOMsgs?relay          6
-     ??Sys_MessageMSGCB?relay            6
-     ??Sys_SendPreBindMessage?relay      6
-     ??zb_StartConfirm?relay             6
-     ??zb_SendDataConfirm?relay          6
-     ??zb_BindConfirm?relay              6
-     ??zb_AllowBindConfirm?relay         6
-     ??zb_FindDeviceConfirm?relay        6
-     ??zb_ReceiveDataIndication?relay    6
-     ??zb_HandleOsalEvent?relay          6
-     ??typeID2pointID?relay              6
-     ??Sensor_BindDevice?relay           6
-     ??osalInitTasks?relay               6
-     ?<Constant "bind">                  6
-
- 
- 1 235 bytes in segment BANKED_CODE
-    90 bytes in segment BANK_RELAYS
-    10 bytes in segment XDATA_I
-    10 bytes in segment XDATA_ID
-    57 bytes in segment XDATA_ROM_C
-    16 bytes in segment XDATA_Z
- 
- 1 335 bytes of CODE  memory
-    57 bytes of CONST memory
-    26 bytes of XDATA memory
-
-Errors: none
+Errors: 1
 Warnings: 2

@@ -258,12 +258,10 @@ UINT16 Sys_ProcessEvent( byte task_id, UINT16 events )
 	byte sentEP;
 	ZStatus_t sentStatus;
 	byte sentTransID;       // This should match the value sent
-	(void)task_id;  // Intentionally unreferenced parameter
 
 	if ( events & SYS_EVENT_MSG )
 	{
 		MSGpkt = (afIncomingMSGPacket_t *)osal_msg_receive( task_id );
-		// 其它 task_id 同上
 		while ( MSGpkt )
 		{
 			switch ( MSGpkt->hdr.event )
