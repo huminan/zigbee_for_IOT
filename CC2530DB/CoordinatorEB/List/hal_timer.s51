@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //                                                                            /
-// IAR C/C++ Compiler V8.10.3.10338/W32 for 8051        29/Dec/2017  20:30:08 /
+// IAR C/C++ Compiler V8.10.3.10338/W32 for 8051        30/Mar/2018  16:46:31 /
 // Copyright 2004-2011 IAR Systems AB.                                        /
 //                                                                            /
 //    Core               =  plain                                             /
@@ -40,7 +40,7 @@
 //                          0x0A, 0x0C, 0x0D}" -DMAC_MAX_FRAME_SIZE=116       /
 //                          -DZDNWKMGR_MIN_TRANSMISSIONS=20 "-DCONST=const    /
 //                          __code" -DGENERIC=__generic                       /
-//                          -DRFD_RCVC_ALWAYS_ON=FALSE -DPOLL_RATE=1000       /
+//                          -DRFD_RCVC_ALWAYS_ON=TRUE -DPOLL_RATE=1000        /
 //                          -DQUEUED_POLL_RATE=100 -DRESPONSE_POLL_RATE=100)  /
 //                          -DREJOIN_POLL_RATE=440 D:\ProgramData\Hardware\zi /
 //                          gbee\Components\hal\target\CC2530EB\hal_timer.c   /
@@ -137,8 +137,214 @@
         RSEG PSTACK:XDATA:NOROOT(0)
         RSEG XSTACK:XDATA:NOROOT(0)
 
+        EXTERN ?BDISPATCH
+        EXTERN ?BRET
+        EXTERN ?CALL_IND
+        EXTERN ?INTERRUPT_ENTER_XSP
+        EXTERN ?INTERRUPT_LEAVE_XSP
+        EXTERN __INIT_XDATA_Z
 
-        END
+        PUBLIC ??HalTimerInit?relay
+        FUNCTION ??HalTimerInit?relay,0203H
+        PUBLIC ??HalTimerStart?relay
+        FUNCTION ??HalTimerStart?relay,0203H
+        PUBLIC ??HalTimerStop?relay
+        FUNCTION ??HalTimerStop?relay,0203H
+        PUBWEAK `??T3_ISR??INTVEC 91`
+        PUBLIC ??halTimerIntConnect?relay
+        FUNCTION ??halTimerIntConnect?relay,0203H
+        PUBWEAK CLKCONCMD
+        PUBLIC HalTimerInit
+        FUNCTION HalTimerInit,0203H
+        ARGFRAME XSTACK, 0, STACK
+        PUBLIC HalTimerStart
+        FUNCTION HalTimerStart,0203H
+        ARGFRAME XSTACK, 0, STACK
+        PUBLIC HalTimerStop
+        FUNCTION HalTimerStop,0203H
+        ARGFRAME XSTACK, 0, STACK
+        PUBWEAK T3CC0
+        PUBWEAK T3CNT
+        PUBWEAK T3CTL
+        PUBLIC T3_ISR
+        FUNCTION T3_ISR,0233H
+        ARGFRAME XSTACK, 0, STACK
+        LOCFRAME XSTACK, 14, STACK
+        PUBWEAK _A_IEN0
+        PUBWEAK _A_IEN1
+        PUBWEAK _A_IRCON
+        PUBWEAK _A_TIMIF
+        PUBLIC halTimerIntConnect
+        FUNCTION halTimerIntConnect,0203H
+        ARGFRAME XSTACK, 0, STACK
+        LOCFRAME ISTACK, 2, STACK
+        
+        CFI Names cfiNames0
+        CFI StackFrame CFA_SP SP IDATA
+        CFI StackFrame CFA_PSP16 PSP16 XDATA
+        CFI StackFrame CFA_XSP16 XSP16 XDATA
+        CFI StaticOverlayFrame CFA_IOVERLAY IOVERLAY
+        CFI StaticOverlayFrame CFA_DOVERLAY DOVERLAY
+        CFI Resource `PSW.CY`:1, `B.BR0`:1, `B.BR1`:1, `B.BR2`:1, `B.BR3`:1
+        CFI Resource `B.BR4`:1, `B.BR5`:1, `B.BR6`:1, `B.BR7`:1, `VB.BR8`:1
+        CFI Resource `VB.BR9`:1, `VB.BR10`:1, `VB.BR11`:1, `VB.BR12`:1
+        CFI Resource `VB.BR13`:1, `VB.BR14`:1, `VB.BR15`:1, VB:8, B:8, A:8
+        CFI Resource PSW:8, DPL0:8, DPH0:8, R0:8, R1:8, R2:8, R3:8, R4:8, R5:8
+        CFI Resource R6:8, R7:8, V0:8, V1:8, V2:8, V3:8, V4:8, V5:8, V6:8, V7:8
+        CFI Resource V8:8, V9:8, V10:8, V11:8, V12:8, V13:8, V14:8, V15:8, SP:8
+        CFI Resource PSPH:8, PSPL:8, PSP16:16, XSPH:8, XSPL:8, XSP16:16
+        CFI VirtualResource ?RET:24
+        CFI Resource ?BRET_EXT:8
+        CFI VirtualResource ?RET_HIGH:8, ?RET_LOW:8
+        CFI ResourceParts PSP16 PSPH, PSPL
+        CFI ResourceParts XSP16 XSPH, XSPL
+        CFI ResourceParts ?RET ?BRET_EXT, ?RET_HIGH, ?RET_LOW
+        CFI EndNames cfiNames0
+        
+        CFI Common cfiCommon0 Using cfiNames0
+        CFI CodeAlign 1
+        CFI DataAlign -1
+        CFI ReturnAddress ?RET CODE
+        CFI CFA_DOVERLAY Used
+        CFI CFA_IOVERLAY Used
+        CFI CFA_SP SP+-3
+        CFI CFA_PSP16 PSP16+0
+        CFI CFA_XSP16 XSP16+0
+        CFI `PSW.CY` SameValue
+        CFI `B.BR0` SameValue
+        CFI `B.BR1` SameValue
+        CFI `B.BR2` SameValue
+        CFI `B.BR3` SameValue
+        CFI `B.BR4` SameValue
+        CFI `B.BR5` SameValue
+        CFI `B.BR6` SameValue
+        CFI `B.BR7` SameValue
+        CFI `VB.BR8` SameValue
+        CFI `VB.BR9` SameValue
+        CFI `VB.BR10` SameValue
+        CFI `VB.BR11` SameValue
+        CFI `VB.BR12` SameValue
+        CFI `VB.BR13` SameValue
+        CFI `VB.BR14` SameValue
+        CFI `VB.BR15` SameValue
+        CFI VB SameValue
+        CFI B Undefined
+        CFI A Undefined
+        CFI PSW SameValue
+        CFI DPL0 SameValue
+        CFI DPH0 SameValue
+        CFI R0 Undefined
+        CFI R1 Undefined
+        CFI R2 Undefined
+        CFI R3 Undefined
+        CFI R4 Undefined
+        CFI R5 Undefined
+        CFI R6 SameValue
+        CFI R7 SameValue
+        CFI V0 SameValue
+        CFI V1 SameValue
+        CFI V2 SameValue
+        CFI V3 SameValue
+        CFI V4 SameValue
+        CFI V5 SameValue
+        CFI V6 SameValue
+        CFI V7 SameValue
+        CFI V8 SameValue
+        CFI V9 SameValue
+        CFI V10 SameValue
+        CFI V11 SameValue
+        CFI V12 SameValue
+        CFI V13 SameValue
+        CFI V14 SameValue
+        CFI V15 SameValue
+        CFI PSPH Undefined
+        CFI PSPL Undefined
+        CFI XSPH Undefined
+        CFI XSPL Undefined
+        CFI ?RET Concat
+        CFI ?BRET_EXT Frame(CFA_SP, 3)
+        CFI ?RET_HIGH Frame(CFA_SP, 2)
+        CFI ?RET_LOW Frame(CFA_SP, 1)
+        CFI EndCommon cfiCommon0
+        
+        
+        CFI Common cfiCommon1 Using cfiNames0
+        CFI CodeAlign 1
+        CFI DataAlign -1
+        CFI ReturnAddress ?RET CODE
+        CFI CFA_DOVERLAY Used
+        CFI CFA_IOVERLAY Used
+        CFI CFA_SP SP+-2
+        CFI CFA_PSP16 PSP16+0
+        CFI CFA_XSP16 XSP16+0
+        CFI `PSW.CY` SameValue
+        CFI `B.BR0` SameValue
+        CFI `B.BR1` SameValue
+        CFI `B.BR2` SameValue
+        CFI `B.BR3` SameValue
+        CFI `B.BR4` SameValue
+        CFI `B.BR5` SameValue
+        CFI `B.BR6` SameValue
+        CFI `B.BR7` SameValue
+        CFI `VB.BR8` SameValue
+        CFI `VB.BR9` SameValue
+        CFI `VB.BR10` SameValue
+        CFI `VB.BR11` SameValue
+        CFI `VB.BR12` SameValue
+        CFI `VB.BR13` SameValue
+        CFI `VB.BR14` SameValue
+        CFI `VB.BR15` SameValue
+        CFI VB SameValue
+        CFI B SameValue
+        CFI A SameValue
+        CFI PSW SameValue
+        CFI DPL0 SameValue
+        CFI DPH0 SameValue
+        CFI R0 SameValue
+        CFI R1 SameValue
+        CFI R2 SameValue
+        CFI R3 SameValue
+        CFI R4 SameValue
+        CFI R5 SameValue
+        CFI R6 SameValue
+        CFI R7 SameValue
+        CFI V0 SameValue
+        CFI V1 SameValue
+        CFI V2 SameValue
+        CFI V3 SameValue
+        CFI V4 SameValue
+        CFI V5 SameValue
+        CFI V6 SameValue
+        CFI V7 SameValue
+        CFI V8 SameValue
+        CFI V9 SameValue
+        CFI V10 SameValue
+        CFI V11 SameValue
+        CFI V12 SameValue
+        CFI V13 SameValue
+        CFI V14 SameValue
+        CFI V15 SameValue
+        CFI PSPH Undefined
+        CFI PSPL Undefined
+        CFI XSPH Undefined
+        CFI XSPL Undefined
+        CFI ?RET Concat
+        CFI ?BRET_EXT SameValue
+        CFI ?RET_HIGH Frame(CFA_SP, 2)
+        CFI ?RET_LOW Frame(CFA_SP, 1)
+        CFI EndCommon cfiCommon1
+        
+HalTimerInit        SYMBOL "HalTimerInit"
+??HalTimerInit?relay SYMBOL "?relay", HalTimerInit
+HalTimerStart       SYMBOL "HalTimerStart"
+??HalTimerStart?relay SYMBOL "?relay", HalTimerStart
+HalTimerStop        SYMBOL "HalTimerStop"
+??HalTimerStop?relay SYMBOL "?relay", HalTimerStop
+T3_ISR              SYMBOL "T3_ISR"
+`??T3_ISR??INTVEC 91` SYMBOL "??INTVEC 91", T3_ISR
+halTimerIntConnect  SYMBOL "halTimerIntConnect"
+??halTimerIntConnect?relay SYMBOL "?relay", halTimerIntConnect
+
 // D:\ProgramData\Hardware\zigbee\Components\hal\target\CC2530EB\hal_timer.c
 //    1 /**************************************************************************************************
 //    2   Filename:       hal_timer.c
@@ -164,7 +370,7 @@
 //   22   its documentation for any purpose.
 //   23 
 //   24   YOU FURTHER ACKNOWLEDGE AND AGREE THAT THE SOFTWARE AND DOCUMENTATION ARE
-//   25   PROVIDED “AS IS” WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+//   25   PROVIDED “AS IS?WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESS OR IMPLIED,
 //   26   INCLUDING WITHOUT LIMITATION, ANY WARRANTY OF MERCHANTABILITY, TITLE,
 //   27   NON-INFRINGEMENT AND FITNESS FOR A PARTICULAR PURPOSE. IN NO EVENT SHALL
 //   28   TEXAS INSTRUMENTS OR ITS LICENSORS BE LIABLE OR OBLIGATED UNDER CONTRACT,
@@ -185,9 +391,343 @@
 //   43        for the users to implement their own application timer 
 //   44        functions.
 //   45 *********************************************************************/
+//   46 
+//   47 /*******************************************************************************
+//   48 * INCLUDES
+//   49 */
+//   50 #include "hal_types.h"
+//   51 #include "hal_defs.h"
+//   52 #include "hal_timer.h"
+
+        ASEGN SFR_AN:DATA:NOROOT,0a8H
+// union <unnamed> volatile __sfr _A_IEN0
+_A_IEN0:
+        DATA8
+        DS 1
+
+        ASEGN SFR_AN:DATA:NOROOT,0b8H
+// union <unnamed> volatile __sfr _A_IEN1
+_A_IEN1:
+        DATA8
+        DS 1
+
+        ASEGN SFR_AN:DATA:NOROOT,0c0H
+// union <unnamed> volatile __sfr _A_IRCON
+_A_IRCON:
+        DATA8
+        DS 1
+
+        ASEGN SFR_AN:DATA:NOROOT,0c6H
+// unsigned char volatile __sfr CLKCONCMD
+CLKCONCMD:
+        DATA8
+        DS 1
+
+        ASEGN SFR_AN:DATA:NOROOT,0caH
+// unsigned char volatile __sfr T3CNT
+T3CNT:
+        DATA8
+        DS 1
+
+        ASEGN SFR_AN:DATA:NOROOT,0cbH
+// unsigned char volatile __sfr T3CTL
+T3CTL:
+        DATA8
+        DS 1
+
+        ASEGN SFR_AN:DATA:NOROOT,0cdH
+// unsigned char volatile __sfr T3CC0
+T3CC0:
+        DATA8
+        DS 1
+
+        ASEGN SFR_AN:DATA:NOROOT,0d8H
+// union <unnamed> volatile __sfr _A_TIMIF
+_A_TIMIF:
+        DATA8
+        DS 1
+//   53 #include "hal_board.h"
+//   54 // #include "hal_int.h"
+//   55 #include "hal_assert.h"
+//   56 
+//   57 /*******************************************************************************
+//   58 * LOCAL VARIABLES
+//   59 */
+
+        RSEG XDATA_Z:XDATA:NOROOT(0)
+        DATA16
+//   60 static halTimerCBack_t fptr;
+fptr:
+        DS 2
+        REQUIRE __INIT_XDATA_Z
+//   61 
+//   62 /*******************************************************************************
+//   63 * @fn       HalTimerInit
+//   64 *
+//   65 * @brief    Set up timer 3  to generate an interrupt every "cycles" 1us * cycles
+//   66 *
+//   67 *           Use halTimerIntConnect() to connect an ISR to the interrupt.
+//   68 *
+//   69 * @param   uint8 cycles - Number of cycles between interrupt
+//   70 *
+//   71 *
+//   72 * @return  none
+//   73 */
+
+        RSEG BANKED_CODE:CODE:NOROOT(0)
+//   74 void HalTimerInit ( uint8 cycles )
+HalTimerInit:
+        CFI Block cfiBlock0 Using cfiCommon0
+        CFI Function HalTimerInit
+        CODE
+//   75 {
+        ; Saved register size: 0
+        ; Auto size: 0
+//   76     //uint16 clock_divider = ID_0; // Default - don't divide input clock
+//   77 
+//   78    EA = 1;
+        SETB    0xa8.7
+//   79 
+//   80    CLKCONCMD &= ~0x07;  // clock 32MHZ
+        ANL     0xc6,#0xf8
+//   81    
+//   82    // Set count value
+//   83    T3CNT = TIMER3_INT_DELAY; 
+        MOV     0xca,#0xe
+//   84    T3CC0 = TIMER3_INT_DELAY; 
+        MOV     0xcd,#0xe
+//   85 
+//   86    // clear interrupt pending flag, disable interrupt
+//   87    TIMIF &= ~0x01;
+        CLR     0xd8.0
+//   88      
+//   89    // Set prescaler divider value to 4// But 32(0xA9) is right!!!
+//   90    T3CTL = 0x49;	// and use backwards mode with interrupt enabled
+        MOV     0xcb,#0x49
+//   91 }
+        LJMP    ?BRET
+        CFI EndBlock cfiBlock0
+        REQUIRE _A_IEN0
+        REQUIRE CLKCONCMD
+        REQUIRE T3CNT
+        REQUIRE T3CC0
+        REQUIRE _A_TIMIF
+        REQUIRE T3CTL
+//   92 
+//   93 /*******************************************************************************
+//   94 * @fn       HalTimerStart
+//   95 *
+//   96 * @brief    
+//   97 *
+//   98 * @param   
+//   99 *
+//  100 * @return  none
+//  101 */
+
+        RSEG BANKED_CODE:CODE:NOROOT(0)
+//  102 void HalTimerStart ( void )
+HalTimerStart:
+        CFI Block cfiBlock1 Using cfiCommon0
+        CFI Function HalTimerStart
+        CODE
+//  103 {
+        ; Saved register size: 0
+        ; Auto size: 0
+//  104     IEN1 |=  0x08; // IEN1.T3EN = 1
+        SETB    0xb8.3
+//  105     T3CTL |= 0x10;	// Start T3
+        ORL     0xcb,#0x10
+//  106 }
+        LJMP    ?BRET
+        CFI EndBlock cfiBlock1
+        REQUIRE _A_IEN1
+        REQUIRE T3CTL
+//  107 
+//  108 /*******************************************************************************
+//  109 * @fn       HalTimerStop
+//  110 *
+//  111 * @brief    
+//  112 *
+//  113 * @param   
+//  114 *
+//  115 * @return  none
+//  116 */
+
+        RSEG BANKED_CODE:CODE:NOROOT(0)
+//  117 void HalTimerStop ( void )
+HalTimerStop:
+        CFI Block cfiBlock2 Using cfiCommon0
+        CFI Function HalTimerStop
+        CODE
+//  118 {
+        ; Saved register size: 0
+        ; Auto size: 0
+//  119      IEN1  &=  ~0x08; // IEN1.T3EN = 0
+        CLR     0xb8.3
+//  120      T3CTL &=  ~0x10;	// Stop T3
+        ANL     0xcb,#0xef
+//  121 }
+        LJMP    ?BRET
+        CFI EndBlock cfiBlock2
+        REQUIRE _A_IEN1
+        REQUIRE T3CTL
+//  122 
+//  123 /*******************************************************************************
+//  124 * @fn      halTimerIntConnect
+//  125 *
+//  126 * @brief   Connect function to timer interrupt
+//  127 *
+//  128 * @param   ISR_FUNC_PTR isr - pointer to function
+//  129 *
+//  130 * @return  none
+//  131 */
+
+        RSEG BANKED_CODE:CODE:NOROOT(0)
+//  132 void halTimerIntConnect(halTimerCBack_t isr)
+halTimerIntConnect:
+        CFI Block cfiBlock3 Using cfiCommon0
+        CFI Function halTimerIntConnect
+        CODE
+//  133 {
+        PUSH    DPL
+        CFI DPL0 Frame(CFA_SP, 4)
+        CFI CFA_SP SP+-4
+        PUSH    DPH
+        CFI DPH0 Frame(CFA_SP, 5)
+        CFI CFA_SP SP+-5
+        ; Saved register size: 2
+        ; Auto size: 0
+//  134     fptr = isr;
+        MOV     DPTR,#fptr
+        MOV     A,R2
+        MOVX    @DPTR,A
+        INC     DPTR
+        MOV     A,R3
+        MOVX    @DPTR,A
+//  135 }
+        POP     DPH
+        CFI DPH0 SameValue
+        CFI CFA_SP SP+-4
+        POP     DPL
+        CFI DPL0 SameValue
+        CFI CFA_SP SP+-3
+        LJMP    ?BRET
+        CFI EndBlock cfiBlock3
+//  136 
+//  137 /*******************************************************************************
+//  138 * @fn      T3_ISR
+//  139 *
+//  140 * @brief   ISR framework for the timer 3 component
+//  141 *
+//  142 * @param   none
+//  143 *
+//  144 * @return  none
+//  145 */
+//  146 
+
+        RSEG NEAR_CODE:CODE:NOROOT(0)
+//  147 HAL_ISR_FUNCTION(T3_ISR,T3_VECTOR)
+T3_ISR:
+        CFI Block cfiBlock4 Using cfiCommon1
+        CFI Function T3_ISR
+        CODE
+//  148 {
+        PUSH    A
+        CFI A Frame(CFA_SP, 3)
+        CFI CFA_SP SP+-3
+        MOV     A,#-0xe
+        LCALL   ?INTERRUPT_ENTER_XSP
+        CFI B load(1, XDATA, add(CFA_XSP16, literal(-1)))
+        CFI VB load(1, XDATA, add(CFA_XSP16, literal(-2)))
+        CFI PSW load(1, XDATA, add(CFA_XSP16, literal(-3)))
+        CFI DPL0 load(1, XDATA, add(CFA_XSP16, literal(-4)))
+        CFI DPH0 load(1, XDATA, add(CFA_XSP16, literal(-5)))
+        CFI R7 load(1, XDATA, add(CFA_XSP16, literal(-6)))
+        CFI R6 load(1, XDATA, add(CFA_XSP16, literal(-7)))
+        CFI R5 load(1, XDATA, add(CFA_XSP16, literal(-8)))
+        CFI R4 load(1, XDATA, add(CFA_XSP16, literal(-9)))
+        CFI V0 load(1, XDATA, add(CFA_XSP16, literal(-10)))
+        CFI R3 load(1, XDATA, add(CFA_XSP16, literal(-11)))
+        CFI R2 load(1, XDATA, add(CFA_XSP16, literal(-12)))
+        CFI R1 load(1, XDATA, add(CFA_XSP16, literal(-13)))
+        CFI R0 load(1, XDATA, add(CFA_XSP16, literal(-14)))
+        CFI CFA_XSP16 add(XSP16, 14)
+        ; Saved register size: 14
+        ; Auto size: 0
+//  149    if (fptr != NULL)
+        MOV     DPTR,#fptr
+        MOVX    A,@DPTR
+        MOV     R0,A
+        INC     DPTR
+        MOVX    A,@DPTR
+        MOV     R1,A
+        MOV     A,R0
+        ORL     A,R1
+        JZ      ??T3_ISR_0
+//  150    {
+//  151         (*fptr)();
+        ; Setup parameters for indirect call
+        MOVX    A,@DPTR
+        MOV     DPH,A
+        MOV     DPL,R0
+        LCALL   ?CALL_IND
+//  152    }
+//  153    IRCON = 0x00;
+??T3_ISR_0:
+        MOV     0xc0,#0x0
+//  154    T3CTL |= 0x10;
+        ORL     0xcb,#0x10
+//  155    TIMIF &= ~0x01;
+        CLR     0xd8.0
+//  156 }
+        MOV     R7,#0x1
+        LJMP    ?INTERRUPT_LEAVE_XSP
+        CFI EndBlock cfiBlock4
+        REQUIRE _A_IRCON
+        REQUIRE T3CTL
+        REQUIRE _A_TIMIF
+
+        COMMON INTVEC:CODE:ROOT(0)
+        ORG 91
+`??T3_ISR??INTVEC 91`:
+        LJMP       (T3_ISR)
+
+        RSEG BANK_RELAYS:CODE:REORDER:NOROOT(0)
+??HalTimerInit?relay:
+        LCALL   ?BDISPATCH
+        DATA
+        DC24    HalTimerInit
+
+        RSEG BANK_RELAYS:CODE:REORDER:NOROOT(0)
+??HalTimerStart?relay:
+        LCALL   ?BDISPATCH
+        DATA
+        DC24    HalTimerStart
+
+        RSEG BANK_RELAYS:CODE:REORDER:NOROOT(0)
+??HalTimerStop?relay:
+        LCALL   ?BDISPATCH
+        DATA
+        DC24    HalTimerStop
+
+        RSEG BANK_RELAYS:CODE:REORDER:NOROOT(0)
+??halTimerIntConnect?relay:
+        LCALL   ?BDISPATCH
+        DATA
+        DC24    halTimerIntConnect
+
+        END
 // 
+// 54 bytes in segment BANKED_CODE
+// 24 bytes in segment BANK_RELAYS
+//  3 bytes in segment INTVEC
+// 40 bytes in segment NEAR_CODE
+//  8 bytes in segment SFR_AN
+//  2 bytes in segment XDATA_Z
 // 
-// 0 bytes of memory
+// 118 bytes of CODE  memory (+ 3 bytes shared)
+//   0 bytes of DATA  memory (+ 8 bytes shared)
+//   2 bytes of XDATA memory
 //
 //Errors: none
 //Warnings: none

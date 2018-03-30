@@ -1,6 +1,6 @@
 ###############################################################################
 #                                                                             #
-# IAR C/C++ Compiler V8.10.3.10338/W32 for 8051         29/Dec/2017  20:30:08 #
+# IAR C/C++ Compiler V8.10.3.10338/W32 for 8051         30/Mar/2018  16:46:31 #
 # Copyright 2004-2011 IAR Systems AB.                                         #
 #                                                                             #
 #    Core               =  plain                                              #
@@ -40,7 +40,7 @@
 #                          -DMAC_MAX_FRAME_SIZE=116                           #
 #                          -DZDNWKMGR_MIN_TRANSMISSIONS=20 "-DCONST=const     #
 #                          __code" -DGENERIC=__generic                        #
-#                          -DRFD_RCVC_ALWAYS_ON=FALSE -DPOLL_RATE=1000        #
+#                          -DRFD_RCVC_ALWAYS_ON=TRUE -DPOLL_RATE=1000         #
 #                          -DQUEUED_POLL_RATE=100 -DRESPONSE_POLL_RATE=100)   #
 #                          -DREJOIN_POLL_RATE=440 D:\ProgramData\Hardware\zig #
 #                          bee\Components\hal\target\CC2530EB\hal_timer.c -D  #
@@ -144,7 +144,7 @@ D:\ProgramData\Hardware\zigbee\Components\hal\target\CC2530EB\hal_timer.c
      22            its documentation for any purpose.
      23          
      24            YOU FURTHER ACKNOWLEDGE AND AGREE THAT THE SOFTWARE AND DOCUMENTATION ARE
-     25            PROVIDED “AS IS” WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+     25            PROVIDED “AS IS?WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESS OR IMPLIED,
      26            INCLUDING WITHOUT LIMITATION, ANY WARRANTY OF MERCHANTABILITY, TITLE,
      27            NON-INFRINGEMENT AND FITNESS FOR A PARTICULAR PURPOSE. IN NO EVENT SHALL
      28            TEXAS INSTRUMENTS OR ITS LICENSORS BE LIABLE OR OBLIGATED UNDER CONTRACT,
@@ -165,11 +165,318 @@ D:\ProgramData\Hardware\zigbee\Components\hal\target\CC2530EB\hal_timer.c
      43                 for the users to implement their own application timer 
      44                 functions.
      45          *********************************************************************/
+     46          
+     47          /*******************************************************************************
+     48          * INCLUDES
+     49          */
+     50          #include "hal_types.h"
+     51          #include "hal_defs.h"
+     52          #include "hal_timer.h"
+
+   \                                 In  segment SFR_AN, at 0xa8
+   \   union <unnamed> volatile __sfr _A_IEN0
+   \                     _A_IEN0:
+   \   000000                DS 1
+
+   \                                 In  segment SFR_AN, at 0xb8
+   \   union <unnamed> volatile __sfr _A_IEN1
+   \                     _A_IEN1:
+   \   000000                DS 1
+
+   \                                 In  segment SFR_AN, at 0xc0
+   \   union <unnamed> volatile __sfr _A_IRCON
+   \                     _A_IRCON:
+   \   000000                DS 1
+
+   \                                 In  segment SFR_AN, at 0xc6
+   \   unsigned char volatile __sfr CLKCONCMD
+   \                     CLKCONCMD:
+   \   000000                DS 1
+
+   \                                 In  segment SFR_AN, at 0xca
+   \   unsigned char volatile __sfr T3CNT
+   \                     T3CNT:
+   \   000000                DS 1
+
+   \                                 In  segment SFR_AN, at 0xcb
+   \   unsigned char volatile __sfr T3CTL
+   \                     T3CTL:
+   \   000000                DS 1
+
+   \                                 In  segment SFR_AN, at 0xcd
+   \   unsigned char volatile __sfr T3CC0
+   \                     T3CC0:
+   \   000000                DS 1
+
+   \                                 In  segment SFR_AN, at 0xd8
+   \   union <unnamed> volatile __sfr _A_TIMIF
+   \                     _A_TIMIF:
+   \   000000                DS 1
+     53          #include "hal_board.h"
+     54          // #include "hal_int.h"
+     55          #include "hal_assert.h"
+     56          
+     57          /*******************************************************************************
+     58          * LOCAL VARIABLES
+     59          */
+
+   \                                 In  segment XDATA_Z, align 1, keep-with-next
+     60          static halTimerCBack_t fptr;
+   \                     fptr:
+   \   000000                DS 2
+   \   000002                REQUIRE __INIT_XDATA_Z
+     61          
+     62          /*******************************************************************************
+     63          * @fn       HalTimerInit
+     64          *
+     65          * @brief    Set up timer 3  to generate an interrupt every "cycles" 1us * cycles
+     66          *
+     67          *           Use halTimerIntConnect() to connect an ISR to the interrupt.
+     68          *
+     69          * @param   uint8 cycles - Number of cycles between interrupt
+     70          *
+     71          *
+     72          * @return  none
+     73          */
+
+   \                                 In  segment BANKED_CODE, align 1, keep-with-next
+     74          void HalTimerInit ( uint8 cycles )
+   \                     HalTimerInit:
+     75          {
+   \   000000                ; Saved register size: 0
+   \   000000                ; Auto size: 0
+     76              //uint16 clock_divider = ID_0; // Default - don't divide input clock
+     77          
+     78             EA = 1;
+   \   000000   D2AF         SETB    0xa8.7
+     79          
+     80             CLKCONCMD &= ~0x07;  // clock 32MHZ
+   \   000002   53C6F8       ANL     0xc6,#0xf8
+     81             
+     82             // Set count value
+     83             T3CNT = TIMER3_INT_DELAY; 
+   \   000005   75CA0E       MOV     0xca,#0xe
+     84             T3CC0 = TIMER3_INT_DELAY; 
+   \   000008   75CD0E       MOV     0xcd,#0xe
+     85          
+     86             // clear interrupt pending flag, disable interrupt
+     87             TIMIF &= ~0x01;
+   \   00000B   C2D8         CLR     0xd8.0
+     88               
+     89             // Set prescaler divider value to 4// But 32(0xA9) is right!!!
+     90             T3CTL = 0x49;	// and use backwards mode with interrupt enabled
+   \   00000D   75CB49       MOV     0xcb,#0x49
+     91          }
+   \   000010   02....       LJMP    ?BRET
+   \   000013                REQUIRE _A_IEN0
+   \   000013                REQUIRE CLKCONCMD
+   \   000013                REQUIRE T3CNT
+   \   000013                REQUIRE T3CC0
+   \   000013                REQUIRE _A_TIMIF
+   \   000013                REQUIRE T3CTL
+     92          
+     93          /*******************************************************************************
+     94          * @fn       HalTimerStart
+     95          *
+     96          * @brief    
+     97          *
+     98          * @param   
+     99          *
+    100          * @return  none
+    101          */
+
+   \                                 In  segment BANKED_CODE, align 1, keep-with-next
+    102          void HalTimerStart ( void )
+   \                     HalTimerStart:
+    103          {
+   \   000000                ; Saved register size: 0
+   \   000000                ; Auto size: 0
+    104              IEN1 |=  0x08; // IEN1.T3EN = 1
+   \   000000   D2BB         SETB    0xb8.3
+    105              T3CTL |= 0x10;	// Start T3
+   \   000002   43CB10       ORL     0xcb,#0x10
+    106          }
+   \   000005   02....       LJMP    ?BRET
+   \   000008                REQUIRE _A_IEN1
+   \   000008                REQUIRE T3CTL
+    107          
+    108          /*******************************************************************************
+    109          * @fn       HalTimerStop
+    110          *
+    111          * @brief    
+    112          *
+    113          * @param   
+    114          *
+    115          * @return  none
+    116          */
+
+   \                                 In  segment BANKED_CODE, align 1, keep-with-next
+    117          void HalTimerStop ( void )
+   \                     HalTimerStop:
+    118          {
+   \   000000                ; Saved register size: 0
+   \   000000                ; Auto size: 0
+    119               IEN1  &=  ~0x08; // IEN1.T3EN = 0
+   \   000000   C2BB         CLR     0xb8.3
+    120               T3CTL &=  ~0x10;	// Stop T3
+   \   000002   53CBEF       ANL     0xcb,#0xef
+    121          }
+   \   000005   02....       LJMP    ?BRET
+   \   000008                REQUIRE _A_IEN1
+   \   000008                REQUIRE T3CTL
+    122          
+    123          /*******************************************************************************
+    124          * @fn      halTimerIntConnect
+    125          *
+    126          * @brief   Connect function to timer interrupt
+    127          *
+    128          * @param   ISR_FUNC_PTR isr - pointer to function
+    129          *
+    130          * @return  none
+    131          */
+
+   \                                 In  segment BANKED_CODE, align 1, keep-with-next
+    132          void halTimerIntConnect(halTimerCBack_t isr)
+   \                     halTimerIntConnect:
+    133          {
+   \   000000   C082         PUSH    DPL
+   \   000002   C083         PUSH    DPH
+   \   000004                ; Saved register size: 2
+   \   000004                ; Auto size: 0
+    134              fptr = isr;
+   \   000004   90....       MOV     DPTR,#fptr
+   \   000007   EA           MOV     A,R2
+   \   000008   F0           MOVX    @DPTR,A
+   \   000009   A3           INC     DPTR
+   \   00000A   EB           MOV     A,R3
+   \   00000B   F0           MOVX    @DPTR,A
+    135          }
+   \   00000C   D083         POP     DPH
+   \   00000E   D082         POP     DPL
+   \   000010   02....       LJMP    ?BRET
+    136          
+    137          /*******************************************************************************
+    138          * @fn      T3_ISR
+    139          *
+    140          * @brief   ISR framework for the timer 3 component
+    141          *
+    142          * @param   none
+    143          *
+    144          * @return  none
+    145          */
+    146          
+
+   \                                 In  segment NEAR_CODE, align 1, keep-with-next
+    147          HAL_ISR_FUNCTION(T3_ISR,T3_VECTOR)
+   \                     T3_ISR:
+    148          {
+   \   000000   C0E0         PUSH    A
+   \   000002   74F2         MOV     A,#-0xe
+   \   000004   12....       LCALL   ?INTERRUPT_ENTER_XSP
+   \   000007                ; Saved register size: 14
+   \   000007                ; Auto size: 0
+    149             if (fptr != NULL)
+   \   000007   90....       MOV     DPTR,#fptr
+   \   00000A   E0           MOVX    A,@DPTR
+   \   00000B   F8           MOV     R0,A
+   \   00000C   A3           INC     DPTR
+   \   00000D   E0           MOVX    A,@DPTR
+   \   00000E   F9           MOV     R1,A
+   \   00000F   E8           MOV     A,R0
+   \   000010   49           ORL     A,R1
+   \   000011   6008         JZ      ??T3_ISR_0
+    150             {
+    151                  (*fptr)();
+   \   000013                ; Setup parameters for indirect call
+   \   000013   E0           MOVX    A,@DPTR
+   \   000014   F583         MOV     DPH,A
+   \   000016   8882         MOV     DPL,R0
+   \   000018   12....       LCALL   ?CALL_IND
+    152             }
+    153             IRCON = 0x00;
+   \                     ??T3_ISR_0:
+   \   00001B   75C000       MOV     0xc0,#0x0
+    154             T3CTL |= 0x10;
+   \   00001E   43CB10       ORL     0xcb,#0x10
+    155             TIMIF &= ~0x01;
+   \   000021   C2D8         CLR     0xd8.0
+    156          }
+   \   000023   7F01         MOV     R7,#0x1
+   \   000025   02....       LJMP    ?INTERRUPT_LEAVE_XSP
+   \   000028                REQUIRE _A_IRCON
+   \   000028                REQUIRE T3CTL
+   \   000028                REQUIRE _A_TIMIF
+
+   \                                 In  segment INTVEC, offset 0x5b, root
+   \                     `??T3_ISR??INTVEC 91`:
+   \   00005B   02....       LJMP       (T3_ISR)
+
+   \                                 In  segment BANK_RELAYS, align 1
+   \                     ??HalTimerInit?relay:
+   \   000000   12....       LCALL   ?BDISPATCH
+   \   000003   ......       DC24    HalTimerInit
+
+   \                                 In  segment BANK_RELAYS, align 1
+   \                     ??HalTimerStart?relay:
+   \   000000   12....       LCALL   ?BDISPATCH
+   \   000003   ......       DC24    HalTimerStart
+
+   \                                 In  segment BANK_RELAYS, align 1
+   \                     ??HalTimerStop?relay:
+   \   000000   12....       LCALL   ?BDISPATCH
+   \   000003   ......       DC24    HalTimerStop
+
+   \                                 In  segment BANK_RELAYS, align 1
+   \                     ??halTimerIntConnect?relay:
+   \   000000   12....       LCALL   ?BDISPATCH
+   \   000003   ......       DC24    halTimerIntConnect
+
+   Maximum stack usage in bytes:
+
+     Function           ISTACK PSTACK XSTACK
+     --------           ------ ------ ------
+     HalTimerInit           0      0      0
+     HalTimerStart          0      0      0
+     HalTimerStop           0      0      0
+     T3_ISR                 0      0     14
+     halTimerIntConnect     2      0      0
 
 
+   Segment part sizes:
+
+     Function/Label             Bytes
+     --------------             -----
+     _A_IEN0                       1
+     _A_IEN1                       1
+     _A_IRCON                      1
+     CLKCONCMD                     1
+     T3CNT                         1
+     T3CTL                         1
+     T3CC0                         1
+     _A_TIMIF                      1
+     fptr                          2
+     HalTimerInit                 19
+     HalTimerStart                 8
+     HalTimerStop                  8
+     halTimerIntConnect           19
+     T3_ISR                       40
+     ??T3_ISR??INTVEC 91           3
+     ??HalTimerInit?relay          6
+     ??HalTimerStart?relay         6
+     ??HalTimerStop?relay          6
+     ??halTimerIntConnect?relay    6
+
  
+ 54 bytes in segment BANKED_CODE
+ 24 bytes in segment BANK_RELAYS
+  3 bytes in segment INTVEC
+ 40 bytes in segment NEAR_CODE
+  8 bytes in segment SFR_AN
+  2 bytes in segment XDATA_Z
  
- 0 bytes of memory
+ 118 bytes of CODE  memory (+ 3 bytes shared)
+   0 bytes of DATA  memory (+ 8 bytes shared)
+   2 bytes of XDATA memory
 
 Errors: none
 Warnings: none

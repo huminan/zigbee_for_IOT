@@ -6,6 +6,7 @@
 #include "sapi.h"
 
 #include "SensorSys_End.h"
+#include "device.h"
 #include "DebugTrace.h"
 
 #if !defined( WIN32 )
@@ -33,7 +34,7 @@
  * GLOBAL VARIABLES
  */
 
-
+uint8 buttonCnt = 0;
 
 
 
@@ -42,11 +43,13 @@
 // This list should be filled with Application specific Cluster IDs.
 const cId_t Button_ClusterList[BUTTON_MAX_CLUSTERS] =
 {
-	BUTTON_CLUSTERID
+    BUTTON_OPEN,
+    BUTTON_CLOSE,
+    BUTTON_TRIGGER
 };
 
 // Button 端点简单描述符
-const SimpleDescriptionFormat_t Button_SimpleDesc =
+SimpleDescriptionFormat_t Button_SimpleDesc[BUTTON_NUM_MAX] =
 {
 	BUTTON_ENDPOINT,           //  int Endpoint;
 	SYS_PROFID,                //  uint16 AppProfId[2];
@@ -59,13 +62,14 @@ const SimpleDescriptionFormat_t Button_SimpleDesc =
 	(cId_t *)Button_ClusterList   //  byte *pAppInClusterList;
 };
 
-endPointDesc_t Button_epDesc;
+endPointDesc_t Button_epDesc[BUTTON_NUM_MAX];
 
 /*********************************************************************
  * EXTERNAL VARIABLES
  */
 extern uint8 myAppState;
-
+extern uint8 keys_shift;
+extern uint8 type_join;
 /*********************************************************************
  * EXTERNAL FUNCTIONS
  */
@@ -73,8 +77,7 @@ extern uint8 myAppState;
 /*********************************************************************
  * LOCAL VARIABLES
  */
-static uint8 keys_shift = 0;
-static uint8 type_join;
+
 
 byte Button_TaskID;
 
@@ -88,7 +91,9 @@ void Button_Init( byte task_id );
 UINT16 Button_ProcessEvent( byte task_id, UINT16 events );
 void Button_HandleKeys( byte shift, byte keys );
 
-
+static void Button_ReceiveDataIndication( uint16 source, uint8 endPoint, 
+                              uint16 command, uint16 len, uint8 *pData  );
+static void Button_AllowBindConfirm( uint16 source );
 /*********************************************************************
  * @fn      Button_Init
  *
@@ -105,6 +110,7 @@ void Button_HandleKeys( byte shift, byte keys );
  */
 void Button_Init( byte task_id )
 {
+        char i;
 	Button_TaskID = task_id;
 
 	// Device hardware initialization can be added here or in main() (Zmain.c).
@@ -114,16 +120,21 @@ void Button_Init( byte task_id )
 	Button_DstAddr.addrMode = (afAddrMode_t)AddrNotPresent;
 	Button_DstAddr.endPoint = 0;
 	Button_DstAddr.addr.shortAddr = 0;
-
-	// Fill out the endpoint description.
-	Button_epDesc.endPoint = BUTTON_ENDPOINT;
-	Button_epDesc.task_id = &Button_TaskID;
-	Button_epDesc.simpleDesc
-						= (SimpleDescriptionFormat_t *)&Button_SimpleDesc;
-	Button_epDesc.latencyReq = noLatencyReqs;
-
-	// Register the endpoint description with the AF
-	afRegister( &Button_epDesc );
+        
+        for( i=0; i<BUTTON_NUM_MAX; i++)
+        {
+            // Fill out the endpoint description.
+            Button_epDesc[i].endPoint = BUTTON_ENDPOINT+i;
+            Button_epDesc[i].task_id = &Button_TaskID;
+            Button_SimpleDesc[i] = Button_SimpleDesc[0];
+            Button_epDesc[i].simpleDesc
+						= (SimpleDescriptionFormat_t *)&(Button_SimpleDesc[i]);
+            Button_SimpleDesc[i].EndPoint += i;
+	    Button_epDesc[i].latencyReq = noLatencyReqs;
+            
+            // Register the endpoint description with the AF
+	    afRegister( &(Button_epDesc[i]) );
+        }
 
 	// Register for all key events - This app will handle all key events
 	RegisterForKeys( Button_TaskID );
@@ -132,8 +143,8 @@ void Button_Init( byte task_id )
 	ZDO_RegisterForZDOMsg( Button_TaskID, Match_Desc_rsp );
 
 	HalLedSet ( HAL_LED_1, HAL_LED_MODE_ON );
-  HalLedSet ( HAL_LED_2, HAL_LED_MODE_ON );
-  HalLedSet ( HAL_LED_3, HAL_LED_MODE_ON );
+        HalLedSet ( HAL_LED_2, HAL_LED_MODE_ON );
+        HalLedSet ( HAL_LED_3, HAL_LED_MODE_ON );
 
 }
 
@@ -152,29 +163,38 @@ void Button_Init( byte task_id )
  */
 UINT16 Button_ProcessEvent( byte task_id, UINT16 events )
 {
-	afIncomingMSGPacket_t *MSGpkt = NULL;
-	(void)task_id;  // Intentionally unreferenced parameter
+    afIncomingMSGPacket_t *MSGpkt = NULL;
+    (void)task_id;  // Intentionally unreferenced parameter
 
-	if ( events & SYS_EVENT_MSG )
-	{
-    MSGpkt = (afIncomingMSGPacket_t *)osal_msg_receive( task_id );
-    while ( MSGpkt )
+    if ( events & SYS_EVENT_MSG )
     {
-      switch ( MSGpkt->hdr.event )
-      {
-      	case KEY_CHANGE:
-      		Button_HandleKeys( ((keyChange_t *)MSGpkt)->state, ((keyChange_t *)MSGpkt)->keys );
-      	break;
-      }
-      // Release the memory
-      osal_msg_deallocate( (uint8 *)MSGpkt );
-
-      // Next
-      MSGpkt = (afIncomingMSGPacket_t *)osal_msg_receive( Button_TaskID );
+        MSGpkt = (afIncomingMSGPacket_t *)osal_msg_receive( task_id );
+        while ( MSGpkt )
+        {
+          switch ( MSGpkt->hdr.event )
+          {
+            case KEY_CHANGE:
+                Button_HandleKeys( ((keyChange_t *)MSGpkt)->state, ((keyChange_t *)MSGpkt)->keys );
+                break;
+        
+            case AF_INCOMING_MSG_CMD:
+                Button_ReceiveDataIndication( MSGpkt->srcAddr.addr.shortAddr, MSGpkt->endPoint, MSGpkt->clusterId,
+                                        MSGpkt->cmd.DataLength, MSGpkt->cmd.Data);
+                break;
+              
+            case ZDO_MATCH_DESC_RSP_SENT:
+                Button_AllowBindConfirm( ((ZDO_MatchDescRspSent_t *)MSGpkt)->nwkAddr );
+                break;
+          }
+          // Release the memory
+          osal_msg_deallocate( (uint8 *)MSGpkt );
+    
+          // Next
+          MSGpkt = (afIncomingMSGPacket_t *)osal_msg_receive( Button_TaskID );
+        }
+        return (events ^ SYS_EVENT_MSG);
     }
-    return (events ^ SYS_EVENT_MSG);
-	}
-  return 0;
+    return 0;
 }
 
 /*********************************************************************
@@ -193,8 +213,33 @@ UINT16 Button_ProcessEvent( byte task_id, UINT16 events )
  */
 void Button_HandleKeys( byte shift, byte keys )
 {
-	uint8 startOptions;
-	uint8 logicalType;
+  if(shift)
+  {
+        if ( keys & HAL_KEY_SW_1 )
+        {
+          zb_SystemReset();
+        }
+        if ( keys & HAL_KEY_SW_2 )
+        {
+          zb_SystemReset();
+        }
+        if ( keys & HAL_KEY_SW_3 )
+        {
+          zb_SystemReset();
+        }
+        if ( keys & HAL_KEY_SW_4 )
+        {
+        }
+        if ( keys & HAL_KEY_SW_6 )  // Physical Button S1
+        {
+            // Send to Watch Endpoint ? Send to Button Endpoint ?
+        }
+  }
+  
+  else
+  {
+//	uint8 startOptions;
+//	uint8 logicalType;
 	// Shift is used to make each button/switch dual purpose.
 	if ( keys_shift )
 	{
@@ -203,12 +248,11 @@ void Button_HandleKeys( byte shift, byte keys )
 		{
 			if(type_join)
 			{
-				Sensor_AllowBind(10);
-				HalLedSet(HAL_LED_1, HAL_LED_MODE_OFF);
+				Sys_AllowBind(10);
+                                
 			// osal_start_timerEx(Sys_TaskID, CLOSE_BIND_EVT, 10000);
 			
 				keys_shift = 0;
-				type_join = 0;
 			}
 			else
 			{
@@ -229,7 +273,9 @@ void Button_HandleKeys( byte shift, byte keys )
 	{
 		if ( keys & HAL_KEY_SW_1 )
 		{
-			if ( myAppState == APP_INIT )
+                  
+                  /*
+		    if ( myAppState == APP_INIT )
 		    {
 		        // In the init state, keys are used to indicate the logical mode.
 		        // The Switch device is always an end-device
@@ -243,14 +289,11 @@ void Button_HandleKeys( byte shift, byte keys )
 		        zb_WriteConfiguration( ZCD_NV_STARTUP_OPTION, sizeof(uint8), &startOptions );
 		        zb_SystemReset();
 
-    		}
-			else
-			{
-				HalLedSet ( HAL_LED_1, HAL_LED_MODE_ON );
-	 			HalLedSet ( HAL_LED_2, HAL_LED_MODE_ON );
-				HalLedSet ( HAL_LED_3, HAL_LED_MODE_ON );
-				HalLedSet ( HAL_LED_4, HAL_LED_MODE_ON );
-			}
+    		    }*/
+		  //  else
+		//    {
+
+	//	    }
 		}
 
 		if ( keys & HAL_KEY_SW_2 )
@@ -258,8 +301,7 @@ void Button_HandleKeys( byte shift, byte keys )
 		/*
 			HalLedSet ( HAL_LED_4, HAL_LED_MODE_OFF );
 
-			// 想绑定另一个端点
-			dstAddr.addrMode = Addr16Bit;
+			// 想绑定另一个端�?			dstAddr.addrMode = Addr16Bit;
 			dstAddr.addr.shortAddr = 0x0000; 
 			ZDP_EndDeviceBindReq( &dstAddr, NLME_GetShortAddr(), 
 														Button_epDesc.endPoint,
@@ -286,4 +328,86 @@ void Button_HandleKeys( byte shift, byte keys )
 		*/
 		}
 	}
+  }
+}
+
+/******************************************************************************
+ * @fn          Button_ReceiveDataIndication
+ *
+ * @brief       The SAPI_ReceiveDataIndication callback function is called
+ *              asynchronously by the ZigBee stack to notify the application
+ *              when data is received from a peer device.
+ *
+ * @param       source - The short address of the peer device that sent the data
+ *              command - The commandId associated with the data
+ *              len - The number of bytes in the pData parameter
+ *              pData - The data sent by the peer device
+ *
+ * @return      none
+ */
+void Button_ReceiveDataIndication( uint16 source, uint8 endPoint, uint16 command, uint16 len, uint8 *pData  )
+{
+  // ButtonAction(endPoint-BUTTON_ENDPOINT, command);
+  switch (endPoint)
+  {
+    case BUTTON_ENDPOINT:
+      {
+        if (command == BUTTON_OPEN)
+        {
+            Button_HandleKeys( 1, HAL_KEY_SW_1 );
+        }
+        if (command == BUTTON_CLOSE)
+        {
+            Button_HandleKeys( 1, HAL_KEY_SW_2 );
+        }
+        if (command == BUTTON_TRIGGER)
+        {
+            Button_HandleKeys( 1, HAL_KEY_SW_3 );
+        }
+      }
+    case (BUTTON_ENDPOINT+1):
+      {
+        if (command == BUTTON_OPEN)
+        {
+            Button_HandleKeys( 1, HAL_KEY_SW_2 );
+        }
+        if (command == BUTTON_CLOSE)
+        {
+            Button_HandleKeys( 1, HAL_KEY_SW_2 );
+        }
+        if (command == BUTTON_TRIGGER)
+        {
+            Button_HandleKeys( 1, HAL_KEY_SW_3 );
+        }
+      }
+    case (BUTTON_ENDPOINT+2):
+      {
+        if (command == BUTTON_OPEN)
+        {
+            Button_HandleKeys( 1, HAL_KEY_SW_3 );
+        } 
+        if (command == BUTTON_CLOSE)
+        {
+            Button_HandleKeys( 1, HAL_KEY_SW_2 );
+        }
+        if (command == BUTTON_TRIGGER)
+        {
+            Button_HandleKeys( 1, HAL_KEY_SW_3 );
+        }
+      }
+  }
+}
+
+/******************************************************************************
+ * @fn          Button_AllowBindConfirm
+ *
+ * @brief       Indicates when another device attempted to bind to this device
+ *
+ * @param
+ *
+ * @return      none
+ */
+void Button_AllowBindConfirm( uint16 source )
+{
+    Sys_AllowBindConfirm(source);
 }

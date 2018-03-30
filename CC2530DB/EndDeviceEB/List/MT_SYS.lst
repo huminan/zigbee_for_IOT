@@ -1,13 +1,13 @@
 ###############################################################################
 #                                                                             #
-# IAR C/C++ Compiler V8.10.3.10338/W32 for 8051         08/Sep/2017  21:42:44 #
+# IAR C/C++ Compiler V8.10.3.10338/W32 for 8051         30/Mar/2018  14:24:10 #
 # Copyright 2004-2011 IAR Systems AB.                                         #
 #                                                                             #
 #    Core               =  plain                                              #
 #    Code model         =  banked                                             #
 #    Data model         =  large                                              #
 #    Calling convention =  xdata reentrant                                    #
-#    Constant location  =  data_rom                                           #
+#    Constant location  =  data                                               #
 #    Dptr setup         =  1,16                                               #
 #    Source file        =  D:\ProgramData\Hardware\zigbee\Components\mt\MT_SY #
 #                          S.c                                                #
@@ -38,7 +38,7 @@
 #                          -DMAC_MAX_FRAME_SIZE=116                           #
 #                          -DZDNWKMGR_MIN_TRANSMISSIONS=20 "-DCONST=const     #
 #                          __code" -DGENERIC=__generic                        #
-#                          -DRFD_RCVC_ALWAYS_ON=FALSE -DPOLL_RATE=1000        #
+#                          -DRFD_RCVC_ALWAYS_ON=TRUE -DPOLL_RATE=1000         #
 #                          -DQUEUED_POLL_RATE=100 -DRESPONSE_POLL_RATE=100)   #
 #                          -DREJOIN_POLL_RATE=440 D:\ProgramData\Hardware\zig #
 #                          bee\Components\mt\MT_SYS.c -D NWK_AUTO_POLL -D     #
@@ -55,9 +55,9 @@
 #                          --no_code_motion --debug --core=plain --dptr=16,1  #
 #                          --data_model=large --code_model=banked             #
 #                          --calling_convention=xdata_reentrant               #
-#                          --place_constants=data_rom --nr_virtual_regs 16    #
-#                          -I D:\ProgramData\Hardware\zigbee\Projects\zstack\ #
-#                          Samples\SensorSys\CC2530DB\ -I                     #
+#                          --place_constants=data --nr_virtual_regs 16 -I     #
+#                          D:\ProgramData\Hardware\zigbee\Projects\zstack\Sam #
+#                          ples\SensorSys\CC2530DB\ -I                        #
 #                          D:\ProgramData\Hardware\zigbee\Projects\zstack\Sam #
 #                          ples\SensorSys\CC2530DB\..\Source\ -I              #
 #                          D:\ProgramData\Hardware\zigbee\Projects\zstack\Sam #
@@ -207,13 +207,12 @@ D:\ProgramData\Hardware\zigbee\Components\mt\MT_SYS.c
      83          #endif
      84          
 
-   \                                 In  segment XDATA_ROM_C, align 1
+   \                                 In  segment XDATA_I, align 1, keep-with-next
      85          const uint16 MT_SysOsalEventId [] = {
    \                     MT_SysOsalEventId:
-   \   000000   0008         DW 2048
-   \   000002   0004         DW 1024
-   \   000004   0002         DW 512
-   \   000006   0001         DW 256
+   \   000000                DS 8
+   \   000008                REQUIRE `?<Initializer for MT_SysOsalEventId>`
+   \   000008                REQUIRE __INIT_XDATA_I
      86                                                MT_SYS_OSAL_EVENT_0,
      87                                                MT_SYS_OSAL_EVENT_1,
      88                                                MT_SYS_OSAL_EVENT_2,
@@ -1285,6 +1284,13 @@ D:\ProgramData\Hardware\zigbee\Components\mt\MT_SYS.c
    \   000024   7F01         MOV     R7,#0x1
    \   000026   02....       LJMP    ?BANKED_LEAVE_XDATA
 
+   \                                 In  segment XDATA_ID, align 1, keep-with-next
+   \                     `?<Initializer for MT_SysOsalEventId>`:
+   \   000000   0008         DW 2048
+   \   000002   0004         DW 1024
+   \   000004   0002         DW 512
+   \   000006   0001         DW 256
+
    \                                 In  segment BANK_RELAYS, align 1
    \                     ??MT_SysResetInd?relay:
    \   000000   12....       LCALL   ?BDISPATCH
@@ -1313,24 +1319,26 @@ D:\ProgramData\Hardware\zigbee\Components\mt\MT_SYS.c
 
    Segment part sizes:
 
-     Function/Label                 Bytes
-     --------------                 -----
-     SLEEPSTA                          1
-     MT_SysOsalEventId                 8
-     MT_SysResetInd                   90
-     MT_SysOsalTimerExpired           41
-     ??MT_SysResetInd?relay            6
-     ??MT_SysOsalTimerExpired?relay    6
+     Function/Label                       Bytes
+     --------------                       -----
+     SLEEPSTA                                1
+     MT_SysOsalEventId                       8
+     MT_SysResetInd                         90
+     MT_SysOsalTimerExpired                 41
+     ?<Initializer for MT_SysOsalEventId>    8
+     ??MT_SysResetInd?relay                  6
+     ??MT_SysOsalTimerExpired?relay          6
 
  
  131 bytes in segment BANKED_CODE
   12 bytes in segment BANK_RELAYS
    1 byte  in segment SFR_AN
-   8 bytes in segment XDATA_ROM_C
+   8 bytes in segment XDATA_I
+   8 bytes in segment XDATA_ID
  
- 143 bytes of CODE  memory
-   8 bytes of CONST memory
+ 151 bytes of CODE  memory
    0 bytes of DATA  memory (+ 1 byte shared)
+   8 bytes of XDATA memory
 
 Errors: none
 Warnings: none

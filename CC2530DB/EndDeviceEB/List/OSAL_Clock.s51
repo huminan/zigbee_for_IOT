@@ -1,13 +1,13 @@
 ///////////////////////////////////////////////////////////////////////////////
 //                                                                            /
-// IAR C/C++ Compiler V8.10.3.10338/W32 for 8051        08/Sep/2017  21:42:45 /
+// IAR C/C++ Compiler V8.10.3.10338/W32 for 8051        30/Mar/2018  14:24:00 /
 // Copyright 2004-2011 IAR Systems AB.                                        /
 //                                                                            /
 //    Core               =  plain                                             /
 //    Code model         =  banked                                            /
 //    Data model         =  large                                             /
 //    Calling convention =  xdata reentrant                                   /
-//    Constant location  =  data_rom                                          /
+//    Constant location  =  data                                              /
 //    Dptr setup         =  1,16                                              /
 //    Source file        =  D:\ProgramData\Hardware\zigbee\Components\osal\co /
 //                          mmon\OSAL_Clock.c                                 /
@@ -38,7 +38,7 @@
 //                          0x0A, 0x0C, 0x0D}" -DMAC_MAX_FRAME_SIZE=116       /
 //                          -DZDNWKMGR_MIN_TRANSMISSIONS=20 "-DCONST=const    /
 //                          __code" -DGENERIC=__generic                       /
-//                          -DRFD_RCVC_ALWAYS_ON=FALSE -DPOLL_RATE=1000       /
+//                          -DRFD_RCVC_ALWAYS_ON=TRUE -DPOLL_RATE=1000        /
 //                          -DQUEUED_POLL_RATE=100 -DRESPONSE_POLL_RATE=100)  /
 //                          -DREJOIN_POLL_RATE=440 D:\ProgramData\Hardware\zi /
 //                          gbee\Components\osal\common\OSAL_Clock.c -D       /
@@ -56,10 +56,9 @@
 //                          --no_code_motion --debug --core=plain             /
 //                          --dptr=16,1 --data_model=large                    /
 //                          --code_model=banked --calling_convention=xdata_re /
-//                          entrant --place_constants=data_rom                /
-//                          --nr_virtual_regs 16 -I                           /
-//                          D:\ProgramData\Hardware\zigbee\Projects\zstack\Sa /
-//                          mples\SensorSys\CC2530DB\ -I                      /
+//                          entrant --place_constants=data --nr_virtual_regs  /
+//                          16 -I D:\ProgramData\Hardware\zigbee\Projects\zst /
+//                          ack\Samples\SensorSys\CC2530DB\ -I                /
 //                          D:\ProgramData\Hardware\zigbee\Projects\zstack\Sa /
 //                          mples\SensorSys\CC2530DB\..\Source\ -I            /
 //                          D:\ProgramData\Hardware\zigbee\Projects\zstack\Sa /
@@ -156,6 +155,7 @@
         EXTERN ?V0
         EXTERN ?XLOAD_R2345
         EXTERN ?XSTACK_DISP0_8
+        EXTERN __INIT_XDATA_I
         EXTERN __INIT_XDATA_Z
 
         FUNCTION ??monthLength?relay,0203H
@@ -2312,19 +2312,40 @@ osal_ConvertUTCSecs:
         CFI EndBlock cfiCond31
         CFI EndBlock cfiPicker32
 
-        RSEG XDATA_ROM_C:CONST:REORDER:NOROOT(0)
+        RSEG XDATA_I:XDATA:NOROOT(0)
         DATA32
 __Constant_15180:
+        DS 4
+        REQUIRE `?<Initializer for __Constant_15180>`
+        REQUIRE __INIT_XDATA_I
+
+        RSEG XDATA_ID:CODE:NOROOT(0)
+`?<Initializer for __Constant_15180>`:
+        DATA32
         DD 86400
 
-        RSEG XDATA_ROM_C:CONST:REORDER:NOROOT(0)
+        RSEG XDATA_I:XDATA:NOROOT(0)
         DATA32
 __Constant_3c:
+        DS 4
+        REQUIRE `?<Initializer for __Constant_3c>`
+        REQUIRE __INIT_XDATA_I
+
+        RSEG XDATA_ID:CODE:NOROOT(0)
+`?<Initializer for __Constant_3c>`:
+        DATA32
         DD 60
 
-        RSEG XDATA_ROM_C:CONST:REORDER:NOROOT(0)
+        RSEG XDATA_I:XDATA:NOROOT(0)
         DATA32
 __Constant_e10:
+        DS 4
+        REQUIRE `?<Initializer for __Constant_e10>`
+        REQUIRE __INIT_XDATA_I
+
+        RSEG XDATA_ID:CODE:NOROOT(0)
+`?<Initializer for __Constant_e10>`:
+        DATA32
         DD 3600
 
         RSEG BANK_RELAYS:CODE:REORDER:NOROOT(0)
@@ -2368,13 +2389,13 @@ __Constant_e10:
 // 1 163 bytes in segment BANKED_CODE
 //    36 bytes in segment BANK_RELAYS
 //     1 byte  in segment SFR_AN
-//    12 bytes in segment XDATA_ROM_C
+//    12 bytes in segment XDATA_I
+//    12 bytes in segment XDATA_ID
 //    12 bytes in segment XDATA_Z
 // 
-// 1 199 bytes of CODE  memory
-//     0 bytes of CONST memory (+ 12 bytes shared)
+// 1 199 bytes of CODE  memory (+ 12 bytes shared)
 //     0 bytes of DATA  memory (+  1 byte  shared)
-//    12 bytes of XDATA memory
+//    12 bytes of XDATA memory (+ 12 bytes shared)
 //
 //Errors: none
 //Warnings: none

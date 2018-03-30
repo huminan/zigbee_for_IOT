@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //                                                                            /
-// IAR C/C++ Compiler V8.10.3.10338/W32 for 8051        29/Dec/2017  20:30:05 /
+// IAR C/C++ Compiler V8.10.3.10338/W32 for 8051        30/Mar/2018  16:46:32 /
 // Copyright 2004-2011 IAR Systems AB.                                        /
 //                                                                            /
 //    Core               =  plain                                             /
@@ -40,7 +40,7 @@
 //                          0x0A, 0x0C, 0x0D}" -DMAC_MAX_FRAME_SIZE=116       /
 //                          -DZDNWKMGR_MIN_TRANSMISSIONS=20 "-DCONST=const    /
 //                          __code" -DGENERIC=__generic                       /
-//                          -DRFD_RCVC_ALWAYS_ON=FALSE -DPOLL_RATE=1000       /
+//                          -DRFD_RCVC_ALWAYS_ON=TRUE -DPOLL_RATE=1000        /
 //                          -DQUEUED_POLL_RATE=100 -DRESPONSE_POLL_RATE=100)  /
 //                          -DREJOIN_POLL_RATE=440 D:\ProgramData\Hardware\zi /
 //                          gbee\Components\stack\zdo\ZDProfile.c -D          /
@@ -862,7 +862,7 @@ zdpProcessAddrReq   SYMBOL "zdpProcessAddrReq"
 //   22   its documentation for any purpose.
 //   23 
 //   24   YOU FURTHER ACKNOWLEDGE AND AGREE THAT THE SOFTWARE AND DOCUMENTATION ARE
-//   25   PROVIDED “AS IS” WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+//   25   PROVIDED “AS IS?WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESS OR IMPLIED,
 //   26   INCLUDING WITHOUT LIMITATION, ANY WARRANTY OF MERCHANTABILITY, TITLE,
 //   27   NON-INFRINGEMENT AND FITNESS FOR A PARTICULAR PURPOSE. IN NO EVENT SHALL
 //   28   TEXAS INSTRUMENTS OR ITS LICENSORS BE LIABLE OR OBLIGATED UNDER CONTRACT,
@@ -2100,80 +2100,25 @@ ZDP_MatchDescReq:
 //  403   {
 //  404     return afStatus_MEM_FAIL;
         MOV     R1,#0x10
-        LJMP    ??ZDP_MatchDescReq_1 & 0xFFFF
+        SJMP    ??ZDP_MatchDescReq_1
 //  405   }
 //  406 
 //  407   // The spec changed in Zigbee 2007 (2.4.3.1.7.1) to not allow sending
 //  408   // this command to 0xFFFF.  So, here we will filter this and replace 
 //  409   // with 0xFFFD to only send to devices with RX ON.  This includes the 
 //  410   // network address of interest.
-//  411   if ( ((dstAddr->addrMode == AddrBroadcast) || (dstAddr->addrMode == Addr16Bit))
+//  411 /*  if ( ((dstAddr->addrMode == AddrBroadcast) || (dstAddr->addrMode == Addr16Bit))
 //  412       && (dstAddr->addr.shortAddr == NWK_BROADCAST_SHORTADDR_DEVALL) )
-??ZDP_MatchDescReq_0:
-        MOV     DPL,R2
-        MOV     DPH,R3
-        INC     DPTR
-        INC     DPTR
-        INC     DPTR
-        INC     DPTR
-        INC     DPTR
-        INC     DPTR
-        INC     DPTR
-        INC     DPTR
-        MOVX    A,@DPTR
-        XRL     A,#0xf
-        JZ      ??ZDP_MatchDescReq_2
-        MOV     DPL,R2
-        MOV     DPH,R3
-        INC     DPTR
-        INC     DPTR
-        INC     DPTR
-        INC     DPTR
-        INC     DPTR
-        INC     DPTR
-        INC     DPTR
-        INC     DPTR
-        MOVX    A,@DPTR
-        XRL     A,#0x2
-        JNZ     ??ZDP_MatchDescReq_3
-??ZDP_MatchDescReq_2:
-        MOV     DPL,R2
-        MOV     DPH,R3
-        MOVX    A,@DPTR
-        CPL     A
-        JNZ     ??ZDP_MatchDescReq_4
-        INC     DPTR
-        MOVX    A,@DPTR
-        CPL     A
-??ZDP_MatchDescReq_4:
-        JNZ     ??ZDP_MatchDescReq_3
 //  413   {
 //  414     dstAddr->addr.shortAddr = NWK_BROADCAST_SHORTADDR_DEVRXON;
-        MOV     DPL,R2
-        MOV     DPH,R3
-        MOV     A,#-0x3
-        MOVX    @DPTR,A
-        INC     DPTR
-        MOV     A,#-0x1
-        MOVX    @DPTR,A
 //  415   }
 //  416   if ( nwkAddr == NWK_BROADCAST_SHORTADDR_DEVALL )
-??ZDP_MatchDescReq_3:
-        MOV     A,#-0x1
-        XRL     A,R4
-        JNZ     ??ZDP_MatchDescReq_5
-        MOV     A,#-0x1
-        XRL     A,R5
-??ZDP_MatchDescReq_5:
-        JNZ     ??ZDP_MatchDescReq_6
 //  417   {
 //  418     nwkAddr = NWK_BROADCAST_SHORTADDR_DEVRXON;
-        MOV     R4,#-0x3
-        MOV     R5,#-0x1
-//  419   }
+//  419   }*/
 //  420   
 //  421   *pBuf++ = LO_UINT16( nwkAddr );   // NWKAddrOfInterest
-??ZDP_MatchDescReq_6:
+??ZDP_MatchDescReq_0:
         MOV     A,R4
         MOV     DPL,R0
         MOV     DPH,R1
@@ -2192,12 +2137,12 @@ ZDP_MatchDescReq:
         LCALL   ??Subroutine120_0 & 0xFFFF
 //  428   if ( NumInClusters )
 ??CrossCallReturnLabel_231:
-        JZ      ??ZDP_MatchDescReq_7
+        JZ      ??ZDP_MatchDescReq_2
 //  429   {
 //  430     for (i=0; i<NumInClusters; ++i)  {
         MOV     ?V0 + 0,#0x0
 //  431       *pBuf++ = LO_UINT16( InClusterList[i] );
-??ZDP_MatchDescReq_8:
+??ZDP_MatchDescReq_3:
         MOV     A,?V0 + 0
         CLR     C
         RLC     A
@@ -2215,20 +2160,20 @@ ZDP_MatchDescReq:
 //  434   }
 ??CrossCallReturnLabel_2:
         SUBB    A,R6
-        JC      ??ZDP_MatchDescReq_8
+        JC      ??ZDP_MatchDescReq_3
 //  435 
 //  436   *pBuf++ = NumOutClusters; // Output cluster list
-??ZDP_MatchDescReq_7:
+??ZDP_MatchDescReq_2:
         MOV     A,R7
         LCALL   ?Subroutine51 & 0xFFFF
 //  437   if ( NumOutClusters )
 ??CrossCallReturnLabel_234:
-        JZ      ??ZDP_MatchDescReq_9
+        JZ      ??ZDP_MatchDescReq_4
 //  438   {
 //  439     for (i=0; i<NumOutClusters; ++i)  {
         MOV     ?V0 + 0,#0x0
 //  440       *pBuf++ = LO_UINT16( OutClusterList[i] );
-??ZDP_MatchDescReq_10:
+??ZDP_MatchDescReq_5:
         MOV     A,?V0 + 0
         CLR     C
         RLC     A
@@ -2246,10 +2191,10 @@ ZDP_MatchDescReq:
 //  443   }
 ??CrossCallReturnLabel_3:
         SUBB    A,R7
-        JC      ??ZDP_MatchDescReq_10
+        JC      ??ZDP_MatchDescReq_5
 //  444 
 //  445   return fillAndSend( &ZDP_TransID, dstAddr, Match_Desc_req, len );
-??ZDP_MatchDescReq_9:
+??ZDP_MatchDescReq_4:
         ; Setup parameters for call to function fillAndSend
         MOV     ?V0 + 0,#0x6
         MOV     ?V0 + 1,#0x0
@@ -22185,14 +22130,14 @@ ZDP_IncomingData:
 // 1940 *********************************************************************/
 // 1941 
 // 
-// 6 535 bytes in segment BANKED_CODE
+// 6 462 bytes in segment BANKED_CODE
 //   204 bytes in segment BANK_RELAYS
 //    37 bytes in segment CODE_C
 //     2 bytes in segment XDATA_I
 //     2 bytes in segment XDATA_ID
 //    84 bytes in segment XDATA_Z
 // 
-// 6 778 bytes of CODE  memory
+// 6 705 bytes of CODE  memory
 //    86 bytes of XDATA memory
 //
 //Errors: none

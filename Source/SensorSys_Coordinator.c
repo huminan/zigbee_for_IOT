@@ -66,6 +66,8 @@
 #include "sapi.h"
 
 #include "SensorSys_Coor.h"
+#include "Bluetooth.h"
+#include "device.h"
 #include "DebugTrace.h"
 
 #if !defined( WIN32 )
@@ -78,6 +80,10 @@
 #include "hal_uart.h"
 
 #include "nwk.h"
+// for SendDataRequest func
+#include "NLMEDE.h"
+#include "nwk_util.h"
+
 #include "APS.h"
 #include "ZDApp.h"
 #include "OSAL.h"
@@ -95,7 +101,12 @@
 /*********************************************************************
  * TYPEDEFS
  */
-#define SAPICB_BIND_CNF   0xE1
+// Message ID's for application user messages must be in 0xE0-0xEF range
+//#define ZB_USER_MSG                       0xE0
+#define SYSCB_DATA_CNF   0xE0
+//#define SAPICB_BIND_CNF   0xE1
+//#define SAPICB_START_CNF  0xE2
+
 /*********************************************************************
  * GLOBAL VARIABLES
  */
@@ -151,8 +162,6 @@ endPointDesc_t Sys_epDesc;
  */
 uint8 myAppState = APP_INIT;
 
-static byte type_join;
-
 byte Sys_TaskID;
 
 devStates_t Sys_NwkState;   // 节点现在的网络状态
@@ -173,13 +182,12 @@ UINT16 Sys_ProcessEvent( byte task_id, UINT16 events );
 void Sys_ProcessZDOMsgs( zdoIncomingMsg_t *inMsg );
 
 void Sys_MessageMSGCB( afIncomingMSGPacket_t *pckt, byte task_id );
-void Sys_SendPreBindMessage( byte type_id );
+void Sys_SendPreBindMessage( byte type_id, byte ep_id );
+void Sys_SendDataRequest ( uint16 destination, endPointDesc_t *epDesc, uint16 commandId, uint8 len,
+                          uint8 *pData, uint8 handle, uint8 ack, uint8 radius );
+void Sys_SendCback( uint8 event, uint8 status, uint16 data );
 
-void Sensor_BindDevice ( uint8 create, uint16 commandId, uint8 *pDestination );
-
-uint8 typeID2pointID(char type);
-
-
+void Sys_SendDataConfirm( uint8 handle, uint8 status );
 /*********************************************************************
  * NETWORK LAYER CALLBACKS
  */
@@ -225,6 +233,9 @@ void Sys_Init( byte task_id )
   HalLedSet ( HAL_LED_4, HAL_LED_MODE_ON );
   // To Initiallize
   // osal_start_timerEx(task_id, CONFIG_OPTION_EVT, 5000);
+  
+  // USE Bluetooth
+  BluetoothInit();
 }
 
 /*********************************************************************
@@ -293,6 +304,11 @@ UINT16 Sys_ProcessEvent( byte task_id, UINT16 events )
             ;
           }
           
+          break;
+          
+        case SYSCB_DATA_CNF:        // Data sent CoNFirm CallBack function
+          Sys_SendDataConfirm( (uint8)((sys_CbackEvent_t *)MSGpkt)->data,
+                                    ((sys_CbackEvent_t *)MSGpkt)->hdr.status );
           break;
 
         default:
@@ -376,6 +392,35 @@ void Sys_ProcessZDOMsgs( zdoIncomingMsg_t *inMsg /*, byte task_id */)
       }
 #endif
       break;
+      /*
+    case Match_Desc_rsp:
+      {
+        zAddrType_t dstAddr;
+        ZDO_ActiveEndpointRsp_t *pRsp = ZDO_ParseEPListRsp( inMsg );
+    
+        if ( sensor_bindInProgress != 0xffff )
+        {
+          // Create a binding table entry
+          dstAddr.addrMode = Addr16Bit;
+          dstAddr.addr.shortAddr = pRsp->nwkAddr;
+    
+          if ( APSME_BindRequest( Button_epDesc.simpleDesc->EndPoint,
+                     sensor_bindInProgress, &dstAddr, pRsp->epList[0] ) == ZSuccess )
+          {
+            osal_stop_timerEx(sapi_TaskID,  BUTTON_BIND_TIMER);
+            osal_start_timerEx( ZDAppTaskID, ZDO_NWK_UPDATE_NV, 250 );
+    
+            // Find IEEE addr
+            ZDP_IEEEAddrReq( pRsp->nwkAddr, ZDP_ADDR_REQTYPE_SINGLE, 0, 0 );
+            // Send bind confirm callback to application
+    #if ( SAPI_CB_FUNC )
+            Sys_BindConfirm( sensor_bindInProgress, ZB_SUCCESS );
+    #endif
+            sensor_bindInProgress = 0xffff;
+          }
+        }
+      }
+    break;*/
 /*
     case Match_Desc_rsp:
       { 
@@ -441,12 +486,7 @@ void Sys_MessageMSGCB( afIncomingMSGPacket_t *pkt, byte task_id )
 {
   switch ( pkt->clusterId )
   {
-    case BUTTON_CLUSTERID:
-      // "the" message
-#if defined( WIN32 )
-      WPRINTSTR( pkt->cmd.Data );
-#endif
-      break;
+    
   }
 }
 
@@ -459,10 +499,9 @@ void Sys_MessageMSGCB( afIncomingMSGPacket_t *pkt, byte task_id )
  *
  * @return  none
  */
-void Sys_SendPreBindMessage( byte type_id )
+void Sys_SendPreBindMessage( byte type_id, byte ep_id )
 {
   afAddrType_t dstAddr;
-  uint8 endPoint_ID;
 
   dstAddr.addr.shortAddr = 0xFFFF;
   dstAddr.addrMode = (afAddrMode_t)AddrBroadcast;
@@ -470,9 +509,8 @@ void Sys_SendPreBindMessage( byte type_id )
 
   char theMessageData[6] = "bind";
   theMessageData[4] = type_id;
-  endPoint_ID = typeID2pointID(type_id);
-  theMessageData[5] = endPoint_ID;
-
+  theMessageData[5] = ep_id;
+  
   if ( AF_DataRequest( &dstAddr, &Sys_epDesc,
                        SYS_CLUSTERID,
                        (byte)osal_strlen( theMessageData ) + 1,
@@ -481,19 +519,93 @@ void Sys_SendPreBindMessage( byte type_id )
                        AF_DISCV_ROUTE, AF_DEFAULT_RADIUS ) == afStatus_SUCCESS )
   {
     // Successfully requested to be sent.
-    // 闪5s灯
-    HalLedBlink (HAL_LED_1, 1, 50, 5000);
-    //if(想要绑定什么就对应的 TypeID)
-
-    type_join = type_id;
-    if(type_id == BUTTON_TYPE_ID)
-      osal_start_timerEx(Button_TaskID, MATCH_BIND_EVT, 5000);
-
+    
+    //(想要绑定什么就对应的 TypeID)
+    switch(type_id)
+    {
+        case BUTTON_TYPE_ID:
+          osal_start_timerEx(Button_TaskID, MATCH_BIND_EVT, 5000);
+          break;
+        
+        case MOTOR_TYPE_ID:
+          osal_start_timerEx(Motor_TaskID, MATCH_BIND_EVT, 5000);
+          break;
+          
+        case LED_TYPE_ID:
+          osal_start_timerEx(Led_TaskID, MATCH_BIND_EVT, 5000);
+          break;
+    }
   }
   else
   {
     // Error occurred in request to send.
     HalLedSet(HAL_LED_1, HAL_LED_MODE_OFF);
+  }
+}
+
+/******************************************************************************
+ * @fn          zb_SendDataRequest
+ *
+ * @brief       The zb_SendDataRequest function initiates transmission of data
+ *              to a peer device
+ *
+ * @param       destination - The destination of the data.  The destination can
+ *                            be one of the following:
+ *                            - 16-Bit short address of device [0-0xfffD]
+ *                            - ZB_BROADCAST_ADDR sends the data to all devices
+ *                              in the network.
+ *                            - ZB_BINDING_ADDR sends the data to a previously
+ *                              bound device.
+ *
+ *              commandId - The command ID to send with the message.  If the
+ *                          SYS_BINDING_ADDR destination is used, this parameter
+ *                          also indicates the binding to use.
+ *
+ *              len - The size of the pData buffer in bytes
+ *              handle - A handle used to identify the send data request.
+ *              txOptions - TRUE if requesting acknowledgement from the destination.
+ *              radius - The max number of hops the packet can travel through
+ *                       before it is dropped.
+ *
+ * @return      none
+ */
+void Sys_SendDataRequest ( uint16 destination, endPointDesc_t *epDesc, uint16 commandId, uint8 len,
+                          uint8 *pData, uint8 handle, uint8 txOptions, uint8 radius )
+{
+  afStatus_t status;
+  afAddrType_t dstAddr;
+
+  txOptions |= AF_DISCV_ROUTE;
+
+  // Set the destination address
+  if (destination == SYS_BINDING_ADDR)
+  {
+    // Binding
+    dstAddr.addrMode = afAddrNotPresent;
+  } 
+  else
+  {
+    // Use short address
+    dstAddr.addr.shortAddr = destination;
+    dstAddr.addrMode = afAddr16Bit;
+
+    if ( ADDR_NOT_BCAST != NLME_IsAddressBroadcast( destination ) )
+    {
+      txOptions &= ~AF_ACK_REQUEST;
+    }
+  }
+
+  dstAddr.panId = 0;                                    // Not an inter-pan message.
+  dstAddr.endPoint = epDesc->simpleDesc->EndPoint;  // Set the endpoint.
+
+  
+  // Send the message
+  status = AF_DataRequest(&dstAddr, epDesc, commandId, len,
+                          pData, &handle, txOptions, radius);
+
+  if (status != afStatus_SUCCESS)
+  {
+    Sys_SendCback( SYSCB_DATA_CNF, status, handle );
   }
 }
 
@@ -515,67 +627,16 @@ void Sys_SendPreBindMessage( byte type_id )
  */
 void zb_StartConfirm( uint8 status )
 {
-    if ( status == ZB_SUCCESS )
+  if ( status == ZB_SUCCESS )
   {
-    myAppState = APP_START;
+//    myAppState = APP_START;
   }
   else
   {
     // Try again later with a delay
+  }
+}
 
-    HalLedSet(HAL_LED_2, HAL_LED_MODE_BLINK);
-  }
-}
-/******************************************************************************
- * @fn          zb_SendDataConfirm
- *
- * @brief       The zb_SendDataConfirm callback function is called by the
- *              ZigBee after a send data operation completes
- *
- * @param       handle - The handle identifying the data transmission.
- *              status - The status of the operation.
- *
- * @return      none
- */
-void zb_SendDataConfirm( uint8 handle, uint8 status )
-{
-}
-/******************************************************************************
- * @fn          zb_BindConfirm
- *
- * @brief       The zb_BindConfirm callback is called by the ZigBee stack
- *              after a bind operation completes.
- *
- * @param       commandId - The command ID of the binding being confirmed.
- *              status - The status of the bind operation.
- *
- * @return      none
- */
-void zb_BindConfirm( uint16 commandId, uint8 status )
-{
-  if( status == ZB_SUCCESS)
-  {
-    // Light D2
-    HalLedSet(HAL_LED_2, HAL_LED_MODE_OFF);
-  }
-  else
-  {
-    // Light D3
-    HalLedSet(HAL_LED_3, HAL_LED_MODE_OFF);
-  }
-}
-/******************************************************************************
- * @fn          zb_AllowBindConfirm
- *
- * @brief       Indicates when another device attempted to bind to this device
- *
- * @param
- *
- * @return      none
- */
-void zb_AllowBindConfirm( uint16 source )
-{
-}
 /******************************************************************************
  * @fn          zb_FindDeviceConfirm
  *
@@ -591,23 +652,6 @@ void zb_AllowBindConfirm( uint16 source )
 void zb_FindDeviceConfirm( uint8 searchType, uint8 *searchKey, uint8 *result )
 {
 }
-/******************************************************************************
- * @fn          zb_ReceiveDataIndication
- *
- * @brief       The zb_ReceiveDataIndication callback function is called
- *              asynchronously by the ZigBee stack to notify the application
- *              when data is received from a peer device.
- *
- * @param       source - The short address of the peer device that sent the data
- *              command - The commandId associated with the data
- *              len - The number of bytes in the pData parameter
- *              pData - The data sent by the peer device
- *
- * @return      none
- */
-void zb_ReceiveDataIndication( uint16 source, uint16 command, uint16 len, uint8 *pData  )
-{
-}
 
 void zb_HandleOsalEvent( uint16 event )
 {
@@ -616,109 +660,87 @@ void zb_HandleOsalEvent( uint16 event )
     zb_StartRequest();
   }
 }
+/*********************************************************************
+ * CBack FUNCTIONS
+ */
 
-uint8 typeID2pointID(char type)
+/*********************************************************************
+ * @fn      SAPI_SendCback
+ *
+ * @brief   Sends a message to the sapi task ( itself ) so that a
+ *           callback can be generated later.
+ *
+ * @return  none
+ */
+void Sys_SendCback( uint8 event, uint8 status, uint16 data )
 {
-  uint8 rst = 0;
-  for(char i = 0; i < 8; i++)
+  sapi_CbackEvent_t *pMsg;
+
+  pMsg = (sapi_CbackEvent_t *)osal_msg_allocate( sizeof(sapi_CbackEvent_t) );
+  if( pMsg )
   {
-    if(type)
-    {
-      rst++;
-      type = type >> 1;
-    }
+    pMsg->hdr.event = event;
+    pMsg->hdr.status = status;
+    pMsg->data = data;
+
+    osal_msg_send( Sys_TaskID, (uint8 *)pMsg );
   }
-  return rst;
+
 }
 
+
+
 /******************************************************************************
- * @fn          Sensor_BindDevice
- *
- * @brief       The zb_BindDevice function establishes or removes a ‘binding? *              between two devices.  Once bound, an application can send
- *              messages to a device by referencing the commandId for the
- *              binding.
- *
- * @param       create - TRUE to create a binding, FALSE to remove a binding
- *              commandId - The identifier of the binding
- *              pDestination - The 64-bit IEEE address of the device to bind to
- *
- * @return      The status of the bind operation is returned in the
- *              zb_BindConfirm callback.
+ * CONFIRM FUNCTIONS 
  */
-void Sensor_BindDevice ( uint8 create, uint16 commandId, uint8 *pDestination )
+
+/******************************************************************************
+ * @fn          Sys_BindConfirm
+ *
+ * @brief       The Sys_BindConfirm callback is called by the ZigBee stack
+ *              after a bind operation completes.
+ *
+ * @param       commandId - The command ID of the binding being confirmed.
+ *              status - The status of the bind operation.
+ *
+ * @return      none
+ */
+void Sys_BindConfirm( uint16 commandId, uint8 status )
 {
-  zAddrType_t destination;
-  uint8 ret = ZB_ALREADY_IN_PROGRESS;
-
-  if ( create )
+  if( status == ZB_SUCCESS)
   {
-    if (sensor_bindInProgress == 0xffff)
-    {
-      if ( pDestination )
-      {
-        destination.addrMode = Addr64Bit;
-        osal_cpyExtAddr( destination.addr.extAddr, pDestination );
-          // here was sapi_epDesc.endPoint
-        ret = APSME_BindRequest( BUTTON_ENDPOINT, commandId,
-                                            &destination, BUTTON_ENDPOINT );
-
-        if ( ret == ZSuccess )
-        {
-          // Find nwk addr
-          ZDP_NwkAddrReq(pDestination, ZDP_ADDR_REQTYPE_SINGLE, 0, 0 );
-          osal_start_timerEx( ZDAppTaskID, ZDO_NWK_UPDATE_NV, 250 );
-        }
-      }
-      else
-      {
-        ret = ZB_INVALID_PARAMETER;
-        destination.addrMode = Addr16Bit;
-        destination.addr.shortAddr = NWK_BROADCAST_SHORTADDR;
-        if ( ZDO_AnyClusterMatches( 1, &commandId, Button_epDesc.simpleDesc->AppNumOutClusters,
-                                                Button_epDesc.simpleDesc->pAppOutClusterList ) )
-        {
-          // Try to match with a device in the allow bind mode
-          ret = ZDP_MatchDescReq( &destination, NWK_BROADCAST_SHORTADDR,
-              Button_epDesc.simpleDesc->AppProfId, 1, &commandId, 0, (cId_t *)NULL, 0 );
-        }
-        else if ( ZDO_AnyClusterMatches( 1, &commandId, sapi_epDesc.simpleDesc->AppNumInClusters,
-                                                sapi_epDesc.simpleDesc->pAppInClusterList ) )
-        {
-          ret = ZDP_MatchDescReq( &destination, NWK_BROADCAST_SHORTADDR,
-              Button_epDesc.simpleDesc->AppProfId, 0, (cId_t *)NULL, 1, &commandId, 0 );
-        }
-
-        if ( ret == ZB_SUCCESS )
-        {
-          // Set a timer to make sure bind completes
-#if ( ZG_BUILD_RTR_TYPE )
-          osal_start_timerEx(Button_TaskID, ZB_BIND_TIMER, AIB_MaxBindingTime);
-#else
-          // AIB_MaxBindingTime is not defined for an End Device
-          osal_start_timerEx(Button_TaskID, ZB_BIND_TIMER, zgApsDefaultMaxBindingTime);
-#endif
-          sensor_bindInProgress = commandId;
-          return; // dont send cback event
-        }
-      }
-    }
-
-  //  SAPI_SendCback( SAPICB_BIND_CNF, ret, commandId );
+    // Light D2
+    HalLedSet(HAL_LED_3, HAL_LED_MODE_ON);
+    HalLedSet(HAL_LED_2, HAL_LED_MODE_OFF);
+    osal_start_timerEx(Sys_TaskID, CLOSE_LIGHT_EVT, 5000);
   }
   else
   {
-    // Remove local bindings for the commandId
-    BindingEntry_t *pBind;
-
-    // Loop through bindings an remove any that match the cluster
-    while ( pBind = bindFind( BUTTON_ENDPOINT, commandId, 0 ) )
-    {
-      bindRemoveEntry(pBind);
-    }
-    osal_start_timerEx( ZDAppTaskID, ZDO_NWK_UPDATE_NV, 250 );
+    // Light D3
+    HalLedSet(HAL_LED_2, HAL_LED_MODE_ON);
+    HalLedSet(HAL_LED_3, HAL_LED_MODE_OFF);
   }
-  return;
 }
+
+/******************************************************************************
+ * @fn          Sys_SendDataConfirm
+ *
+ * @brief       The zb_SendDataConfirm callback function is called by the
+ *              ZigBee after a send data operation completes
+ *
+ * @param       handle - The handle identifying the data transmission.
+ *              status - The status of the operation.
+ *
+ * @return      none
+ */
+void Sys_SendDataConfirm( uint8 handle, uint8 status )
+{
+}
+
+/*******************************************************************************
+ *******************************************************************************
+ * CONFIGURATIONS
+ ******************************************************************************/
 
 // The order in this table must be identical to the task initialization calls below in osalInitTask.
 
@@ -734,6 +756,8 @@ const pTaskEventHandlerFn tasksArr[] = {
 
   Sys_ProcessEvent,
   Button_ProcessEvent,
+  Motor_ProcessEvent,
+  Led_ProcessEvent,
   SAPI_ProcessEvent
 };
 
@@ -768,5 +792,7 @@ void osalInitTasks( void )
   ZDApp_Init( taskID++ );
   Sys_Init( taskID++ );
   Button_Init( taskID++ );
+  Motor_Init( taskID++ );
+  Led_Init( taskID++ );
   SAPI_Init( taskID );
 }

@@ -36,9 +36,6 @@
   Should you have any questions regarding your right to use this Software,
   contact Texas Instruments Incorporated at www.TI.com. 
 **************************************************************************************************/
-#include <stdio.h>
-#include <string.h>
-
 #ifndef END_H
 #define END_H
 
@@ -50,25 +47,20 @@ extern "C"
 /*********************************************************************
  * INCLUDES
  */
+#include <stdio.h>
+#include <string.h>
+#include "SensorSys_Tools.h"
 #include "ZComDef.h"
 
 /*********************************************************************
  * CONSTANTS
  */
-#define MY_DEVICE   BUTTON_TYPE_ID
+#define MY_DEVICE   BUTTON_TYPE_ID|MOTOR_TYPE_ID|LED_TYPE_ID
 
 
 #define APP_INIT                           0
 #define APP_START                          1
 
-// These constants are only for example and should be changed to the
-// device's needs
-
-#define SYS_ENDPOINT           2
-#define ZB_ENDPOINT          3
-#define BUTTON_ENDPOINT        10
-
-  
 #define SYS_PROFID             0x0F04
 #define SYS_DEVICEID           0x0001
 #define SYS_DEVICE_VERSION     0
@@ -86,51 +78,54 @@ extern "C"
 
 #define ALLOW_BIND_TIMER       0x0040
 
-
-// Cluster IDs
-#define SYS_MAX_CLUSTERS       1
-#define BUTTON_MAX_CLUSTERS    2
-#define ZB_MAX_CLUSTERS      4
-  
-#define SYS_CLUSTERID          0x0001
-#define ZB_CLUSTERID         0x0002
-#define BUTTON_CLUSTERID       0x0003
-  
-// Define the Command ID's used in this application
-#define BUTTON_CMD_ID          1
-
-// Terminator Type ID
-#define BUTTON_TYPE_ID         0x01
-#define MOTOR_TYPE_ID          0x02
-  //...   0x04 0x08 0x10 ...
-
+// EndPoint MAX
+#define BUTTON_NUM_MAX         3
+#define MOTOR_NUM_MAX          2
+#define LED_NUM_MAX            3
+#define OBSERVE_NUM_MAX        1
 /*********************************************************************
  * MACROS
  */
 extern byte Sys_TaskID;
 extern byte Button_TaskID;
-extern uint8 ZDAppTaskID;
-extern endPointDesc_t Button_epDesc;
+extern byte Motor_TaskID;
+extern byte Led_TaskID;
 
+extern uint8 ZDAppTaskID;
+
+extern endPointDesc_t Sys_epDesc;
+extern endPointDesc_t Button_epDesc[BUTTON_NUM_MAX];
+extern endPointDesc_t Motor_epDesc[MOTOR_NUM_MAX];
+extern endPointDesc_t Led_epDesc[LED_NUM_MAX];
+
+extern uint8 buttonCnt;
+extern uint8 motorCnt;
+extern uint8 ledCnt;
 /*********************************************************************
  * FUNCTIONS
  */
 
-extern void Sensor_AllowBind ( uint8 timeout );
-
+extern void Sys_AllowBind ( uint8 timeout );
+extern void Sys_AllowBindConfirm( uint16 source );
 /*
  * Task Initialization for the Generic Application
  */
 extern void Sys_Init( byte task_id );
 extern void Button_Init( byte task_id );
+extern void Motor_Init( byte task_id );
+extern void Led_Init( byte task_id );
+
 /*
  * Task Event Processor for the Generic Application
  */
 extern UINT16 Sys_ProcessEvent( byte task_id, UINT16 events );
 extern UINT16 Button_ProcessEvent( byte task_id, UINT16 events );
+extern UINT16 Motor_ProcessEvent( byte task_id, UINT16 events );
+extern UINT16 Led_ProcessEvent( byte task_id, UINT16 events );
 
 extern void osalAddTasks( void );
 
+uint8 Type2EP(uint8 type, uint8 offset);
 /*********************************************************************
 *********************************************************************/
 

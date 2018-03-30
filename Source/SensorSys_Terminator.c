@@ -66,6 +66,7 @@
 #include "sapi.h"
 
 #include "SensorSys_End.h"
+#include "device.h"
 #include "DebugTrace.h"
 
 #if !defined( WIN32 )
@@ -159,8 +160,8 @@ endPointDesc_t Sys_epDesc;
  * LOCAL VARIABLES
  */
 uint8 myAppState = APP_INIT;
-static uint8 keys_shift = 0;
-static uint8 type_join;
+uint8 keys_shift = 0;
+uint8 type_join;		// Which type of EndPoint want to match
 
 byte Sys_TaskID;
 
@@ -177,14 +178,11 @@ void Sys_Init( byte task_id );
 
 UINT16 Sys_ProcessEvent( byte task_id, UINT16 events );
 
-void Sensor_AllowBind ( uint8 timeout );
-
-// Just because the error of the Button_TaskID 
-void Button_HandleKeys( byte shift, byte keys );
+void Sys_AllowBind ( uint8 timeout );
 
 void Sys_MessageMSGCB( afIncomingMSGPacket_t *pckt, byte task_id );
+void Sys_AllowBindConfirm( uint16 source );
 // void Sys_SendMessage( byte task_id );
-void zb_ReceiveDataIndication( uint16 source, uint16 command, uint16 len, uint8 *pData  );
 
 /*********************************************************************
  * NETWORK LAYER CALLBACKS
@@ -230,6 +228,7 @@ void Sys_Init( byte task_id )
   // Register the endpoint description with the AF
   afRegister( &Sys_epDesc );
 
+  type_join = 0;
   // Set device as Enddevice
   //zgDeviceLogicalType = ZG_DEVICETYPE_ENDDEVICE;
 
@@ -296,7 +295,7 @@ UINT16 Sys_ProcessEvent( byte task_id, UINT16 events )
 						;
 					}
 					break;
-
+                  
 				default:
 					break;
 			}
@@ -314,6 +313,7 @@ UINT16 Sys_ProcessEvent( byte task_id, UINT16 events )
 	if(events & ALLOW_BIND_TIMER)
 	{
 		afSetMatch(type_join, FALSE);
+                HalLedSet ( HAL_LED_2, HAL_LED_MODE_ON );
 		return (events ^ ALLOW_BIND_TIMER);
 	}
 	if(events & CLOSE_BIND_EVT)
@@ -324,10 +324,10 @@ UINT16 Sys_ProcessEvent( byte task_id, UINT16 events )
 
 	if(events & CLOSE_LIGHT_EVT)
 	{
-	  HalLedSet ( HAL_LED_1, HAL_LED_MODE_ON );
-	  HalLedSet ( HAL_LED_2, HAL_LED_MODE_ON );
-	  HalLedSet ( HAL_LED_3, HAL_LED_MODE_ON );
-		return (events ^ CLOSE_LIGHT_EVT);
+            HalLedSet ( HAL_LED_1, HAL_LED_MODE_ON );
+            HalLedSet ( HAL_LED_2, HAL_LED_MODE_ON );
+            HalLedSet ( HAL_LED_3, HAL_LED_MODE_ON );
+	    return (events ^ CLOSE_LIGHT_EVT);
 	}
 	// Discard unknown events
 	return 0;
@@ -337,6 +337,66 @@ UINT16 Sys_ProcessEvent( byte task_id, UINT16 events )
 /*********************************************************************
  * LOCAL FUNCTIONS
  */
+
+/*********************************************************************
+ * @fn      Type2EP
+ *
+ * @brief   query for device type's corresponding endpoint number
+ *
+ * @param   type : which device type want to bind
+*          offset : which endpoint in corresponding device ( start from 1 )
+ * @return  Corresponding Endpoint number
+ */
+uint8 Type2EP(uint8 type, uint8 offset)
+{
+    switch(type)
+    {
+        case BUTTON_TYPE_ID:
+          {
+                // 10~59
+                if(buttonCnt == BUTTON_NUM_MAX)
+                {
+                    return 0;     // error
+                }
+                if(offset >= BUTTON_NUM_MAX)
+                {
+                    return 0;
+                }
+                buttonCnt++;
+                return (BUTTON_ENDPOINT+offset-1);
+          }
+        case LED_TYPE_ID:
+          {
+                // 60~109
+                if(ledCnt == LED_NUM_MAX)
+                {
+                    return 0;     // error
+                }
+                if(offset >= LED_NUM_MAX)
+                {
+                    return 0;
+                }
+                ledCnt++;
+                return (LED_ENDPOINT+offset-1);
+          }
+        case MOTOR_TYPE_ID:
+          {
+                // 110~119
+                if(motorCnt == MOTOR_NUM_MAX)
+                {
+                  return 0;     // error
+                }
+                if(offset >= MOTOR_NUM_MAX)
+                {
+                    return 0;
+                }
+                motorCnt++;
+                return (MOTOR_ENDPOINT+offset-1);
+          }
+    }
+    return 0;
+}
+
 
 /*********************************************************************
  * @fn      Sys_MessageMSGCB
@@ -354,29 +414,34 @@ void Sys_MessageMSGCB( afIncomingMSGPacket_t *pkt, byte task_id )
 	switch ( pkt->clusterId )
 	{
 		case SYS_CLUSTERID:
-    {
+                {
 			char flag[4];
 			osal_memcpy( flag, pkt->cmd.Data, 4 );
 			if( osal_memcmp( flag, "bind", 4) )
 			{
 				if( pkt->cmd.Data[4] & MY_DEVICE )
 				{
-					type_join = pkt->cmd.Data[5];
-					HalLedSet(HAL_LED_2, HAL_LED_MODE_OFF);		// Set Red LED ON
-			//		osal_start_timerEx(Sys_TaskID, CLOSE_BIND_EVT, 5000);		// Bind operation 5s timeout
-					keys_shift = 1;
+                                        type_join = Type2EP(pkt->cmd.Data[4], pkt->cmd.Data[5]);  // query for this type's corresponding endpoint number
+                                        if(!type_join)
+                                        {
+                                            // faild to add endpoint
+                                        }
+                                        else
+                                        {
+       					    keys_shift = 1;
+                                        }
 				}
 			}
 #if defined( WIN32 )
 			WPRINTSTR( pkt->cmd.Data );
 #endif
 			break;
-    }
+                }
 	}
 }
 
 /******************************************************************************
- * @fn          Sensor_AllowBind
+ * @fn          Sys_AllowBind
  *
  * @brief       The zb_AllowBind function puts the device into the
  *              Allow Binding Mode for a given period of time.  A peer device
@@ -392,10 +457,8 @@ void Sys_MessageMSGCB( afIncomingMSGPacket_t *pkt, byte task_id )
  *              an error code.
  */
 
-void Sensor_AllowBind ( uint8 timeout )
+void Sys_AllowBind ( uint8 timeout )
 {
-
-  //HalLedSet(HAL_LED_1, HAL_LED_MODE_FLASH);
   osal_stop_timerEx(Sys_TaskID, ALLOW_BIND_TIMER);
 
   if ( timeout == 0 )
@@ -415,6 +478,23 @@ void Sensor_AllowBind ( uint8 timeout )
     }
   }
   return;
+}
+
+/******************************************************************************
+ * @fn          Button_AllowBindConfirm
+ *
+ * @brief       Indicates when another device attempted to bind to this device
+ *              Shut Up allowbind after 1s.
+ *
+ * @param
+ *
+ * @return      none
+ */
+void Sys_AllowBindConfirm( uint16 source )
+{
+    type_join = 0;
+    osal_stop_timerEx(Sys_TaskID, ALLOW_BIND_TIMER);
+    osal_start_timerEx(Sys_TaskID, ALLOW_BIND_TIMER, 1000); 
 }
 
 /*********************************************************************
@@ -445,28 +525,7 @@ void Sys_SendMessage( void )
 	}
 }
 */
-/******************************************************************************
- * @fn          zb_ReceiveDataIndication
- * 
- * @brief       The zb_ReceiveDataIndication callback function is called
- *              asynchronously by the ZigBee stack to notify the application
- *              when data is received from a peer device.
- *
- * @param       source - The short address of the peer device that sent the data
- *              command - The commandId associated with the data
- *              len - The number of bytes in the pData parameter
- *              pData - The data sent by the peer device
- *
- * @return      none
- */
-void zb_ReceiveDataIndication( uint16 source, uint16 command, uint16 len, uint8 *pData  )
-{
-  if (command == BUTTON_CMD_ID)
-  {
-    // Received application command to toggle the LED
-    HalLedSet(HAL_LED_2, HAL_LED_MODE_ON);
-  }
-}
+
 /*********************************************************************
 *********************************************************************/
 /******************************************************************************
@@ -485,52 +544,13 @@ void zb_StartConfirm( uint8 status )
 {
   if ( status == ZB_SUCCESS )
   {
-    myAppState = APP_START;
+        myAppState = APP_START;
   }
   else
   {
   }
 }
-/******************************************************************************
- * @fn          zb_SendDataConfirm
- *
- * @brief       The zb_SendDataConfirm callback function is called by the
- *              ZigBee after a send data operation completes
- *
- * @param       handle - The handle identifying the data transmission.
- *              status - The status of the operation.
- *
- * @return      none
- */
-void zb_SendDataConfirm( uint8 handle, uint8 status )
-{
-}
-/******************************************************************************
- * @fn          zb_BindConfirm
- *
- * @brief       The zb_BindConfirm callback is called by the ZigBee stack
- *              after a bind operation completes.
- *
- * @param       commandId - The command ID of the binding being confirmed.
- *              status - The status of the bind operation.
- *
- * @return      none
- */
-void zb_BindConfirm( uint16 commandId, uint8 status )
-{
-}
-/******************************************************************************
- * @fn          zb_AllowBindConfirm
- *
- * @brief       Indicates when another device attempted to bind to this device
- *
- * @param
- *
- * @return      none
- */
-void zb_AllowBindConfirm( uint16 source )
-{
-}
+
 /******************************************************************************
  * @fn          zb_FindDeviceConfirm
  *
@@ -566,6 +586,8 @@ const pTaskEventHandlerFn tasksArr[] = {
 
   Sys_ProcessEvent,
   Button_ProcessEvent,
+  Motor_ProcessEvent,
+  Led_ProcessEvent,
   SAPI_ProcessEvent
 };
 
@@ -600,5 +622,7 @@ void osalInitTasks( void )
   ZDApp_Init( taskID++ );
   Sys_Init( taskID++ );
   Button_Init( taskID++ );
+  Motor_Init( taskID++ );
+  Led_Init( taskID++ );
   SAPI_Init( taskID );
 }

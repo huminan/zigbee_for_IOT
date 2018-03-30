@@ -1,13 +1,13 @@
 ///////////////////////////////////////////////////////////////////////////////
 //                                                                            /
-// IAR C/C++ Compiler V8.10.3.10338/W32 for 8051        08/Sep/2017  21:42:45 /
+// IAR C/C++ Compiler V8.10.3.10338/W32 for 8051        30/Mar/2018  14:24:00 /
 // Copyright 2004-2011 IAR Systems AB.                                        /
 //                                                                            /
 //    Core               =  plain                                             /
 //    Code model         =  banked                                            /
 //    Data model         =  large                                             /
 //    Calling convention =  xdata reentrant                                   /
-//    Constant location  =  data_rom                                          /
+//    Constant location  =  data                                              /
 //    Dptr setup         =  1,16                                              /
 //    Source file        =  D:\ProgramData\Hardware\zigbee\Components\osal\co /
 //                          mmon\OSAL_PwrMgr.c                                /
@@ -38,7 +38,7 @@
 //                          0x0A, 0x0C, 0x0D}" -DMAC_MAX_FRAME_SIZE=116       /
 //                          -DZDNWKMGR_MIN_TRANSMISSIONS=20 "-DCONST=const    /
 //                          __code" -DGENERIC=__generic                       /
-//                          -DRFD_RCVC_ALWAYS_ON=FALSE -DPOLL_RATE=1000       /
+//                          -DRFD_RCVC_ALWAYS_ON=TRUE -DPOLL_RATE=1000        /
 //                          -DQUEUED_POLL_RATE=100 -DRESPONSE_POLL_RATE=100)  /
 //                          -DREJOIN_POLL_RATE=440 D:\ProgramData\Hardware\zi /
 //                          gbee\Components\osal\common\OSAL_PwrMgr.c -D      /
@@ -56,10 +56,9 @@
 //                          --no_code_motion --debug --core=plain             /
 //                          --dptr=16,1 --data_model=large                    /
 //                          --code_model=banked --calling_convention=xdata_re /
-//                          entrant --place_constants=data_rom                /
-//                          --nr_virtual_regs 16 -I                           /
-//                          D:\ProgramData\Hardware\zigbee\Projects\zstack\Sa /
-//                          mples\SensorSys\CC2530DB\ -I                      /
+//                          entrant --place_constants=data --nr_virtual_regs  /
+//                          16 -I D:\ProgramData\Hardware\zigbee\Projects\zst /
+//                          ack\Samples\SensorSys\CC2530DB\ -I                /
 //                          D:\ProgramData\Hardware\zigbee\Projects\zstack\Sa /
 //                          mples\SensorSys\CC2530DB\..\Source\ -I            /
 //                          D:\ProgramData\Hardware\zigbee\Projects\zstack\Sa /
@@ -422,10 +421,11 @@ osal_pwrmgr_init:
         ; Auto size: 0
 //  102   pwrmgr_attribute.pwrmgr_device = PWRMGR_ALWAYS_ON; // Default to no power conservation.
         MOV     DPTR,#pwrmgr_attribute + 6
-        CLR     A
+        MOV     A,#0x1
         MOVX    @DPTR,A
 //  103   pwrmgr_attribute.pwrmgr_task_state = 0;            // Cleared.  All set to conserve
         MOV     DPTR,#pwrmgr_attribute
+        CLR     A
         MOVX    @DPTR,A
         INC     DPTR
         CFI EndBlock cfiBlock0
@@ -673,6 +673,7 @@ osal_pwrmgr_powerconserve:
 //  171   if ( pwrmgr_attribute.pwrmgr_device != PWRMGR_ALWAYS_ON )
         MOV     DPTR,#pwrmgr_attribute + 6
         MOVX    A,@DPTR
+        XRL     A,#0x1
         JZ      ??osal_pwrmgr_powerconserve_0
 //  172   {
 //  173     // Are all tasks in agreement to conserve
@@ -746,12 +747,12 @@ osal_pwrmgr_powerconserve:
 //  192 /*********************************************************************
 //  193 *********************************************************************/
 // 
-// 153 bytes in segment BANKED_CODE
+// 157 bytes in segment BANKED_CODE
 //  24 bytes in segment BANK_RELAYS
 //   1 byte  in segment SFR_AN
 //   7 bytes in segment XDATA_Z
 // 
-// 177 bytes of CODE  memory
+// 181 bytes of CODE  memory
 //   0 bytes of DATA  memory (+ 1 byte shared)
 //   7 bytes of XDATA memory
 //

@@ -23,15 +23,7 @@ extern "C"
 
 #define APP_INIT                           0
 #define APP_START                          1
-
-// These constants are only for example and should be changed to the
-// device's needs
-
-#define SYS_ENDPOINT           2
-#define ZB_ENDPOINT            3
-#define BUTTON_ENDPOINT        10
-
-  
+ 
 #define SYS_PROFID             0x0F04
 #define SYS_DEVICEID           0x0001
 #define SYS_DEVICE_VERSION     0
@@ -46,37 +38,53 @@ extern "C"
 #define CLOSE_BIND_EVT         0x0004
 #define CLOSE_LIGHT_EVT        0x0008
 #define CONFIG_OPTION_EVT      0x0010
+#define MY_START_EVT           0x0011    // I dont kown whether it is here
 
-#define ALLOW_BIND_TIMER       0x0020
-
-
-// Cluster IDs
-#define SYS_MAX_CLUSTERS       1
-#define BUTTON_MAX_CLUSTERS    2
-#define ZB_MAX_CLUSTERS      4
+#define BUTTON_BIND_TIMER      0x0021
+#define MOTOR_BIND_TIMER       0x0021
+#define LED_BIND_TIMER         0x0021
+#define OBSERVE_BIND_TIMER     0x0021
   
-#define SYS_CLUSTERID          0x0001
-#define ZB_CLUSTERID         0x0002
-#define BUTTON_CLUSTERID       0x0003
+// EndPoint MAX
+#define BUTTON_NUM_MAX         50
+#define MOTOR_NUM_MAX          10   // can be expand to 20
+#define LED_NUM_MAX            20   // should be 50
+#define OBSERVE_NUM_MAX        40
   
-// Define the Command ID's used in this application
-#define BUTTON_CMD_ID          1
-
-// Terminator Type ID
-#define BUTTON_TYPE_ID         0x01
-#define MOTOR_TYPE_ID          0x02
-  //...   0x04 0x08 0x10 ...
+  
+// SAPI SendDataRequest destinations
+#define SYS_BINDING_ADDR                   INVALID_NODE_ADDR
+#define SYS_BROADCAST_ADDR                 0xffff
+  
+/*********************************************************************
+ * STRUCTS
+ */
+  
+typedef struct
+{
+  osal_event_hdr_t hdr;
+  uint16 data;
+} sys_CbackEvent_t;  
 
 /*********************************************************************
  * MACROS
  */
 extern byte Sys_TaskID;
 extern byte Button_TaskID;
-extern uint8 ZDAppTaskID;
-extern endPointDesc_t Button_epDesc;
+extern byte Motor_TaskID;
+extern byte Led_TaskID;
 
-extern uint16 sensor_bindInProgress;
+extern uint8 ZDAppTaskID;
+extern endPointDesc_t Sys_epDesc;
+extern endPointDesc_t Button_epDesc[BUTTON_NUM_MAX];
+extern endPointDesc_t Motor_epDesc[MOTOR_NUM_MAX];
+extern endPointDesc_t Led_epDesc[LED_NUM_MAX];
+
 extern uint8 sysSeqNumber;
+
+extern uint8 buttonCnt;
+extern uint8 motorCnt;
+extern uint8 ledCnt;
 /*********************************************************************
  * FUNCTIONS
  */
@@ -88,15 +96,23 @@ extern void Sensor_AllowBind ( uint8 timeout );
  */
 extern void Sys_Init( byte task_id );
 extern void Button_Init( byte task_id );
+extern void Motor_Init( byte task_id );
+extern void Led_Init( byte task_id );
 /*
  * Task Event Processor for the Generic Application
  */
 extern UINT16 Sys_ProcessEvent( byte task_id, UINT16 events );
 extern UINT16 Button_ProcessEvent( byte task_id, UINT16 events );
+extern UINT16 Motor_ProcessEvent( byte task_id, UINT16 events );
+extern UINT16 Led_ProcessEvent( byte task_id, UINT16 events );
 
-extern void Sys_SendPreBindMessage( byte type_id );
-extern void Sensor_BindDevice ( uint8 create, uint16 commandId, uint8 *pDestination );
+
+extern void Sys_SendPreBindMessage( byte type_id, byte ep_id );
+extern void Sys_SendDataRequest ( uint16 destination, endPointDesc_t *epDesc, uint16 commandId, uint8 len,
+                          uint8 *pData, uint8 handle, uint8 ack, uint8 radius );
+// extern void Button_BindDevice ( uint8 create, uint16 commandId, uint8 *pDestination );
 
 extern void osalAddTasks( void );
+extern void Sys_BindConfirm( uint16 commandId, uint8 status );
 
 #endif

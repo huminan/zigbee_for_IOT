@@ -1,13 +1,13 @@
 ///////////////////////////////////////////////////////////////////////////////
 //                                                                            /
-// IAR C/C++ Compiler V8.10.3.10338/W32 for 8051        08/Sep/2017  21:42:41 /
+// IAR C/C++ Compiler V8.10.3.10338/W32 for 8051        30/Mar/2018  14:24:13 /
 // Copyright 2004-2011 IAR Systems AB.                                        /
 //                                                                            /
 //    Core               =  plain                                             /
 //    Code model         =  banked                                            /
 //    Data model         =  large                                             /
 //    Calling convention =  xdata reentrant                                   /
-//    Constant location  =  data_rom                                          /
+//    Constant location  =  data                                              /
 //    Dptr setup         =  1,16                                              /
 //    Source file        =  D:\ProgramData\Hardware\zigbee\Components\stack\z /
 //                          do\ZDConfig.c                                     /
@@ -38,7 +38,7 @@
 //                          0x0A, 0x0C, 0x0D}" -DMAC_MAX_FRAME_SIZE=116       /
 //                          -DZDNWKMGR_MIN_TRANSMISSIONS=20 "-DCONST=const    /
 //                          __code" -DGENERIC=__generic                       /
-//                          -DRFD_RCVC_ALWAYS_ON=FALSE -DPOLL_RATE=1000       /
+//                          -DRFD_RCVC_ALWAYS_ON=TRUE -DPOLL_RATE=1000        /
 //                          -DQUEUED_POLL_RATE=100 -DRESPONSE_POLL_RATE=100)  /
 //                          -DREJOIN_POLL_RATE=440 D:\ProgramData\Hardware\zi /
 //                          gbee\Components\stack\zdo\ZDConfig.c -D           /
@@ -56,10 +56,9 @@
 //                          --no_code_motion --debug --core=plain             /
 //                          --dptr=16,1 --data_model=large                    /
 //                          --code_model=banked --calling_convention=xdata_re /
-//                          entrant --place_constants=data_rom                /
-//                          --nr_virtual_regs 16 -I                           /
-//                          D:\ProgramData\Hardware\zigbee\Projects\zstack\Sa /
-//                          mples\SensorSys\CC2530DB\ -I                      /
+//                          entrant --place_constants=data --nr_virtual_regs  /
+//                          16 -I D:\ProgramData\Hardware\zigbee\Projects\zst /
+//                          ack\Samples\SensorSys\CC2530DB\ -I                /
 //                          D:\ProgramData\Hardware\zigbee\Projects\zstack\Sa /
 //                          mples\SensorSys\CC2530DB\..\Source\ -I            /
 //                          D:\ProgramData\Hardware\zigbee\Projects\zstack\Sa /
@@ -546,13 +545,14 @@ ZDConfig_UpdateNodeDescriptor:
 //  140   #endif
 //  141         );
         INC     DPTR
-        CLR     A
+        MOV     A,#0x8
         MOVX    @DPTR,A
 //  142   }
 //  143   
 //  144   // Manufacturer Code - *YOU FILL IN*
 //  145   ZDO_Config_Node_Descriptor.ManufacturerCode[0] = 0;
         INC     DPTR
+        CLR     A
         MOVX    @DPTR,A
 //  146   ZDO_Config_Node_Descriptor.ManufacturerCode[1] = 0;
         INC     DPTR
@@ -761,11 +761,11 @@ ZDConfig_UpdatePowerDescriptor:
 //  201 
 //  202 
 // 
-// 131 bytes in segment BANKED_CODE
+// 133 bytes in segment BANKED_CODE
 //  18 bytes in segment BANK_RELAYS
 //  15 bytes in segment XDATA_Z
 // 
-// 149 bytes of CODE  memory
+// 151 bytes of CODE  memory
 //  15 bytes of XDATA memory
 //
 //Errors: none

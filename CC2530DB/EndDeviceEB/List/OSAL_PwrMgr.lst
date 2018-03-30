@@ -1,13 +1,13 @@
 ###############################################################################
 #                                                                             #
-# IAR C/C++ Compiler V8.10.3.10338/W32 for 8051         08/Sep/2017  21:42:45 #
+# IAR C/C++ Compiler V8.10.3.10338/W32 for 8051         30/Mar/2018  14:24:00 #
 # Copyright 2004-2011 IAR Systems AB.                                         #
 #                                                                             #
 #    Core               =  plain                                              #
 #    Code model         =  banked                                             #
 #    Data model         =  large                                              #
 #    Calling convention =  xdata reentrant                                    #
-#    Constant location  =  data_rom                                           #
+#    Constant location  =  data                                               #
 #    Dptr setup         =  1,16                                               #
 #    Source file        =  D:\ProgramData\Hardware\zigbee\Components\osal\com #
 #                          mon\OSAL_PwrMgr.c                                  #
@@ -38,7 +38,7 @@
 #                          -DMAC_MAX_FRAME_SIZE=116                           #
 #                          -DZDNWKMGR_MIN_TRANSMISSIONS=20 "-DCONST=const     #
 #                          __code" -DGENERIC=__generic                        #
-#                          -DRFD_RCVC_ALWAYS_ON=FALSE -DPOLL_RATE=1000        #
+#                          -DRFD_RCVC_ALWAYS_ON=TRUE -DPOLL_RATE=1000         #
 #                          -DQUEUED_POLL_RATE=100 -DRESPONSE_POLL_RATE=100)   #
 #                          -DREJOIN_POLL_RATE=440 D:\ProgramData\Hardware\zig #
 #                          bee\Components\osal\common\OSAL_PwrMgr.c -D        #
@@ -56,9 +56,9 @@
 #                          --no_code_motion --debug --core=plain --dptr=16,1  #
 #                          --data_model=large --code_model=banked             #
 #                          --calling_convention=xdata_reentrant               #
-#                          --place_constants=data_rom --nr_virtual_regs 16    #
-#                          -I D:\ProgramData\Hardware\zigbee\Projects\zstack\ #
-#                          Samples\SensorSys\CC2530DB\ -I                     #
+#                          --place_constants=data --nr_virtual_regs 16 -I     #
+#                          D:\ProgramData\Hardware\zigbee\Projects\zstack\Sam #
+#                          ples\SensorSys\CC2530DB\ -I                        #
 #                          D:\ProgramData\Hardware\zigbee\Projects\zstack\Sam #
 #                          ples\SensorSys\CC2530DB\..\Source\ -I              #
 #                          D:\ProgramData\Hardware\zigbee\Projects\zstack\Sam #
@@ -239,14 +239,15 @@ D:\ProgramData\Hardware\zigbee\Components\osal\common\OSAL_PwrMgr.c
    \   000004                ; Auto size: 0
     102            pwrmgr_attribute.pwrmgr_device = PWRMGR_ALWAYS_ON; // Default to no power conservation.
    \   000004   90....       MOV     DPTR,#pwrmgr_attribute + 6
-   \   000007   E4           CLR     A
-   \   000008   F0           MOVX    @DPTR,A
+   \   000007   7401         MOV     A,#0x1
+   \   000009   F0           MOVX    @DPTR,A
     103            pwrmgr_attribute.pwrmgr_task_state = 0;            // Cleared.  All set to conserve
-   \   000009   90....       MOV     DPTR,#pwrmgr_attribute
-   \   00000C   F0           MOVX    @DPTR,A
-   \   00000D   A3           INC     DPTR
-   \   00000E                REQUIRE ?Subroutine0
-   \   00000E                ; // Fall through to label ?Subroutine0
+   \   00000A   90....       MOV     DPTR,#pwrmgr_attribute
+   \   00000D   E4           CLR     A
+   \   00000E   F0           MOVX    @DPTR,A
+   \   00000F   A3           INC     DPTR
+   \   000010                REQUIRE ?Subroutine0
+   \   000010                ; // Fall through to label ?Subroutine0
     104          }
 
    \                                 In  segment BANKED_CODE, align 1, keep-with-next
@@ -403,47 +404,48 @@ D:\ProgramData\Hardware\zigbee\Components\osal\common\OSAL_PwrMgr.c
     171            if ( pwrmgr_attribute.pwrmgr_device != PWRMGR_ALWAYS_ON )
    \   000005   90....       MOV     DPTR,#pwrmgr_attribute + 6
    \   000008   E0           MOVX    A,@DPTR
-   \   000009   601C         JZ      ??osal_pwrmgr_powerconserve_0
+   \   000009   6401         XRL     A,#0x1
+   \   00000B   601C         JZ      ??osal_pwrmgr_powerconserve_0
     172            {
     173              // Are all tasks in agreement to conserve
     174              if ( pwrmgr_attribute.pwrmgr_task_state == 0 )
-   \   00000B   90....       MOV     DPTR,#pwrmgr_attribute
-   \   00000E   E0           MOVX    A,@DPTR
-   \   00000F   F8           MOV     R0,A
-   \   000010   A3           INC     DPTR
-   \   000011   E0           MOVX    A,@DPTR
-   \   000012   F9           MOV     R1,A
-   \   000013   E8           MOV     A,R0
-   \   000014   49           ORL     A,R1
-   \   000015   7010         JNZ     ??osal_pwrmgr_powerconserve_0
+   \   00000D   90....       MOV     DPTR,#pwrmgr_attribute
+   \   000010   E0           MOVX    A,@DPTR
+   \   000011   F8           MOV     R0,A
+   \   000012   A3           INC     DPTR
+   \   000013   E0           MOVX    A,@DPTR
+   \   000014   F9           MOV     R1,A
+   \   000015   E8           MOV     A,R0
+   \   000016   49           ORL     A,R1
+   \   000017   7010         JNZ     ??osal_pwrmgr_powerconserve_0
     175              {
     176                // Hold off interrupts.
     177                HAL_ENTER_CRITICAL_SECTION( intState );
-   \   000017   E5A8         MOV     A,0xa8
-   \   000019   FE           MOV     R6,A
-   \   00001A   C2AF         CLR     0xa8.7
+   \   000019   E5A8         MOV     A,0xa8
+   \   00001B   FE           MOV     R6,A
+   \   00001C   C2AF         CLR     0xa8.7
     178          
     179                // Get next time-out
     180                next = osal_next_timeout();
-   \   00001C                ; Setup parameters for call to function osal_next_timeout
-   \   00001C   12....       LCALL   ??osal_next_timeout?relay
+   \   00001E                ; Setup parameters for call to function osal_next_timeout
+   \   00001E   12....       LCALL   ??osal_next_timeout?relay
     181          
     182                // Re-enable interrupts.
     183                HAL_EXIT_CRITICAL_SECTION( intState );
-   \   00001F   EE           MOV     A,R6
-   \   000020   A2E7         MOV     C,0xE0 /* A   */.7
-   \   000022   92AF         MOV     0xa8.7,C
+   \   000021   EE           MOV     A,R6
+   \   000022   A2E7         MOV     C,0xE0 /* A   */.7
+   \   000024   92AF         MOV     0xa8.7,C
     184          
     185                // Put the processor into sleep mode
     186                OSAL_SET_CPU_INTO_SLEEP( next );
-   \   000024                ; Setup parameters for call to function halSleep
-   \   000024   12....       LCALL   ??halSleep?relay
+   \   000026                ; Setup parameters for call to function halSleep
+   \   000026   12....       LCALL   ??halSleep?relay
     187              }
     188            }
     189          }
    \                     ??osal_pwrmgr_powerconserve_0:
-   \   000027   80..         SJMP    ?Subroutine1
-   \   000029                REQUIRE _A_IEN0
+   \   000029   80..         SJMP    ?Subroutine1
+   \   00002B                REQUIRE _A_IEN0
 
    \                                 In  segment BANK_RELAYS, align 1
    \                     ??osal_pwrmgr_init?relay:
@@ -487,24 +489,24 @@ D:\ProgramData\Hardware\zigbee\Components\osal\common\OSAL_PwrMgr.c
      --------------                    -----
      _A_IEN0                              1
      pwrmgr_attribute                     7
-     osal_pwrmgr_init                    14
+     osal_pwrmgr_init                    16
      ?Subroutine0                         8
      osal_pwrmgr_device                  10
      osal_pwrmgr_task_state              75
      ?Subroutine1                         5
-     osal_pwrmgr_powerconserve           41
+     osal_pwrmgr_powerconserve           43
      ??osal_pwrmgr_init?relay             6
      ??osal_pwrmgr_device?relay           6
      ??osal_pwrmgr_task_state?relay       6
      ??osal_pwrmgr_powerconserve?relay    6
 
  
- 153 bytes in segment BANKED_CODE
+ 157 bytes in segment BANKED_CODE
   24 bytes in segment BANK_RELAYS
    1 byte  in segment SFR_AN
    7 bytes in segment XDATA_Z
  
- 177 bytes of CODE  memory
+ 181 bytes of CODE  memory
    0 bytes of DATA  memory (+ 1 byte shared)
    7 bytes of XDATA memory
 

@@ -1,6 +1,6 @@
 ###############################################################################
 #                                                                             #
-# IAR C/C++ Compiler V8.10.3.10338/W32 for 8051         29/Dec/2017  20:30:11 #
+# IAR C/C++ Compiler V8.10.3.10338/W32 for 8051         30/Mar/2018  16:46:47 #
 # Copyright 2004-2011 IAR Systems AB.                                         #
 #                                                                             #
 #    Core               =  plain                                              #
@@ -40,7 +40,7 @@
 #                          -DMAC_MAX_FRAME_SIZE=116                           #
 #                          -DZDNWKMGR_MIN_TRANSMISSIONS=20 "-DCONST=const     #
 #                          __code" -DGENERIC=__generic                        #
-#                          -DRFD_RCVC_ALWAYS_ON=FALSE -DPOLL_RATE=1000        #
+#                          -DRFD_RCVC_ALWAYS_ON=TRUE -DPOLL_RATE=1000         #
 #                          -DQUEUED_POLL_RATE=100 -DRESPONSE_POLL_RATE=100)   #
 #                          -DREJOIN_POLL_RATE=440 D:\ProgramData\Hardware\zig #
 #                          bee\Components\stack\sapi\sapi.c -D                #
@@ -258,8 +258,8 @@ D:\ProgramData\Hardware\zigbee\Components\stack\sapi\sapi.c
     122          static void SAPI_SendCback( uint8 event, uint8 status, uint16 data );
     123          
     124          static void SAPI_StartConfirm( uint8 status );
-    125          static void SAPI_SendDataConfirm( uint8 handle, uint8 status );
-    126          static void SAPI_BindConfirm( uint16 commandId, uint8 status );
+    125          //static void SAPI_SendDataConfirm( uint8 handle, uint8 status );
+    126          //static void SAPI_BindConfirm( uint16 commandId, uint8 status );
     127          static void SAPI_FindDeviceConfirm( uint8 searchType,
     128                                                  uint8 *searchKey, uint8 *result );
     129          static void SAPI_ReceiveDataIndication( uint16 source,
@@ -439,12 +439,12 @@ D:\ProgramData\Hardware\zigbee\Components\stack\sapi\sapi.c
    \   00002A   E0           MOVX    A,@DPTR
    \   00002B   F4           CPL     A
    \                     ??zb_BindDevice_1:
-   \   00002C   7056         JNZ     ??CrossCallReturnLabel_10
+   \   00002C   7058         JNZ     ??CrossCallReturnLabel_6
     219              {
     220                if ( pDestination )
    \   00002E   EE           MOV     A,R6
    \   00002F   4F           ORL     A,R7
-   \   000030   6067         JZ      ??zb_BindDevice_2
+   \   000030   6069         JZ      ??zb_BindDevice_2
     221                {
     222                  destination.addrMode = Addr64Bit;
    \   000032   740A         MOV     A,#0xa
@@ -473,34 +473,37 @@ D:\ProgramData\Hardware\zigbee\Components\stack\sapi\sapi.c
    \   000058   AD83         MOV     R5,DPH
    \   00005A   7401         MOV     A,#0x1
    \   00005C   12....       LCALL   ?XSTACK_DISP0_8
-   \   00005F   12....       LCALL   ??Subroutine17_0 & 0xFFFF
-   \                     ??CrossCallReturnLabel_23:
-   \   000062   90....       MOV     DPTR,#sapi_epDesc
-   \   000065   E0           MOVX    A,@DPTR
-   \   000066   F9           MOV     R1,A
-   \   000067   12....       LCALL   ??APSME_BindRequest?relay
-   \   00006A   7401         MOV     A,#0x1
-   \   00006C   12....       LCALL   ?DEALLOC_XSTACK8
-   \   00006F   E9           MOV     A,R1
-   \   000070   F5..         MOV     ?V0 + 1,A
+   \   00005F   E0           MOVX    A,@DPTR
+   \   000060   FA           MOV     R2,A
+   \   000061   A3           INC     DPTR
+   \   000062   E0           MOVX    A,@DPTR
+   \   000063   FB           MOV     R3,A
+   \   000064   90....       MOV     DPTR,#sapi_epDesc
+   \   000067   E0           MOVX    A,@DPTR
+   \   000068   F9           MOV     R1,A
+   \   000069   12....       LCALL   ??APSME_BindRequest?relay
+   \   00006C   7401         MOV     A,#0x1
+   \   00006E   12....       LCALL   ?DEALLOC_XSTACK8
+   \   000071   E9           MOV     A,R1
+   \   000072   F5..         MOV     ?V0 + 1,A
     227          
     228                  if ( ret == ZSuccess )
-   \   000072   7010         JNZ     ??CrossCallReturnLabel_10
+   \   000074   7010         JNZ     ??CrossCallReturnLabel_6
     229                  {
     230                    // Find nwk addr
     231                    ZDP_NwkAddrReq(pDestination, ZDP_ADDR_REQTYPE_SINGLE, 0, 0 );
-   \   000074                ; Setup parameters for call to function ZDP_NwkAddrReq
-   \   000074   7D00         MOV     R5,#0x0
-   \   000076   7C00         MOV     R4,#0x0
-   \   000078   7900         MOV     R1,#0x0
-   \   00007A   EE           MOV     A,R6
-   \   00007B   FA           MOV     R2,A
-   \   00007C   EF           MOV     A,R7
-   \   00007D   FB           MOV     R3,A
-   \   00007E   12....       LCALL   ??ZDP_NwkAddrReq?relay
+   \   000076                ; Setup parameters for call to function ZDP_NwkAddrReq
+   \   000076   7D00         MOV     R5,#0x0
+   \   000078   7C00         MOV     R4,#0x0
+   \   00007A   7900         MOV     R1,#0x0
+   \   00007C   EE           MOV     A,R6
+   \   00007D   FA           MOV     R2,A
+   \   00007E   EF           MOV     A,R7
+   \   00007F   FB           MOV     R3,A
+   \   000080   12....       LCALL   ??ZDP_NwkAddrReq?relay
     232                    osal_start_timerEx( ZDAppTaskID, ZDO_NWK_UPDATE_NV, 250 );
-   \   000081                ; Setup parameters for call to function osal_start_timerEx
-   \   000081   12....       LCALL   ?Subroutine8 & 0xFFFF
+   \   000083                ; Setup parameters for call to function osal_start_timerEx
+   \   000083   12....       LCALL   ?Subroutine6 & 0xFFFF
     233                  }
     234                }
     235                else
@@ -538,40 +541,38 @@ D:\ProgramData\Hardware\zigbee\Components\stack\sapi\sapi.c
     267              }
     268          
     269              SAPI_SendCback( SAPICB_BIND_CNF, ret, commandId );
-   \                     ??CrossCallReturnLabel_10:
-   \   000084                ; Setup parameters for call to function SAPI_SendCback
-   \   000084   85..82       MOV     DPL,?XSP + 0
-   \   000087   85..83       MOV     DPH,?XSP + 1
-   \   00008A   E0           MOVX    A,@DPTR
-   \   00008B   FC           MOV     R4,A
-   \   00008C   A3           INC     DPTR
-   \   00008D   E0           MOVX    A,@DPTR
-   \   00008E   FD           MOV     R5,A
-   \   00008F   AA..         MOV     R2,?V0 + 1
-   \   000091   79E1         MOV     R1,#-0x1f
-   \   000093   12....       LCALL   ??SAPI_SendCback?relay
-   \   000096   02....       LJMP    ??CrossCallReturnLabel_11 & 0xFFFF
+   \                     ??CrossCallReturnLabel_6:
+   \   000086                ; Setup parameters for call to function SAPI_SendCback
+   \   000086   85..82       MOV     DPL,?XSP + 0
+   \   000089   85..83       MOV     DPH,?XSP + 1
+   \   00008C   E0           MOVX    A,@DPTR
+   \   00008D   FC           MOV     R4,A
+   \   00008E   A3           INC     DPTR
+   \   00008F   E0           MOVX    A,@DPTR
+   \   000090   FD           MOV     R5,A
+   \   000091   AA..         MOV     R2,?V0 + 1
+   \   000093   79E1         MOV     R1,#-0x1f
+   \   000095   12....       LCALL   ??SAPI_SendCback?relay
+   \   000098   02....       LJMP    ??CrossCallReturnLabel_7 & 0xFFFF
    \                     ??zb_BindDevice_2:
-   \   000099   75..02       MOV     ?V0 + 1,#0x2
-   \   00009C   740A         MOV     A,#0xa
-   \   00009E   12....       LCALL   ?XSTACK_DISP0_8
-   \   0000A1   7402         MOV     A,#0x2
-   \   0000A3   F0           MOVX    @DPTR,A
-   \   0000A4   12....       LCALL   ?XSTACK_DISP0_8
-   \   0000A7   74FF         MOV     A,#-0x1
-   \   0000A9   F0           MOVX    @DPTR,A
-   \   0000AA   A3           INC     DPTR
+   \   00009B   75..02       MOV     ?V0 + 1,#0x2
+   \   00009E   740A         MOV     A,#0xa
+   \   0000A0   12....       LCALL   ?XSTACK_DISP0_8
+   \   0000A3   7402         MOV     A,#0x2
+   \   0000A5   F0           MOVX    @DPTR,A
+   \   0000A6   12....       LCALL   ?XSTACK_DISP0_8
+   \   0000A9   74FF         MOV     A,#-0x1
    \   0000AB   F0           MOVX    @DPTR,A
-   \   0000AC   12....       LCALL   ?Subroutine7 & 0xFFFF
-   \                     ??CrossCallReturnLabel_4:
-   \   0000AF   A3           INC     DPTR
-   \   0000B0   A3           INC     DPTR
+   \   0000AC   A3           INC     DPTR
+   \   0000AD   F0           MOVX    @DPTR,A
+   \   0000AE   12....       LCALL   ?Subroutine5 & 0xFFFF
+   \                     ??CrossCallReturnLabel_2:
    \   0000B1   A3           INC     DPTR
-   \   0000B2   12....       LCALL   ?PUSH_XSTACK8_X_TWO
-   \   0000B5   8882         MOV     DPL,R0
-   \   0000B7   8983         MOV     DPH,R1
-   \   0000B9   A3           INC     DPTR
-   \   0000BA   A3           INC     DPTR
+   \   0000B2   A3           INC     DPTR
+   \   0000B3   A3           INC     DPTR
+   \   0000B4   12....       LCALL   ?PUSH_XSTACK8_X_TWO
+   \   0000B7   8882         MOV     DPL,R0
+   \   0000B9   8983         MOV     DPH,R1
    \   0000BB   A3           INC     DPTR
    \   0000BC   A3           INC     DPTR
    \   0000BD   A3           INC     DPTR
@@ -579,128 +580,130 @@ D:\ProgramData\Hardware\zigbee\Components\stack\sapi\sapi.c
    \   0000BF   A3           INC     DPTR
    \   0000C0   A3           INC     DPTR
    \   0000C1   A3           INC     DPTR
-   \   0000C2   E0           MOVX    A,@DPTR
-   \   0000C3   FC           MOV     R4,A
-   \   0000C4   7402         MOV     A,#0x2
-   \   0000C6   12....       LCALL   ?XSTACK_DISP0_8
-   \   0000C9   AA82         MOV     R2,DPL
-   \   0000CB   AB83         MOV     R3,DPH
-   \   0000CD   7901         MOV     R1,#0x1
-   \   0000CF   12....       LCALL   ??ZDO_AnyClusterMatches?relay
-   \   0000D2   7402         MOV     A,#0x2
-   \   0000D4   12....       LCALL   ?DEALLOC_XSTACK8
-   \   0000D7   E9           MOV     A,R1
-   \   0000D8   6031         JZ      ??zb_BindDevice_3
-   \   0000DA                ; Setup parameters for call to function ZDP_MatchDescReq
-   \   0000DA   75..00       MOV     ?V0 + 1,#0x0
-   \   0000DD   78..         MOV     R0,#?V0 + 1
-   \   0000DF   12....       LCALL   ?PUSH_XSTACK_I_ONE
-   \   0000E2   E4           CLR     A
-   \   0000E3   F5..         MOV     ?V0 + 2,A
-   \   0000E5   F5..         MOV     ?V0 + 3,A
-   \   0000E7   78..         MOV     R0,#?V0 + 2
-   \   0000E9   12....       LCALL   ?PUSH_XSTACK_I_TWO
-   \   0000EC   78..         MOV     R0,#?V0 + 1
-   \   0000EE   12....       LCALL   ?PUSH_XSTACK_I_ONE
-   \   0000F1   7404         MOV     A,#0x4
-   \   0000F3   12....       LCALL   ?XSTACK_DISP0_8
-   \   0000F6   8582..       MOV     ?V0 + 2,DPL
-   \   0000F9   8583..       MOV     ?V0 + 3,DPH
-   \   0000FC   78..         MOV     R0,#?V0 + 2
-   \   0000FE   12....       LCALL   ?PUSH_XSTACK_I_TWO
-   \   000101   12....       LCALL   ?Subroutine10 & 0xFFFF
-   \                     ??CrossCallReturnLabel_6:
-   \   000104   12....       LCALL   ?PUSH_XSTACK8_X_TWO
-   \   000107   7901         MOV     R1,#0x1
-   \   000109   805D         SJMP    ??zb_BindDevice_4
+   \   0000C2   A3           INC     DPTR
+   \   0000C3   A3           INC     DPTR
+   \   0000C4   E0           MOVX    A,@DPTR
+   \   0000C5   FC           MOV     R4,A
+   \   0000C6   7402         MOV     A,#0x2
+   \   0000C8   12....       LCALL   ?XSTACK_DISP0_8
+   \   0000CB   AA82         MOV     R2,DPL
+   \   0000CD   AB83         MOV     R3,DPH
+   \   0000CF   7901         MOV     R1,#0x1
+   \   0000D1   12....       LCALL   ??ZDO_AnyClusterMatches?relay
+   \   0000D4   7402         MOV     A,#0x2
+   \   0000D6   12....       LCALL   ?DEALLOC_XSTACK8
+   \   0000D9   E9           MOV     A,R1
+   \   0000DA   6031         JZ      ??zb_BindDevice_3
+   \   0000DC                ; Setup parameters for call to function ZDP_MatchDescReq
+   \   0000DC   75..00       MOV     ?V0 + 1,#0x0
+   \   0000DF   78..         MOV     R0,#?V0 + 1
+   \   0000E1   12....       LCALL   ?PUSH_XSTACK_I_ONE
+   \   0000E4   E4           CLR     A
+   \   0000E5   F5..         MOV     ?V0 + 2,A
+   \   0000E7   F5..         MOV     ?V0 + 3,A
+   \   0000E9   78..         MOV     R0,#?V0 + 2
+   \   0000EB   12....       LCALL   ?PUSH_XSTACK_I_TWO
+   \   0000EE   78..         MOV     R0,#?V0 + 1
+   \   0000F0   12....       LCALL   ?PUSH_XSTACK_I_ONE
+   \   0000F3   7404         MOV     A,#0x4
+   \   0000F5   12....       LCALL   ?XSTACK_DISP0_8
+   \   0000F8   8582..       MOV     ?V0 + 2,DPL
+   \   0000FB   8583..       MOV     ?V0 + 3,DPH
+   \   0000FE   78..         MOV     R0,#?V0 + 2
+   \   000100   12....       LCALL   ?PUSH_XSTACK_I_TWO
+   \   000103   12....       LCALL   ?Subroutine7 & 0xFFFF
+   \                     ??CrossCallReturnLabel_4:
+   \   000106   12....       LCALL   ?PUSH_XSTACK8_X_TWO
+   \   000109   7901         MOV     R1,#0x1
+   \   00010B   805D         SJMP    ??zb_BindDevice_4
    \                     ??zb_BindDevice_3:
-   \   00010B   12....       LCALL   ?Subroutine7 & 0xFFFF
-   \                     ??CrossCallReturnLabel_5:
-   \   00010E   12....       LCALL   ?PUSH_XSTACK8_X_TWO
-   \   000111   8882         MOV     DPL,R0
-   \   000113   8983         MOV     DPH,R1
-   \   000115   A3           INC     DPTR
-   \   000116   A3           INC     DPTR
+   \   00010D   12....       LCALL   ?Subroutine5 & 0xFFFF
+   \                     ??CrossCallReturnLabel_3:
+   \   000110   12....       LCALL   ?PUSH_XSTACK8_X_TWO
+   \   000113   8882         MOV     DPL,R0
+   \   000115   8983         MOV     DPH,R1
    \   000117   A3           INC     DPTR
    \   000118   A3           INC     DPTR
    \   000119   A3           INC     DPTR
    \   00011A   A3           INC     DPTR
-   \   00011B   E0           MOVX    A,@DPTR
-   \   00011C   FC           MOV     R4,A
-   \   00011D   7402         MOV     A,#0x2
-   \   00011F   12....       LCALL   ?XSTACK_DISP0_8
-   \   000122   AA82         MOV     R2,DPL
-   \   000124   AB83         MOV     R3,DPH
-   \   000126   7901         MOV     R1,#0x1
-   \   000128   12....       LCALL   ??ZDO_AnyClusterMatches?relay
-   \   00012B   7402         MOV     A,#0x2
-   \   00012D   12....       LCALL   ?DEALLOC_XSTACK8
-   \   000130   E9           MOV     A,R1
-   \   000131   7003         JNZ     $+5
-   \   000133   02....       LJMP    ??CrossCallReturnLabel_10 & 0xFFFF
-   \   000136                ; Setup parameters for call to function ZDP_MatchDescReq
-   \   000136   75..00       MOV     ?V0 + 1,#0x0
-   \   000139   78..         MOV     R0,#?V0 + 1
-   \   00013B   12....       LCALL   ?PUSH_XSTACK_I_ONE
-   \   00013E   7401         MOV     A,#0x1
-   \   000140   12....       LCALL   ?XSTACK_DISP0_8
-   \   000143   8582..       MOV     ?V0 + 2,DPL
-   \   000146   8583..       MOV     ?V0 + 3,DPH
-   \   000149   78..         MOV     R0,#?V0 + 2
-   \   00014B   12....       LCALL   ?PUSH_XSTACK_I_TWO
-   \   00014E   75..01       MOV     ?V0 + 1,#0x1
-   \   000151   78..         MOV     R0,#?V0 + 1
-   \   000153   12....       LCALL   ?PUSH_XSTACK_I_ONE
-   \   000156   E4           CLR     A
-   \   000157   F5..         MOV     ?V0 + 2,A
-   \   000159   F5..         MOV     ?V0 + 3,A
-   \   00015B   78..         MOV     R0,#?V0 + 2
-   \   00015D   12....       LCALL   ?PUSH_XSTACK_I_TWO
-   \   000160   12....       LCALL   ?Subroutine10 & 0xFFFF
-   \                     ??CrossCallReturnLabel_7:
-   \   000163   12....       LCALL   ?PUSH_XSTACK8_X_TWO
-   \   000166   7900         MOV     R1,#0x0
+   \   00011B   A3           INC     DPTR
+   \   00011C   A3           INC     DPTR
+   \   00011D   E0           MOVX    A,@DPTR
+   \   00011E   FC           MOV     R4,A
+   \   00011F   7402         MOV     A,#0x2
+   \   000121   12....       LCALL   ?XSTACK_DISP0_8
+   \   000124   AA82         MOV     R2,DPL
+   \   000126   AB83         MOV     R3,DPH
+   \   000128   7901         MOV     R1,#0x1
+   \   00012A   12....       LCALL   ??ZDO_AnyClusterMatches?relay
+   \   00012D   7402         MOV     A,#0x2
+   \   00012F   12....       LCALL   ?DEALLOC_XSTACK8
+   \   000132   E9           MOV     A,R1
+   \   000133   7003         JNZ     $+5
+   \   000135   02....       LJMP    ??CrossCallReturnLabel_6 & 0xFFFF
+   \   000138                ; Setup parameters for call to function ZDP_MatchDescReq
+   \   000138   75..00       MOV     ?V0 + 1,#0x0
+   \   00013B   78..         MOV     R0,#?V0 + 1
+   \   00013D   12....       LCALL   ?PUSH_XSTACK_I_ONE
+   \   000140   7401         MOV     A,#0x1
+   \   000142   12....       LCALL   ?XSTACK_DISP0_8
+   \   000145   8582..       MOV     ?V0 + 2,DPL
+   \   000148   8583..       MOV     ?V0 + 3,DPH
+   \   00014B   78..         MOV     R0,#?V0 + 2
+   \   00014D   12....       LCALL   ?PUSH_XSTACK_I_TWO
+   \   000150   75..01       MOV     ?V0 + 1,#0x1
+   \   000153   78..         MOV     R0,#?V0 + 1
+   \   000155   12....       LCALL   ?PUSH_XSTACK_I_ONE
+   \   000158   E4           CLR     A
+   \   000159   F5..         MOV     ?V0 + 2,A
+   \   00015B   F5..         MOV     ?V0 + 3,A
+   \   00015D   78..         MOV     R0,#?V0 + 2
+   \   00015F   12....       LCALL   ?PUSH_XSTACK_I_TWO
+   \   000162   12....       LCALL   ?Subroutine7 & 0xFFFF
+   \                     ??CrossCallReturnLabel_5:
+   \   000165   12....       LCALL   ?PUSH_XSTACK8_X_TWO
+   \   000168   7900         MOV     R1,#0x0
    \                     ??zb_BindDevice_4:
-   \   000168   7CFF         MOV     R4,#-0x1
-   \   00016A   7DFF         MOV     R5,#-0x1
-   \   00016C   740A         MOV     A,#0xa
-   \   00016E   12....       LCALL   ?XSTACK_DISP0_8
-   \   000171   AA82         MOV     R2,DPL
-   \   000173   AB83         MOV     R3,DPH
-   \   000175   12....       LCALL   ??ZDP_MatchDescReq?relay
-   \   000178   7408         MOV     A,#0x8
-   \   00017A   12....       LCALL   ?DEALLOC_XSTACK8
-   \   00017D   E9           MOV     A,R1
-   \   00017E   F5..         MOV     ?V0 + 1,A
-   \   000180   E5..         MOV     A,?V0 + 1
-   \   000182   6003         JZ      $+5
-   \   000184   02....       LJMP    ??CrossCallReturnLabel_10 & 0xFFFF
-   \   000187                ; Setup parameters for call to function osal_start_timerEx
-   \   000187   90....       MOV     DPTR,#AIB_MaxBindingTime
-   \   00018A   E0           MOVX    A,@DPTR
-   \   00018B   FC           MOV     R4,A
-   \   00018C   A3           INC     DPTR
-   \   00018D   E0           MOVX    A,@DPTR
-   \   00018E   FD           MOV     R5,A
-   \   00018F   7A00         MOV     R2,#0x0
-   \   000191   7B20         MOV     R3,#0x20
-   \   000193   90....       MOV     DPTR,#sapi_TaskID
-   \   000196   12....       LCALL   ??Subroutine14_0 & 0xFFFF
-   \                     ??CrossCallReturnLabel_13:
-   \   000199   85..82       MOV     DPL,?XSP + 0
-   \   00019C   85..83       MOV     DPH,?XSP + 1
-   \   00019F   E0           MOVX    A,@DPTR
-   \   0001A0   F8           MOV     R0,A
-   \   0001A1   A3           INC     DPTR
-   \   0001A2   E0           MOVX    A,@DPTR
-   \   0001A3   F9           MOV     R1,A
-   \   0001A4   90....       MOV     DPTR,#sapi_bindInProgress
-   \   0001A7   E8           MOV     A,R0
-   \   0001A8   F0           MOVX    @DPTR,A
-   \   0001A9   A3           INC     DPTR
-   \   0001AA   E9           MOV     A,R1
-   \   0001AB   F0           MOVX    @DPTR,A
-   \   0001AC   8018         SJMP    ??CrossCallReturnLabel_11
+   \   00016A   7CFF         MOV     R4,#-0x1
+   \   00016C   7DFF         MOV     R5,#-0x1
+   \   00016E   740A         MOV     A,#0xa
+   \   000170   12....       LCALL   ?XSTACK_DISP0_8
+   \   000173   AA82         MOV     R2,DPL
+   \   000175   AB83         MOV     R3,DPH
+   \   000177   12....       LCALL   ??ZDP_MatchDescReq?relay
+   \   00017A   7408         MOV     A,#0x8
+   \   00017C   12....       LCALL   ?DEALLOC_XSTACK8
+   \   00017F   E9           MOV     A,R1
+   \   000180   F5..         MOV     ?V0 + 1,A
+   \   000182   E5..         MOV     A,?V0 + 1
+   \   000184   6003         JZ      $+5
+   \   000186   02....       LJMP    ??CrossCallReturnLabel_6 & 0xFFFF
+   \   000189                ; Setup parameters for call to function osal_start_timerEx
+   \   000189   90....       MOV     DPTR,#AIB_MaxBindingTime
+   \   00018C   E0           MOVX    A,@DPTR
+   \   00018D   FC           MOV     R4,A
+   \   00018E   A3           INC     DPTR
+   \   00018F   E0           MOVX    A,@DPTR
+   \   000190   FD           MOV     R5,A
+   \   000191   7A00         MOV     R2,#0x0
+   \   000193   7B20         MOV     R3,#0x20
+   \   000195   90....       MOV     DPTR,#sapi_TaskID
+   \   000198   12....       LCALL   ??Subroutine10_0 & 0xFFFF
+   \                     ??CrossCallReturnLabel_9:
+   \   00019B   85..82       MOV     DPL,?XSP + 0
+   \   00019E   85..83       MOV     DPH,?XSP + 1
+   \   0001A1   E0           MOVX    A,@DPTR
+   \   0001A2   F8           MOV     R0,A
+   \   0001A3   A3           INC     DPTR
+   \   0001A4   E0           MOVX    A,@DPTR
+   \   0001A5   F9           MOV     R1,A
+   \   0001A6   90....       MOV     DPTR,#sapi_bindInProgress
+   \   0001A9   E8           MOV     A,R0
+   \   0001AA   F0           MOVX    @DPTR,A
+   \   0001AB   A3           INC     DPTR
+   \   0001AC   E9           MOV     A,R1
+   \   0001AD   F0           MOVX    @DPTR,A
+   \   0001AE   8018         SJMP    ??CrossCallReturnLabel_7
     270            }
     271            else
     272            {
@@ -712,29 +715,29 @@ D:\ProgramData\Hardware\zigbee\Components\stack\sapi\sapi.c
     278              {
     279                bindRemoveEntry(pBind);
    \                     ??zb_BindDevice_5:
-   \   0001AE                ; Setup parameters for call to function bindRemoveEntry
-   \   0001AE   12....       LCALL   ??bindRemoveEntry?relay
+   \   0001B0                ; Setup parameters for call to function bindRemoveEntry
+   \   0001B0   12....       LCALL   ??bindRemoveEntry?relay
     280              }
    \                     ??zb_BindDevice_0:
-   \   0001B1                ; Setup parameters for call to function bindFind
-   \   0001B1   7C00         MOV     R4,#0x0
-   \   0001B3   85..82       MOV     DPL,?XSP + 0
-   \   0001B6   85..83       MOV     DPH,?XSP + 1
-   \   0001B9   12....       LCALL   ?Subroutine5 & 0xFFFF
+   \   0001B3                ; Setup parameters for call to function bindFind
+   \   0001B3   7C00         MOV     R4,#0x0
+   \   0001B5   85..82       MOV     DPL,?XSP + 0
+   \   0001B8   85..83       MOV     DPH,?XSP + 1
+   \   0001BB   12....       LCALL   ?Subroutine4 & 0xFFFF
    \                     ??CrossCallReturnLabel_0:
-   \   0001BC   12....       LCALL   ??bindFind?relay
-   \   0001BF   EA           MOV     A,R2
-   \   0001C0   4B           ORL     A,R3
-   \   0001C1   70EB         JNZ     ??zb_BindDevice_5
+   \   0001BE   12....       LCALL   ??bindFind?relay
+   \   0001C1   EA           MOV     A,R2
+   \   0001C2   4B           ORL     A,R3
+   \   0001C3   70EB         JNZ     ??zb_BindDevice_5
     281              osal_start_timerEx( ZDAppTaskID, ZDO_NWK_UPDATE_NV, 250 );
-   \   0001C3                ; Setup parameters for call to function osal_start_timerEx
-   \   0001C3   12....       LCALL   ?Subroutine8 & 0xFFFF
+   \   0001C5                ; Setup parameters for call to function osal_start_timerEx
+   \   0001C5   12....       LCALL   ?Subroutine6 & 0xFFFF
     282            }
-   \                     ??CrossCallReturnLabel_11:
-   \   0001C6   740B         MOV     A,#0xb
-   \   0001C8   12....       LCALL   ?DEALLOC_XSTACK8
-   \   0001CB                REQUIRE ?Subroutine0
-   \   0001CB                ; // Fall through to label ?Subroutine0
+   \                     ??CrossCallReturnLabel_7:
+   \   0001C8   740B         MOV     A,#0xb
+   \   0001CA   12....       LCALL   ?DEALLOC_XSTACK8
+   \   0001CD                REQUIRE ?Subroutine0
+   \   0001CD                ; // Fall through to label ?Subroutine0
     283            return;
     284          }
 
@@ -744,14 +747,14 @@ D:\ProgramData\Hardware\zigbee\Components\stack\sapi\sapi.c
    \   000002   02....       LJMP    ?BANKED_LEAVE_XDATA
 
    \                                 In  segment BANKED_CODE, align 1, keep-with-next
-   \                     ?Subroutine10:
-   \   000000   12....       LCALL   ?Subroutine12 & 0xFFFF
-   \                     ??CrossCallReturnLabel_9:
+   \                     ?Subroutine7:
+   \   000000   12....       LCALL   ?Subroutine9 & 0xFFFF
+   \                     ??CrossCallReturnLabel_17:
    \   000003   A3           INC     DPTR
    \   000004   22           RET
 
    \                                 In  segment BANKED_CODE, align 1, keep-with-next
-   \                     ?Subroutine7:
+   \                     ?Subroutine5:
    \   000000   90....       MOV     DPTR,#sapi_epDesc + 3
    \   000003   E0           MOVX    A,@DPTR
    \   000004   F8           MOV     R0,A
@@ -772,30 +775,43 @@ D:\ProgramData\Hardware\zigbee\Components\stack\sapi\sapi.c
    \   000013   22           RET
 
    \                                 In  segment BANKED_CODE, align 1, keep-with-next
-   \                     ?Subroutine8:
+   \                     ?Subroutine6:
    \   000000   7CFA         MOV     R4,#-0x6
    \   000002   7D00         MOV     R5,#0x0
    \   000004   7A00         MOV     R2,#0x0
    \   000006   7B02         MOV     R3,#0x2
    \   000008   90....       MOV     DPTR,#ZDAppTaskID
-   \   00000B                REQUIRE ??Subroutine14_0
-   \   00000B                ; // Fall through to label ??Subroutine14_0
+   \   00000B                REQUIRE ??Subroutine10_0
+   \   00000B                ; // Fall through to label ??Subroutine10_0
 
    \                                 In  segment BANKED_CODE, align 1, keep-with-next
-   \                     ??Subroutine14_0:
+   \                     ??Subroutine10_0:
    \   000000   E0           MOVX    A,@DPTR
    \   000001   F9           MOV     R1,A
    \   000002   12....       LCALL   ??osal_start_timerEx?relay
    \   000005   22           RET
 
    \                                 In  segment BANKED_CODE, align 1, keep-with-next
-   \                     ?Subroutine12:
-   \   000000   12....       LCALL   ?Subroutine13 & 0xFFFF
-   \                     ??CrossCallReturnLabel_21:
-   \   000003   22           RET
+   \                     ?Subroutine4:
+   \   000000   E0           MOVX    A,@DPTR
+   \   000001   FA           MOV     R2,A
+   \   000002   A3           INC     DPTR
+   \   000003   E0           MOVX    A,@DPTR
+   \   000004   FB           MOV     R3,A
+   \   000005   12....       LCALL   ?Subroutine8 & 0xFFFF
+   \                     ??CrossCallReturnLabel_15:
+   \   000008   22           RET
 
    \                                 In  segment BANKED_CODE, align 1, keep-with-next
-   \                     ?Subroutine13:
+   \                     ?Subroutine8:
+   \   000000   12....       LCALL   ?Subroutine9 & 0xFFFF
+   \                     ??CrossCallReturnLabel_18:
+   \   000003   E0           MOVX    A,@DPTR
+   \   000004   F9           MOV     R1,A
+   \   000005   22           RET
+
+   \                                 In  segment BANKED_CODE, align 1, keep-with-next
+   \                     ?Subroutine9:
    \   000000   90....       MOV     DPTR,#sapi_epDesc + 3
    \   000003   E0           MOVX    A,@DPTR
    \   000004   F8           MOV     R0,A
@@ -804,34 +820,6 @@ D:\ProgramData\Hardware\zigbee\Components\stack\sapi\sapi.c
    \   000007   F583         MOV     DPH,A
    \   000009   8882         MOV     DPL,R0
    \   00000B   22           RET
-
-   \                                 In  segment BANKED_CODE, align 1, keep-with-next
-   \                     ??Subroutine17_0:
-   \   000000   E0           MOVX    A,@DPTR
-   \   000001   FA           MOV     R2,A
-   \   000002   A3           INC     DPTR
-   \   000003   E0           MOVX    A,@DPTR
-   \   000004   FB           MOV     R3,A
-   \   000005   22           RET
-
-   \                                 In  segment BANKED_CODE, align 1, keep-with-next
-   \                     ?Subroutine5:
-   \   000000   E0           MOVX    A,@DPTR
-   \   000001   FA           MOV     R2,A
-   \   000002   A3           INC     DPTR
-   \   000003   E0           MOVX    A,@DPTR
-   \   000004   FB           MOV     R3,A
-   \   000005   12....       LCALL   ?Subroutine11 & 0xFFFF
-   \                     ??CrossCallReturnLabel_19:
-   \   000008   22           RET
-
-   \                                 In  segment BANKED_CODE, align 1, keep-with-next
-   \                     ?Subroutine11:
-   \   000000   12....       LCALL   ?Subroutine13 & 0xFFFF
-   \                     ??CrossCallReturnLabel_22:
-   \   000003   E0           MOVX    A,@DPTR
-   \   000004   F9           MOV     R1,A
-   \   000005   22           RET
     285          /******************************************************************************
     286           * @fn          zb_PermitJoiningRequest
     287           *
@@ -927,22 +915,22 @@ D:\ProgramData\Hardware\zigbee\Components\stack\sapi\sapi.c
     348            {
     349              afSetMatch(sapi_epDesc.simpleDesc->EndPoint, FALSE);
    \   00001D                ; Setup parameters for call to function afSetMatch
-   \   00001D   12....       LCALL   ?Subroutine4 & 0xFFFF
+   \   00001D   12....       LCALL   ?Subroutine3 & 0xFFFF
     350            }
-   \                     ??CrossCallReturnLabel_15:
-   \   000020   802B         SJMP    ??CrossCallReturnLabel_14
+   \                     ??CrossCallReturnLabel_11:
+   \   000020   802B         SJMP    ??CrossCallReturnLabel_10
     351            else
     352            {
     353              afSetMatch(sapi_epDesc.simpleDesc->EndPoint, TRUE);
    \                     ??zb_AllowBind_0:
    \   000022                ; Setup parameters for call to function afSetMatch
    \   000022   7A01         MOV     R2,#0x1
-   \   000024   12....       LCALL   ??Subroutine15_0 & 0xFFFF
+   \   000024   12....       LCALL   ??Subroutine11_0 & 0xFFFF
     354              if ( timeout != 0xFF )
-   \                     ??CrossCallReturnLabel_18:
+   \                     ??CrossCallReturnLabel_14:
    \   000027   74FF         MOV     A,#-0x1
    \   000029   6E           XRL     A,R6
-   \   00002A   6021         JZ      ??CrossCallReturnLabel_14
+   \   00002A   6021         JZ      ??CrossCallReturnLabel_10
     355              {
     356                if ( timeout > 64 )
    \   00002C   EE           MOV     A,R6
@@ -969,11 +957,11 @@ D:\ProgramData\Hardware\zigbee\Components\stack\sapi\sapi.c
    \   000043   7A00         MOV     R2,#0x0
    \   000045   7B40         MOV     R3,#0x40
    \   000047   90....       MOV     DPTR,#sapi_TaskID
-   \   00004A   12....       LCALL   ??Subroutine14_0 & 0xFFFF
+   \   00004A   12....       LCALL   ??Subroutine10_0 & 0xFFFF
     361              }
     362            }
     363            return;
-   \                     ??CrossCallReturnLabel_14:
+   \                     ??CrossCallReturnLabel_10:
    \   00004D                REQUIRE ?Subroutine1
    \   00004D                ; // Fall through to label ?Subroutine1
     364          }
@@ -984,15 +972,15 @@ D:\ProgramData\Hardware\zigbee\Components\stack\sapi\sapi.c
    \   000002   02....       LJMP    ?BANKED_LEAVE_XDATA
 
    \                                 In  segment BANKED_CODE, align 1, keep-with-next
-   \                     ?Subroutine4:
+   \                     ?Subroutine3:
    \   000000   7A00         MOV     R2,#0x0
-   \   000002                REQUIRE ??Subroutine15_0
-   \   000002                ; // Fall through to label ??Subroutine15_0
+   \   000002                REQUIRE ??Subroutine11_0
+   \   000002                ; // Fall through to label ??Subroutine11_0
 
    \                                 In  segment BANKED_CODE, align 1, keep-with-next
-   \                     ??Subroutine15_0:
-   \   000000   12....       LCALL   ?Subroutine11 & 0xFFFF
-   \                     ??CrossCallReturnLabel_20:
+   \                     ??Subroutine11_0:
+   \   000000   12....       LCALL   ?Subroutine8 & 0xFFFF
+   \                     ??CrossCallReturnLabel_16:
    \   000003   12....       LCALL   ??afSetMatch?relay
    \   000006   22           RET
     365          /******************************************************************************
@@ -1020,189 +1008,64 @@ D:\ProgramData\Hardware\zigbee\Components\stack\sapi\sapi.c
     387           *                       before it is dropped.
     388           *
     389           * @return      none
-    390           */
-
-   \                                 In  segment BANKED_CODE, align 1, keep-with-next
-    391          void zb_SendDataRequest ( uint16 destination, uint16 commandId, uint8 len,
-   \                     zb_SendDataRequest:
+    390           *//*
+    391          void Sys_SendDataRequest ( uint16 destination, endPointDesc_t *epDesc, uint16 commandId, uint8 len,
     392                                    uint8 *pData, uint8 handle, uint8 txOptions, uint8 radius )
     393          {
-   \   000000   74F2         MOV     A,#-0xe
-   \   000002   12....       LCALL   ?BANKED_ENTER_XDATA
-   \   000005                ; Saved register size: 14
-   \   000005                ; Auto size: 12
-   \   000005   74F4         MOV     A,#-0xc
-   \   000007   12....       LCALL   ?ALLOC_XSTACK8
-   \   00000A   8C..         MOV     ?V0 + 2,R4
-   \   00000C   8D..         MOV     ?V0 + 3,R5
-   \   00000E   E9           MOV     A,R1
-   \   00000F   FF           MOV     R7,A
-   \   000010   741A         MOV     A,#0x1a
-   \   000012   12....       LCALL   ?XSTACK_DISP0_8
-   \   000015   E0           MOVX    A,@DPTR
-   \   000016   F5..         MOV     ?V0 + 4,A
-   \   000018   A3           INC     DPTR
-   \   000019   E0           MOVX    A,@DPTR
-   \   00001A   F5..         MOV     ?V0 + 5,A
-   \   00001C   741D         MOV     A,#0x1d
-   \   00001E   12....       LCALL   ?XSTACK_DISP0_8
-   \   000021   E0           MOVX    A,@DPTR
-   \   000022   FE           MOV     R6,A
-   \   000023   741E         MOV     A,#0x1e
-   \   000025   12....       LCALL   ?XSTACK_DISP0_8
-   \   000028   E0           MOVX    A,@DPTR
-   \   000029   F5..         MOV     ?V0 + 0,A
     394            afStatus_t status;
     395            afAddrType_t dstAddr;
     396          
     397            txOptions |= AF_DISCV_ROUTE;
-   \   00002B   EE           MOV     A,R6
-   \   00002C   D2E5         SETB    0xE0 /* A   */.5
-   \   00002E   FE           MOV     R6,A
     398          
     399            // Set the destination address
     400            if (destination == ZB_BINDING_ADDR)
-   \   00002F   74FE         MOV     A,#-0x2
-   \   000031   6A           XRL     A,R2
-   \   000032   7003         JNZ     ??zb_SendDataRequest_0
-   \   000034   74FF         MOV     A,#-0x1
-   \   000036   6B           XRL     A,R3
-   \                     ??zb_SendDataRequest_0:
-   \   000037   7009         JNZ     ??zb_SendDataRequest_1
     401            {
     402              // Binding
     403              dstAddr.addrMode = afAddrNotPresent;
-   \   000039   7408         MOV     A,#0x8
-   \   00003B   12....       LCALL   ?XSTACK_DISP0_8
-   \   00003E   E4           CLR     A
-   \   00003F   F0           MOVX    @DPTR,A
-   \   000040   801D         SJMP    ??zb_SendDataRequest_2
-    404            }
+    404            } 
     405            else
     406            {
     407              // Use short address
     408              dstAddr.addr.shortAddr = destination;
-   \                     ??zb_SendDataRequest_1:
-   \   000042   85..82       MOV     DPL,?XSP + 0
-   \   000045   85..83       MOV     DPH,?XSP + 1
-   \   000048   EA           MOV     A,R2
-   \   000049   F0           MOVX    @DPTR,A
-   \   00004A   A3           INC     DPTR
-   \   00004B   EB           MOV     A,R3
-   \   00004C   F0           MOVX    @DPTR,A
     409              dstAddr.addrMode = afAddr16Bit;
-   \   00004D   7408         MOV     A,#0x8
-   \   00004F   12....       LCALL   ?XSTACK_DISP0_8
-   \   000052   7402         MOV     A,#0x2
-   \   000054   F0           MOVX    @DPTR,A
     410          
     411              if ( ADDR_NOT_BCAST != NLME_IsAddressBroadcast( destination ) )
-   \   000055                ; Setup parameters for call to function NLME_IsAddressBroadcast
-   \   000055   12....       LCALL   ??NLME_IsAddressBroadcast?relay
-   \   000058   E9           MOV     A,R1
-   \   000059   6004         JZ      ??zb_SendDataRequest_2
     412              {
     413                txOptions &= ~AF_ACK_REQUEST;
-   \   00005B   EE           MOV     A,R6
-   \   00005C   C2E4         CLR     0xE0 /* A   */.4
-   \   00005E   FE           MOV     R6,A
     414              }
     415            }
     416          
     417            dstAddr.panId = 0;                                    // Not an inter-pan message.
-   \                     ??zb_SendDataRequest_2:
-   \   00005F   740A         MOV     A,#0xa
-   \   000061   12....       LCALL   ?XSTACK_DISP0_8
-   \   000064   E4           CLR     A
-   \   000065   F0           MOVX    @DPTR,A
-   \   000066   A3           INC     DPTR
-   \   000067   F0           MOVX    @DPTR,A
-    418            dstAddr.endPoint = sapi_epDesc.simpleDesc->EndPoint;  // Set the endpoint.
-   \   000068   12....       LCALL   ?Subroutine12 & 0xFFFF
-   \                     ??CrossCallReturnLabel_8:
-   \   00006B   E0           MOVX    A,@DPTR
-   \   00006C   C0E0         PUSH    A
-   \   00006E   7409         MOV     A,#0x9
-   \   000070   12....       LCALL   ?XSTACK_DISP0_8
-   \   000073   D0E0         POP     A
-   \   000075   F0           MOVX    @DPTR,A
+    418            dstAddr.endPoint = epDesc->simpleDesc->EndPoint;  // Set the endpoint.
     419          
-    420            // Send the message
-    421            status = AF_DataRequest(&dstAddr, &sapi_epDesc, commandId, len,
-    422                                    pData, &handle, txOptions, radius);
-   \   000076                ; Setup parameters for call to function AF_DataRequest
-   \   000076   78..         MOV     R0,#?V0 + 0
-   \   000078   12....       LCALL   ?PUSH_XSTACK_I_ONE
-   \   00007B   741D         MOV     A,#0x1d
-   \   00007D   12....       LCALL   ?XSTACK_DISP0_8
-   \   000080   8582..       MOV     ?V0 + 0,DPL
-   \   000083   8583..       MOV     ?V0 + 1,DPH
-   \   000086   78..         MOV     R0,#?V0 + 0
-   \   000088   12....       LCALL   ?PUSH_XSTACK_I_TWO
-   \   00008B   78..         MOV     R0,#?V0 + 4
-   \   00008D   12....       LCALL   ?PUSH_XSTACK_I_TWO
-   \   000090   8F..         MOV     ?V0 + 0,R7
-   \   000092   75..00       MOV     ?V0 + 1,#0x0
-   \   000095   78..         MOV     R0,#?V0 + 0
-   \   000097   12....       LCALL   ?PUSH_XSTACK_I_TWO
-   \   00009A   78..         MOV     R0,#?V0 + 2
-   \   00009C   12....       LCALL   ?PUSH_XSTACK_I_TWO
-   \   00009F   EE           MOV     A,R6
-   \   0000A0   F9           MOV     R1,A
-   \   0000A1   7C..         MOV     R4,#sapi_epDesc & 0xff
-   \   0000A3   7D..         MOV     R5,#(sapi_epDesc >> 8) & 0xff
-   \   0000A5   7409         MOV     A,#0x9
-   \   0000A7   12....       LCALL   ?XSTACK_DISP0_8
-   \   0000AA   AA82         MOV     R2,DPL
-   \   0000AC   AB83         MOV     R3,DPH
-   \   0000AE   12....       LCALL   ??AF_DataRequest?relay
-   \   0000B1   7409         MOV     A,#0x9
-   \   0000B3   12....       LCALL   ?DEALLOC_XSTACK8
-   \   0000B6   E9           MOV     A,R1
-   \   0000B7   FA           MOV     R2,A
-    423          
-    424            if (status != afStatus_SUCCESS)
-   \   0000B8   600E         JZ      ??zb_SendDataRequest_3
-    425            {
-    426              SAPI_SendCback( SAPICB_DATA_CNF, status, handle );
-   \   0000BA                ; Setup parameters for call to function SAPI_SendCback
-   \   0000BA   741C         MOV     A,#0x1c
-   \   0000BC   12....       LCALL   ?XSTACK_DISP0_8
-   \   0000BF   E0           MOVX    A,@DPTR
-   \   0000C0   FC           MOV     R4,A
-   \   0000C1   7D00         MOV     R5,#0x0
-   \   0000C3   79E0         MOV     R1,#-0x20
-   \   0000C5   12....       LCALL   ??SAPI_SendCback?relay
-    427            }
-    428          }
-   \                     ??zb_SendDataRequest_3:
-   \   0000C8   740C         MOV     A,#0xc
-   \   0000CA   12....       LCALL   ?DEALLOC_XSTACK8
-   \   0000CD                REQUIRE ?Subroutine2
-   \   0000CD                ; // Fall through to label ?Subroutine2
+    420            
+    421            // Send the message
+    422            status = AF_DataRequest(&dstAddr, epDesc, commandId, len,
+    423                                    pData, &handle, txOptions, radius);
+    424          
+    425            if (status != afStatus_SUCCESS)
+    426            {
+    427              SAPI_SendCback( SAPICB_DATA_CNF, status, handle );
+    428            }
+    429          }
+    430          */
+    431          /******************************************************************************
+    432           * @fn          zb_ReadConfiguration
+    433           *
+    434           * @brief       The zb_ReadConfiguration function is used to get a
+    435           *              Configuration Protperty from Nonvolatile memory.
+    436           *
+    437           * @param       configId - The identifier for the configuration property
+    438           *              len - The size of the pValue buffer in bytes
+    439           *              pValue - A buffer to hold the configuration property
+    440           *
+    441           * @return      none
+    442           */
 
    \                                 In  segment BANKED_CODE, align 1, keep-with-next
-   \                     ?Subroutine2:
-   \   000000   7F06         MOV     R7,#0x6
-   \   000002   02....       LJMP    ?BANKED_LEAVE_XDATA
-    429          
-    430          /******************************************************************************
-    431           * @fn          zb_ReadConfiguration
-    432           *
-    433           * @brief       The zb_ReadConfiguration function is used to get a
-    434           *              Configuration Protperty from Nonvolatile memory.
-    435           *
-    436           * @param       configId - The identifier for the configuration property
-    437           *              len - The size of the pValue buffer in bytes
-    438           *              pValue - A buffer to hold the configuration property
-    439           *
-    440           * @return      none
-    441           */
-
-   \                                 In  segment BANKED_CODE, align 1, keep-with-next
-    442          uint8 zb_ReadConfiguration( uint8 configId, uint8 len, void *pValue )
+    443          uint8 zb_ReadConfiguration( uint8 configId, uint8 len, void *pValue )
    \                     zb_ReadConfiguration:
-    443          {
+    444          {
    \   000000   74F4         MOV     A,#-0xc
    \   000002   12....       LCALL   ?BANKED_ENTER_XDATA
    \   000005                ; Saved register size: 12
@@ -1213,9 +1076,9 @@ D:\ProgramData\Hardware\zigbee\Components\stack\sapi\sapi.c
    \   000008   FE           MOV     R6,A
    \   000009   8C..         MOV     ?V0 + 0,R4
    \   00000B   8D..         MOV     ?V0 + 1,R5
-    444            uint8 size;
-    445          
-    446            size = (uint8)osal_nv_item_len( configId );
+    445            uint8 size;
+    446          
+    447            size = (uint8)osal_nv_item_len( configId );
    \   00000D                ; Setup parameters for call to function osal_nv_item_len
    \   00000D   8F..         MOV     ?V0 + 2,R7
    \   00000F   AA..         MOV     R2,?V0 + 2
@@ -1223,19 +1086,19 @@ D:\ProgramData\Hardware\zigbee\Components\stack\sapi\sapi.c
    \   000013   12....       LCALL   ??osal_nv_item_len?relay
    \   000016   EA           MOV     A,R2
    \   000017   F9           MOV     R1,A
-    447            if ( size > len )
+    448            if ( size > len )
    \   000018   EE           MOV     A,R6
    \   000019   C3           CLR     C
    \   00001A   99           SUBB    A,R1
    \   00001B   5004         JNC     ??zb_ReadConfiguration_0
-    448            {
-    449              return ZFailure;
+    449            {
+    450              return ZFailure;
    \   00001D   7901         MOV     R1,#0x1
    \   00001F   8021         SJMP    ??zb_ReadConfiguration_1
-    450            }
-    451            else
-    452            {
-    453              return( osal_nv_read(configId, 0, size, pValue) );
+    451            }
+    452            else
+    453            {
+    454              return( osal_nv_read(configId, 0, size, pValue) );
    \                     ??zb_ReadConfiguration_0:
    \   000021                ; Setup parameters for call to function osal_nv_read
    \   000021   78..         MOV     R0,#?V0 + 0
@@ -1252,28 +1115,28 @@ D:\ProgramData\Hardware\zigbee\Components\stack\sapi\sapi.c
    \   00003A   12....       LCALL   ??osal_nv_read?relay
    \   00003D   7404         MOV     A,#0x4
    \   00003F   12....       LCALL   ?DEALLOC_XSTACK8
-    454            }
+    455            }
    \                     ??zb_ReadConfiguration_1:
    \   000042   02....       LJMP    ?Subroutine0 & 0xFFFF
-    455          }
-    456          /******************************************************************************
-    457           * @fn          zb_WriteConfiguration
-    458           *
-    459           * @brief       The zb_WriteConfiguration function is used to write a
-    460           *              Configuration Property to nonvolatile memory.
-    461           *
-    462           * @param       configId - The identifier for the configuration property
-    463           *              len - The size of the pValue buffer in bytes
-    464           *              pValue - A buffer containing the new value of the
-    465           *                       configuration property
-    466           *
-    467           * @return      none
-    468           */
+    456          }
+    457          /******************************************************************************
+    458           * @fn          zb_WriteConfiguration
+    459           *
+    460           * @brief       The zb_WriteConfiguration function is used to write a
+    461           *              Configuration Property to nonvolatile memory.
+    462           *
+    463           * @param       configId - The identifier for the configuration property
+    464           *              len - The size of the pValue buffer in bytes
+    465           *              pValue - A buffer containing the new value of the
+    466           *                       configuration property
+    467           *
+    468           * @return      none
+    469           */
 
    \                                 In  segment BANKED_CODE, align 1, keep-with-next
-    469          uint8 zb_WriteConfiguration( uint8 configId, uint8 len, void *pValue )
+    470          uint8 zb_WriteConfiguration( uint8 configId, uint8 len, void *pValue )
    \                     zb_WriteConfiguration:
-    470          {
+    471          {
    \   000000   74F6         MOV     A,#-0xa
    \   000002   12....       LCALL   ?BANKED_ENTER_XDATA
    \   000005                ; Saved register size: 10
@@ -1282,7 +1145,7 @@ D:\ProgramData\Hardware\zigbee\Components\stack\sapi\sapi.c
    \   000006   FF           MOV     R7,A
    \   000007   EA           MOV     A,R2
    \   000008   FE           MOV     R6,A
-    471            return( osal_nv_write(configId, 0, len, pValue) );
+    472            return( osal_nv_write(configId, 0, len, pValue) );
    \   000009                ; Setup parameters for call to function osal_nv_write
    \   000009   8C..         MOV     ?V0 + 0,R4
    \   00000B   8D..         MOV     ?V0 + 1,R5
@@ -1299,37 +1162,37 @@ D:\ProgramData\Hardware\zigbee\Components\stack\sapi\sapi.c
    \   000024   7B00         MOV     R3,#0x0
    \   000026   12....       LCALL   ??osal_nv_write?relay
    \   000029   7404         MOV     A,#0x4
-   \   00002B                REQUIRE ?Subroutine3
-   \   00002B                ; // Fall through to label ?Subroutine3
-    472          }
+   \   00002B                REQUIRE ?Subroutine2
+   \   00002B                ; // Fall through to label ?Subroutine2
+    473          }
 
    \                                 In  segment BANKED_CODE, align 1, keep-with-next
-   \                     ?Subroutine3:
+   \                     ?Subroutine2:
    \   000000   12....       LCALL   ?DEALLOC_XSTACK8
    \   000003   7F02         MOV     R7,#0x2
    \   000005   02....       LJMP    ?BANKED_LEAVE_XDATA
-    473          /******************************************************************************
-    474           * @fn          zb_GetDeviceInfo
-    475           *
-    476           * @brief       The zb_GetDeviceInfo function retrieves a Device Information
-    477           *              Property.
-    478           *
-    479           * @param       param - The identifier for the device information
-    480           *              pValue - A buffer to hold the device information
-    481           *
-    482           * @return      none
-    483           */
+    474          /******************************************************************************
+    475           * @fn          zb_GetDeviceInfo
+    476           *
+    477           * @brief       The zb_GetDeviceInfo function retrieves a Device Information
+    478           *              Property.
+    479           *
+    480           * @param       param - The identifier for the device information
+    481           *              pValue - A buffer to hold the device information
+    482           *
+    483           * @return      none
+    484           */
 
    \                                 In  segment BANKED_CODE, align 1, keep-with-next
-    484          void zb_GetDeviceInfo ( uint8 param, void *pValue )
+    485          void zb_GetDeviceInfo ( uint8 param, void *pValue )
    \                     zb_GetDeviceInfo:
-    485          {
+    486          {
    \   000000   74F5         MOV     A,#-0xb
    \   000002   12....       LCALL   ?BANKED_ENTER_XDATA
    \   000005                ; Saved register size: 11
    \   000005                ; Auto size: 0
    \   000005   E9           MOV     A,R1
-    486            switch(param)
+    487            switch(param)
    \   000006   6017         JZ      ??zb_GetDeviceInfo_0
    \   000008   14           DEC     A
    \   000009   6026         JZ      ??zb_GetDeviceInfo_1
@@ -1346,9 +1209,9 @@ D:\ProgramData\Hardware\zigbee\Components\stack\sapi\sapi.c
    \   00001A   14           DEC     A
    \   00001B   604E         JZ      ??zb_GetDeviceInfo_7
    \   00001D   8066         SJMP    ??zb_GetDeviceInfo_8
-    487            {
-    488              case ZB_INFO_DEV_STATE:
-    489                osal_memcpy(pValue, &devState, sizeof(uint8));
+    488            {
+    489              case ZB_INFO_DEV_STATE:
+    490                osal_memcpy(pValue, &devState, sizeof(uint8));
    \                     ??zb_GetDeviceInfo_0:
    \   00001F                ; Setup parameters for call to function osal_memcpy
    \   00001F   75....       MOV     ?V0 + 0,#devState & 0xff
@@ -1359,17 +1222,17 @@ D:\ProgramData\Hardware\zigbee\Components\stack\sapi\sapi.c
    \   00002A   12....       LCALL   ?PUSH_XSTACK_I_THREE
    \   00002D   7C01         MOV     R4,#0x1
    \   00002F   804A         SJMP    ??zb_GetDeviceInfo_10
-    490                break;
-    491              case ZB_INFO_IEEE_ADDR:
-    492                osal_memcpy(pValue, &aExtendedAddress, Z_EXTADDR_LEN);
+    491                break;
+    492              case ZB_INFO_IEEE_ADDR:
+    493                osal_memcpy(pValue, &aExtendedAddress, Z_EXTADDR_LEN);
    \                     ??zb_GetDeviceInfo_1:
    \   000031                ; Setup parameters for call to function osal_memcpy
    \   000031   75....       MOV     ?V0 + 0,#aExtendedAddress & 0xff
    \   000034   75....       MOV     ?V0 + 1,#(aExtendedAddress >> 8) & 0xff
    \   000037   8038         SJMP    ??zb_GetDeviceInfo_11
-    493                break;
-    494              case ZB_INFO_SHORT_ADDR:
-    495                osal_memcpy(pValue, &_NIB.nwkDevAddress, sizeof(uint16));
+    494                break;
+    495              case ZB_INFO_SHORT_ADDR:
+    496                osal_memcpy(pValue, &_NIB.nwkDevAddress, sizeof(uint16));
    \                     ??zb_GetDeviceInfo_2:
    \   000039                ; Setup parameters for call to function osal_memcpy
    \   000039   75....       MOV     ?V0 + 0,#(_NIB + 20) & 0xff
@@ -1380,41 +1243,41 @@ D:\ProgramData\Hardware\zigbee\Components\stack\sapi\sapi.c
    \   000044   12....       LCALL   ?PUSH_XSTACK_I_THREE
    \   000047   7C02         MOV     R4,#0x2
    \   000049   8030         SJMP    ??zb_GetDeviceInfo_10
-    496                break;
-    497              case ZB_INFO_PARENT_SHORT_ADDR:
-    498                osal_memcpy(pValue, &_NIB.nwkCoordAddress, sizeof(uint16));
+    497                break;
+    498              case ZB_INFO_PARENT_SHORT_ADDR:
+    499                osal_memcpy(pValue, &_NIB.nwkCoordAddress, sizeof(uint16));
    \                     ??zb_GetDeviceInfo_3:
    \   00004B                ; Setup parameters for call to function osal_memcpy
    \   00004B   75....       MOV     ?V0 + 0,#(_NIB + 23) & 0xff
    \   00004E   75....       MOV     ?V0 + 1,#((_NIB + 23) >> 8) & 0xff
    \   000051   80EC         SJMP    ??zb_GetDeviceInfo_12
-    499                break;
-    500              case ZB_INFO_PARENT_IEEE_ADDR:
-    501                osal_memcpy(pValue, &_NIB.nwkCoordExtAddress, Z_EXTADDR_LEN);
+    500                break;
+    501              case ZB_INFO_PARENT_IEEE_ADDR:
+    502                osal_memcpy(pValue, &_NIB.nwkCoordExtAddress, Z_EXTADDR_LEN);
    \                     ??zb_GetDeviceInfo_4:
    \   000053                ; Setup parameters for call to function osal_memcpy
    \   000053   75....       MOV     ?V0 + 0,#(_NIB + 25) & 0xff
    \   000056   75....       MOV     ?V0 + 1,#((_NIB + 25) >> 8) & 0xff
    \   000059   8016         SJMP    ??zb_GetDeviceInfo_11
-    502                break;
-    503              case ZB_INFO_CHANNEL:
-    504                osal_memcpy(pValue, &_NIB.nwkLogicalChannel, sizeof(uint8));
+    503                break;
+    504              case ZB_INFO_CHANNEL:
+    505                osal_memcpy(pValue, &_NIB.nwkLogicalChannel, sizeof(uint8));
    \                     ??zb_GetDeviceInfo_5:
    \   00005B                ; Setup parameters for call to function osal_memcpy
    \   00005B   75....       MOV     ?V0 + 0,#(_NIB + 22) & 0xff
    \   00005E   75....       MOV     ?V0 + 1,#((_NIB + 22) >> 8) & 0xff
    \   000061   80C2         SJMP    ??zb_GetDeviceInfo_9
-    505                break;
-    506              case ZB_INFO_PAN_ID:
-    507                osal_memcpy(pValue, &_NIB.nwkPanId, sizeof(uint16));
+    506                break;
+    507              case ZB_INFO_PAN_ID:
+    508                osal_memcpy(pValue, &_NIB.nwkPanId, sizeof(uint16));
    \                     ??zb_GetDeviceInfo_6:
    \   000063                ; Setup parameters for call to function osal_memcpy
    \   000063   75....       MOV     ?V0 + 0,#(_NIB + 33) & 0xff
    \   000066   75....       MOV     ?V0 + 1,#((_NIB + 33) >> 8) & 0xff
    \   000069   80D4         SJMP    ??zb_GetDeviceInfo_12
-    508                break;
-    509              case ZB_INFO_EXT_PAN_ID:
-    510                osal_memcpy(pValue, &_NIB.extendedPANID, Z_EXTADDR_LEN);
+    509                break;
+    510              case ZB_INFO_EXT_PAN_ID:
+    511                osal_memcpy(pValue, &_NIB.extendedPANID, Z_EXTADDR_LEN);
    \                     ??zb_GetDeviceInfo_7:
    \   00006B                ; Setup parameters for call to function osal_memcpy
    \   00006B   75....       MOV     ?V0 + 0,#(_NIB + 53) & 0xff
@@ -1429,666 +1292,552 @@ D:\ProgramData\Hardware\zigbee\Components\stack\sapi\sapi.c
    \   00007D   12....       LCALL   ??osal_memcpy?relay
    \   000080   7403         MOV     A,#0x3
    \   000082   12....       LCALL   ?DEALLOC_XSTACK8
-    511                break;
-    512            }
-    513          }
+    512                break;
+    513            }
+    514          }
    \                     ??zb_GetDeviceInfo_8:
    \   000085   7F03         MOV     R7,#0x3
    \   000087   02....       LJMP    ?BANKED_LEAVE_XDATA
-    514          
-    515          /******************************************************************************
-    516           * @fn          zb_FindDeviceRequest
-    517           *
-    518           * @brief       The zb_FindDeviceRequest function is used to determine the
-    519           *              short address for a device in the network.  The device initiating
-    520           *              a call to zb_FindDeviceRequest and the device being discovered
-    521           *              must both be a member of the same network.  When the search is
-    522           *              complete, the zv_FindDeviceConfirm callback function is called.
-    523           *
-    524           * @param       searchType - The type of search to perform. Can be one of following:
-    525           *                           ZB_IEEE_SEARCH - Search for 16-bit addr given IEEE addr.
-    526           *              searchKey - Value to search on.
-    527           *
-    528           * @return      none
-    529           */
+    515          
+    516          /******************************************************************************
+    517           * @fn          zb_FindDeviceRequest
+    518           *
+    519           * @brief       The zb_FindDeviceRequest function is used to determine the
+    520           *              short address for a device in the network.  The device initiating
+    521           *              a call to zb_FindDeviceRequest and the device being discovered
+    522           *              must both be a member of the same network.  When the search is
+    523           *              complete, the zv_FindDeviceConfirm callback function is called.
+    524           *
+    525           * @param       searchType - The type of search to perform. Can be one of following:
+    526           *                           ZB_IEEE_SEARCH - Search for 16-bit addr given IEEE addr.
+    527           *              searchKey - Value to search on.
+    528           *
+    529           * @return      none
+    530           */
 
    \                                 In  segment BANKED_CODE, align 1, keep-with-next
-    530          void zb_FindDeviceRequest( uint8 searchType, void *searchKey )
+    531          void zb_FindDeviceRequest( uint8 searchType, void *searchKey )
    \                     zb_FindDeviceRequest:
-    531          {
+    532          {
    \   000000   74F7         MOV     A,#-0x9
    \   000002   12....       LCALL   ?BANKED_ENTER_XDATA
    \   000005                ; Saved register size: 9
    \   000005                ; Auto size: 0
    \   000005   E9           MOV     A,R1
    \   000006   FE           MOV     R6,A
-    532            if (searchType == ZB_IEEE_SEARCH)
+    533            if (searchType == ZB_IEEE_SEARCH)
    \   000007   7401         MOV     A,#0x1
    \   000009   6E           XRL     A,R6
    \   00000A   7009         JNZ     ??zb_FindDeviceRequest_0
-    533            {
-    534              ZDP_NwkAddrReq((uint8*) searchKey, ZDP_ADDR_REQTYPE_SINGLE, 0, 0 );
+    534            {
+    535              ZDP_NwkAddrReq((uint8*) searchKey, ZDP_ADDR_REQTYPE_SINGLE, 0, 0 );
    \   00000C                ; Setup parameters for call to function ZDP_NwkAddrReq
    \   00000C   7D00         MOV     R5,#0x0
    \   00000E   7C00         MOV     R4,#0x0
    \   000010   7900         MOV     R1,#0x0
    \   000012   12....       LCALL   ??ZDP_NwkAddrReq?relay
-    535            }
-    536          }
+    536            }
+    537          }
    \                     ??zb_FindDeviceRequest_0:
    \   000015   02....       LJMP    ?Subroutine1 & 0xFFFF
-    537          /******************************************************************************
-    538           * @fn          SAPI_StartConfirm
-    539           *
-    540           * @brief       The SAPI_StartConfirm callback is called by the ZigBee stack
-    541           *              after a start request operation completes
-    542           *
-    543           * @param       status - The status of the start operation.  Status of
-    544           *                       ZB_SUCCESS indicates the start operation completed
-    545           *                       successfully.  Else the status is an error code.
-    546           *
-    547           * @return      none
-    548           */
-    549          void SAPI_StartConfirm( uint8 status )
-    550          {
-    551          #if defined ( MT_SAPI_CB_FUNC )
-    552            /* First check if MT has subscribed for this callback. If so , pass it as
-    553            a event to MonitorTest and return control to calling function after that */
-    554            if ( SAPICB_CHECK( SPI_CB_SAPI_START_CNF ) )
-    555            {
-    556              zb_MTCallbackStartConfirm( status );
-    557            }
-    558            else
-    559          #endif  //MT_SAPI_CB_FUNC
-    560            {
-    561          #if ( SAPI_CB_FUNC )
-    562              zb_StartConfirm( status );
-    563          #endif
-    564            }
-    565          }
-    566          
-    567          /******************************************************************************
-    568           * @fn          SAPI_SendDataConfirm
-    569           *
-    570           * @brief       The SAPI_SendDataConfirm callback function is called by the
-    571           *              ZigBee after a send data operation completes
-    572           *
-    573           * @param       handle - The handle identifying the data transmission.
-    574           *              status - The status of the operation.
-    575           *
-    576           * @return      none
-    577           */
-    578          void SAPI_SendDataConfirm( uint8 handle, uint8 status )
-    579          {
-    580          #if defined ( MT_SAPI_CB_FUNC )
-    581            /* First check if MT has subscribed for this callback. If so , pass it as
-    582            a event to MonitorTest and return control to calling function after that */
-    583            if ( SAPICB_CHECK( SPI_CB_SAPI_SEND_DATA_CNF ) )
-    584            {
-    585              zb_MTCallbackSendDataConfirm( handle, status );
-    586            }
-    587            else
-    588          #endif  //MT_SAPI_CB_FUNC
-    589            {
-    590          #if ( SAPI_CB_FUNC )
-    591              zb_SendDataConfirm( handle, status );
-    592          #endif
-    593            }
-    594          }
-    595          
-    596          /******************************************************************************
-    597           * @fn          SAPI_BindConfirm
-    598           *
-    599           * @brief       The SAPI_BindConfirm callback is called by the ZigBee stack
-    600           *              after a bind operation completes.
-    601           *
-    602           * @param       commandId - The command ID of the binding being confirmed.
-    603           *              status - The status of the bind operation.
-    604           *              allowBind - TRUE if the bind operation was initiated by a call
-    605           *                          to zb_AllowBindRespones.  FALSE if the operation
-    606           *                          was initiated by a call to ZB_BindDevice
-    607           *
-    608           * @return      none
-    609           */
-    610          void SAPI_BindConfirm( uint16 commandId, uint8 status )
-    611          {
-    612          #if defined ( MT_SAPI_CB_FUNC )
-    613            /* First check if MT has subscribed for this callback. If so , pass it as
-    614            a event to MonitorTest and return control to calling function after that */
-    615            if ( SAPICB_CHECK( SPI_CB_SAPI_BIND_CNF ) )
-    616            {
-    617              zb_MTCallbackBindConfirm( commandId, status );
-    618            }
-    619            else
-    620          #endif  //MT_SAPI_CB_FUNC
-    621            {
-    622          #if ( SAPI_CB_FUNC )
-    623              zb_BindConfirm( commandId, status );
-    624          #endif
-    625            }
-    626          }
-    627          /******************************************************************************
-    628           * @fn          SAPI_AllowBindConfirm
-    629           *
-    630           * @brief       Indicates when another device attempted to bind to this device
-    631           *
-    632           * @param
-    633           *
-    634           * @return      none
-    635           */
-    636          void SAPI_AllowBindConfirm( uint16 source )
-    637          {
-    638            #if defined ( MT_SAPI_CB_FUNC )
-    639            /* First check if MT has subscribed for this callback. If so , pass it as
-    640            a event to MonitorTest and return control to calling function after that */
-    641            if ( SAPICB_CHECK( SPI_CB_SAPI_ALLOW_BIND_CNF ) )
-    642            {
-    643              zb_MTCallbackAllowBindConfirm( source );
-    644            }
-    645            else
-    646          #endif  //MT_SAPI_CB_FUNC
-    647            {
-    648          #if ( SAPI_CB_FUNC )
-    649              zb_AllowBindConfirm( source );
-    650          #endif
-    651            }
-    652          }
-    653          /******************************************************************************
-    654           * @fn          SAPI_FindDeviceConfirm
-    655           *
-    656           * @brief       The SAPI_FindDeviceConfirm callback function is called by the
-    657           *              ZigBee stack when a find device operation completes.
-    658           *
-    659           * @param       searchType - The type of search that was performed.
-    660           *              searchKey - Value that the search was executed on.
-    661           *              result - The result of the search.
-    662           *
-    663           * @return      none
-    664           */
-    665          void SAPI_FindDeviceConfirm( uint8 searchType, uint8 *searchKey, uint8 *result )
-    666          {
-    667          #if defined ( MT_SAPI_CB_FUNC )
-    668            /* First check if MT has subscribed for this callback. If so , pass it as
-    669            a event to MonitorTest and return control to calling function after that */
-    670            if ( SAPICB_CHECK( SPI_CB_SAPI_FIND_DEV_CNF ) )
-    671            {
-    672              zb_MTCallbackFindDeviceConfirm( searchType, searchKey, result );
-    673            }
-    674            else
-    675          #endif  //MT_SAPI_CB_FUNC
-    676            {
-    677          #if ( SAPI_CB_FUNC )
-    678              zb_FindDeviceConfirm( searchType, searchKey, result );
-    679          #endif
-    680            }
-    681          }
-    682          /******************************************************************************
-    683           * @fn          SAPI_ReceiveDataIndication
-    684           *
-    685           * @brief       The SAPI_ReceiveDataIndication callback function is called
-    686           *              asynchronously by the ZigBee stack to notify the application
-    687           *              when data is received from a peer device.
-    688           *
-    689           * @param       source - The short address of the peer device that sent the data
-    690           *              command - The commandId associated with the data
-    691           *              len - The number of bytes in the pData parameter
-    692           *              pData - The data sent by the peer device
-    693           *
-    694           * @return      none
-    695           */
-    696          void SAPI_ReceiveDataIndication( uint16 source, uint16 command, uint16 len, uint8 *pData  )
-    697          {
-    698          #if defined ( MT_SAPI_CB_FUNC )
-    699            /* First check if MT has subscribed for this callback. If so , pass it as
-    700            a event to MonitorTest and return control to calling function after that */
-    701            if ( SAPICB_CHECK( SPI_CB_SAPI_RCV_DATA_IND ) )
-    702            {
-    703              zb_MTCallbackReceiveDataIndication( source, command, len, pData  );
-    704            }
-    705            else
-    706          #endif  //MT_SAPI_CB_FUNC
-    707            {
-    708          #if ( SAPI_CB_FUNC )
-    709              zb_ReceiveDataIndication( source, command, len, pData  );
-    710          #endif
-    711            }
-    712          }
-    713          /*********************************************************************
-    714           * @fn      SAPI_ProcessEvent
-    715           *
-    716           * @brief   Simple API Task event processor.  This function
-    717           *          is called to process all events for the task.  Events
-    718           *          include timers, messages and any other user defined events.
-    719           *
-    720           * @param   task_id  - The OSAL assigned task ID.
-    721           * @param   events - events to process.  This is a bit map and can
-    722           *                   contain more than one event.
-    723           *
-    724           * @return  none
-    725           */
+    538          /******************************************************************************
+    539           * @fn          SAPI_StartConfirm
+    540           *
+    541           * @brief       The SAPI_StartConfirm callback is called by the ZigBee stack
+    542           *              after a start request operation completes
+    543           *
+    544           * @param       status - The status of the start operation.  Status of
+    545           *                       ZB_SUCCESS indicates the start operation completed
+    546           *                       successfully.  Else the status is an error code.
+    547           *
+    548           * @return      none
+    549           */
+    550          void SAPI_StartConfirm( uint8 status )
+    551          {
+    552          #if defined ( MT_SAPI_CB_FUNC )
+    553            /* First check if MT has subscribed for this callback. If so , pass it as
+    554            a event to MonitorTest and return control to calling function after that */
+    555            if ( SAPICB_CHECK( SPI_CB_SAPI_START_CNF ) )
+    556            {
+    557              zb_MTCallbackStartConfirm( status );
+    558            }
+    559            else
+    560          #endif  //MT_SAPI_CB_FUNC
+    561            {
+    562          #if ( SAPI_CB_FUNC )
+    563              zb_StartConfirm( status );
+    564          #endif
+    565            }
+    566          }
+    567          
+    568          /******************************************************************************
+    569           * @fn          SAPI_SendDataConfirm
+    570           *
+    571           * @brief       The SAPI_SendDataConfirm callback function is called by the
+    572           *              ZigBee after a send data operation completes
+    573           *
+    574           * @param       handle - The handle identifying the data transmission.
+    575           *              status - The status of the operation.
+    576           *
+    577           * @return      none
+    578           *//*
+    579          void SAPI_SendDataConfirm( uint8 handle, uint8 status )
+    580          {
+    581          #if defined ( MT_SAPI_CB_FUNC )*/
+    582            /* First check if MT has subscribed for this callback. If so , pass it as
+    583            a event to MonitorTest and return control to calling function after that *//*
+    584            if ( SAPICB_CHECK( SPI_CB_SAPI_SEND_DATA_CNF ) )
+    585            {
+    586              zb_MTCallbackSendDataConfirm( handle, status );
+    587            }
+    588            else
+    589          #endif  //MT_SAPI_CB_FUNC
+    590            {
+    591          #if ( SAPI_CB_FUNC )
+    592              zb_SendDataConfirm( handle, status );
+    593          #endif
+    594            }
+    595          }
+    596          */
+    597          /******************************************************************************
+    598           * @fn          SAPI_BindConfirm
+    599           *
+    600           * @brief       The SAPI_BindConfirm callback is called by the ZigBee stack
+    601           *              after a bind operation completes.
+    602           *
+    603           * @param       commandId - The command ID of the binding being confirmed.
+    604           *              status - The status of the bind operation.
+    605           *              allowBind - TRUE if the bind operation was initiated by a call
+    606           *                          to zb_AllowBindRespones.  FALSE if the operation
+    607           *                          was initiated by a call to ZB_BindDevice
+    608           *
+    609           * @return      none
+    610           
+    611          void SAPI_BindConfirm( uint16 commandId, uint8 status )
+    612          {
+    613          #if defined ( MT_SAPI_CB_FUNC )
+    614             First check if MT has subscribed for this callback. If so , pass it as
+    615            a event to MonitorTest and return control to calling function after that 
+    616            if ( SAPICB_CHECK( SPI_CB_SAPI_BIND_CNF ) )
+    617            {
+    618              zb_MTCallbackBindConfirm( commandId, status );
+    619            }
+    620            else
+    621          #endif  //MT_SAPI_CB_FUNC
+    622            {
+    623          #if ( SAPI_CB_FUNC )
+    624              zb_BindConfirm( commandId, status );
+    625          #endif
+    626            }
+    627          }*/
+    628          /******************************************************************************
+    629           * @fn          SAPI_AllowBindConfirm
+    630           *
+    631           * @brief       Indicates when another device attempted to bind to this device
+    632           *
+    633           * @param
+    634           *
+    635           * @return      none
+    636           */
+    637          void SAPI_AllowBindConfirm( uint16 source )
+    638          {
+    639            #if defined ( MT_SAPI_CB_FUNC )
+    640            /* First check if MT has subscribed for this callback. If so , pass it as
+    641            a event to MonitorTest and return control to calling function after that */
+    642            if ( SAPICB_CHECK( SPI_CB_SAPI_ALLOW_BIND_CNF ) )
+    643            {
+    644              zb_MTCallbackAllowBindConfirm( source );
+    645            }
+    646            else
+    647          #endif  //MT_SAPI_CB_FUNC
+    648            {
+    649          #if ( SAPI_CB_FUNC )
+    650          //    zb_AllowBindConfirm( source );
+    651          #endif
+    652            }
+    653          }
+    654          /******************************************************************************
+    655           * @fn          SAPI_FindDeviceConfirm
+    656           *
+    657           * @brief       The SAPI_FindDeviceConfirm callback function is called by the
+    658           *              ZigBee stack when a find device operation completes.
+    659           *
+    660           * @param       searchType - The type of search that was performed.
+    661           *              searchKey - Value that the search was executed on.
+    662           *              result - The result of the search.
+    663           *
+    664           * @return      none
+    665           */
+    666          void SAPI_FindDeviceConfirm( uint8 searchType, uint8 *searchKey, uint8 *result )
+    667          {
+    668          #if defined ( MT_SAPI_CB_FUNC )
+    669            /* First check if MT has subscribed for this callback. If so , pass it as
+    670            a event to MonitorTest and return control to calling function after that */
+    671            if ( SAPICB_CHECK( SPI_CB_SAPI_FIND_DEV_CNF ) )
+    672            {
+    673              zb_MTCallbackFindDeviceConfirm( searchType, searchKey, result );
+    674            }
+    675            else
+    676          #endif  //MT_SAPI_CB_FUNC
+    677            {
+    678          #if ( SAPI_CB_FUNC )
+    679              zb_FindDeviceConfirm( searchType, searchKey, result );
+    680          #endif
+    681            }
+    682          }
+    683          /******************************************************************************
+    684           * @fn          SAPI_ReceiveDataIndication
+    685           *
+    686           * @brief       The SAPI_ReceiveDataIndication callback function is called
+    687           *              asynchronously by the ZigBee stack to notify the application
+    688           *              when data is received from a peer device.
+    689           *
+    690           * @param       source - The short address of the peer device that sent the data
+    691           *              command - The commandId associated with the data
+    692           *              len - The number of bytes in the pData parameter
+    693           *              pData - The data sent by the peer device
+    694           *
+    695           * @return      none
+    696           */
+    697          void SAPI_ReceiveDataIndication( uint16 source, uint16 command, uint16 len, uint8 *pData  )
+    698          {
+    699          #if defined ( MT_SAPI_CB_FUNC )
+    700            /* First check if MT has subscribed for this callback. If so , pass it as
+    701            a event to MonitorTest and return control to calling function after that */
+    702            if ( SAPICB_CHECK( SPI_CB_SAPI_RCV_DATA_IND ) )
+    703            {
+    704              zb_MTCallbackReceiveDataIndication( source, command, len, pData  );
+    705            }
+    706            else
+    707          #endif  //MT_SAPI_CB_FUNC
+    708            {
+    709          #if ( SAPI_CB_FUNC )
+    710          //    zb_ReceiveDataIndication( source, command, len, pData  );
+    711          #endif
+    712            }
+    713          }
+    714          /*********************************************************************
+    715           * @fn      SAPI_ProcessEvent
+    716           *
+    717           * @brief   Simple API Task event processor.  This function
+    718           *          is called to process all events for the task.  Events
+    719           *          include timers, messages and any other user defined events.
+    720           *
+    721           * @param   task_id  - The OSAL assigned task ID.
+    722           * @param   events - events to process.  This is a bit map and can
+    723           *                   contain more than one event.
+    724           *
+    725           * @return  none
+    726           */
 
    \                                 In  segment BANKED_CODE, align 1, keep-with-next
-    726          UINT16 SAPI_ProcessEvent( byte task_id, UINT16 events )
+    727          UINT16 SAPI_ProcessEvent( byte task_id, UINT16 events )
    \                     SAPI_ProcessEvent:
-    727          {
+    728          {
    \   000000   74F2         MOV     A,#-0xe
    \   000002   12....       LCALL   ?BANKED_ENTER_XDATA
    \   000005                ; Saved register size: 14
    \   000005                ; Auto size: 0
    \   000005   89..         MOV     ?V0 + 2,R1
-   \   000007   8A..         MOV     ?V0 + 0,R2
-   \   000009   8B..         MOV     ?V0 + 1,R3
-    728            osal_event_hdr_t *pMsg;
-    729            afIncomingMSGPacket_t *pMSGpkt;
-    730            afDataConfirm_t *pDataConfirm;
-    731          
-    732            if ( events & SYS_EVENT_MSG )
-   \   00000B   EB           MOV     A,R3
-   \   00000C   5480         ANL     A,#0x80
-   \   00000E   7003         JNZ     $+5
-   \   000010   02....       LJMP    ??SAPI_ProcessEvent_0 & 0xFFFF
-    733            {
-    734              pMsg = (osal_event_hdr_t *) osal_msg_receive( task_id );
-   \   000013                ; Setup parameters for call to function osal_msg_receive
-   \   000013   800F         SJMP    ??SAPI_ProcessEvent_1
-    735              while ( pMsg )
-    736              {
-    737                switch ( pMsg->event )
-    738                {
-    739                  case ZDO_CB_MSG:
-    740                    SAPI_ProcessZDOMsgs( (zdoIncomingMsg_t *)pMsg );
-    741                    break;
-    742          
-    743                  case AF_DATA_CONFIRM_CMD:
-    744                    // This message is received as a confirmation of a data packet sent.
-    745                    // The status is of ZStatus_t type [defined in ZComDef.h]
-    746                    // The message fields are defined in AF.h
-    747                    pDataConfirm = (afDataConfirm_t *) pMsg;
-    748                    SAPI_SendDataConfirm( pDataConfirm->transID, pDataConfirm->hdr.status );
-    749                    break;
-    750          
-    751                  case AF_INCOMING_MSG_CMD:
-    752                    pMSGpkt = (afIncomingMSGPacket_t *) pMsg;
-    753                    SAPI_ReceiveDataIndication( pMSGpkt->srcAddr.addr.shortAddr, pMSGpkt->clusterId,
-    754                                              pMSGpkt->cmd.DataLength, pMSGpkt->cmd.Data);
-    755                    break;
-    756          
-    757                  case ZDO_STATE_CHANGE:
-    758                    // If the device has started up, notify the application
-    759                    if (pMsg->status == DEV_END_DEVICE ||
-    760                        pMsg->status == DEV_ROUTER ||
-    761                        pMsg->status == DEV_ZB_COORD )
-    762                    {
-    763                      SAPI_StartConfirm( ZB_SUCCESS );
-    764                    }
-    765                    else  if (pMsg->status == DEV_HOLD ||
-    766                            pMsg->status == DEV_INIT)
-    767                    {
-    768                      SAPI_StartConfirm( ZB_INIT );
-    769                    }
-    770                    break;
-    771          
-    772                  case ZDO_MATCH_DESC_RSP_SENT:
-    773                    SAPI_AllowBindConfirm( ((ZDO_MatchDescRspSent_t *)pMsg)->nwkAddr );
-    774                    break;
-    775          
-    776                  case SAPICB_DATA_CNF:
-    777                    SAPI_SendDataConfirm( (uint8)((sapi_CbackEvent_t *)pMsg)->data,
-    778                                              ((sapi_CbackEvent_t *)pMsg)->hdr.status );
-    779                    break;
-    780          
-    781                  case SAPICB_BIND_CNF:
-    782                    SAPI_BindConfirm( ((sapi_CbackEvent_t *)pMsg)->data,
-    783                                        ((sapi_CbackEvent_t *)pMsg)->hdr.status );
-    784                    break;
-    785          
-    786                  case SAPICB_START_CNF:
-    787                    SAPI_StartConfirm( ((sapi_CbackEvent_t *)pMsg)->hdr.status );
+   \   000007   EA           MOV     A,R2
+   \   000008   FE           MOV     R6,A
+   \   000009   EB           MOV     A,R3
+   \   00000A   FF           MOV     R7,A
+    729            osal_event_hdr_t *pMsg;
+    730            afIncomingMSGPacket_t *pMSGpkt;
+    731          //  afDataConfirm_t *pDataConfirm;
+    732          
+    733            if ( events & SYS_EVENT_MSG )
+   \   00000B   5480         ANL     A,#0x80
+   \   00000D   6078         JZ      ??SAPI_ProcessEvent_0
+    734            {
+    735              pMsg = (osal_event_hdr_t *) osal_msg_receive( task_id );
+   \   00000F                ; Setup parameters for call to function osal_msg_receive
+   \   00000F   800F         SJMP    ??SAPI_ProcessEvent_1
+    736              while ( pMsg )
+    737              {
+    738                switch ( pMsg->event )
+    739                {
+    740                  case ZDO_CB_MSG:
+    741                    SAPI_ProcessZDOMsgs( (zdoIncomingMsg_t *)pMsg );
+    742                    break;
+    743          /*
+    744                  case AF_DATA_CONFIRM_CMD:
+    745                    // This message is received as a confirmation of a data packet sent.
+    746                    // The status is of ZStatus_t type [defined in ZComDef.h]
+    747                    // The message fields are defined in AF.h
+    748                    pDataConfirm = (afDataConfirm_t *) pMsg;
+    749                    SAPI_SendDataConfirm( pDataConfirm->transID, pDataConfirm->hdr.status );
+    750                    break;
+    751          */
+    752                  case AF_INCOMING_MSG_CMD:
+    753                    pMSGpkt = (afIncomingMSGPacket_t *) pMsg;
+    754                    SAPI_ReceiveDataIndication( pMSGpkt->srcAddr.addr.shortAddr, pMSGpkt->clusterId,
+    755                                              pMSGpkt->cmd.DataLength, pMSGpkt->cmd.Data);
+    756                    break;
+    757          
+    758                  case ZDO_STATE_CHANGE:
+    759                    // If the device has started up, notify the application
+    760                    if (pMsg->status == DEV_END_DEVICE ||
+    761                        pMsg->status == DEV_ROUTER ||
+    762                        pMsg->status == DEV_ZB_COORD )
+    763                    {
+    764                      SAPI_StartConfirm( ZB_SUCCESS );
+    765                    }
+    766                    else  if (pMsg->status == DEV_HOLD ||
+    767                            pMsg->status == DEV_INIT)
+    768                    {
+    769                      SAPI_StartConfirm( ZB_INIT );
+    770                    }
+    771                    break;
+    772          
+    773                  case ZDO_MATCH_DESC_RSP_SENT:
+    774                    SAPI_AllowBindConfirm( ((ZDO_MatchDescRspSent_t *)pMsg)->nwkAddr );
+    775                    break;
+    776          /*
+    777                  case SAPICB_DATA_CNF:
+    778                    SAPI_SendDataConfirm( (uint8)((sapi_CbackEvent_t *)pMsg)->data,
+    779                                              ((sapi_CbackEvent_t *)pMsg)->hdr.status );
+    780                    break;
+    781          */
+    782          /*        case SAPICB_BIND_CNF:
+    783                    SAPI_BindConfirm( ((sapi_CbackEvent_t *)pMsg)->data,
+    784                                        ((sapi_CbackEvent_t *)pMsg)->hdr.status );
+    785                    break;
+    786          */
+    787                  case SAPICB_START_CNF:
+    788                    SAPI_StartConfirm( ((sapi_CbackEvent_t *)pMsg)->hdr.status );
    \                     ??SAPI_ProcessEvent_2:
-   \   000015                ; Setup parameters for call to function zb_StartConfirm
-   \   000015   A3           INC     DPTR
-   \   000016   E0           MOVX    A,@DPTR
-   \   000017   F9           MOV     R1,A
-   \                     ??SAPI_ProcessEvent_3:
-   \   000018   12....       LCALL   ??zb_StartConfirm?relay
-    788                    break;
-    789          
-    790                  default:
-    791                    // User messages should be handled by user or passed to the application
-    792                    if ( pMsg->event >= ZB_USER_MSG )
-    793                    {
-    794          
-    795                    }
-    796                    break;
-    797                }
-    798          
-    799                // Release the memory
-    800                osal_msg_deallocate( (uint8 *) pMsg );
-   \                     ??SAPI_ProcessEvent_4:
-   \   00001B                ; Setup parameters for call to function osal_msg_deallocate
-   \   00001B   EE           MOV     A,R6
-   \   00001C   FA           MOV     R2,A
-   \   00001D   EF           MOV     A,R7
-   \   00001E   FB           MOV     R3,A
-   \   00001F   12....       LCALL   ??osal_msg_deallocate?relay
-    801          
-    802                // Next
-    803                pMsg = (osal_event_hdr_t *) osal_msg_receive( task_id );
-   \   000022                ; Setup parameters for call to function osal_msg_receive
-   \   000022   A9..         MOV     R1,?V0 + 2
-   \                     ??SAPI_ProcessEvent_1:
-   \   000024   12....       LCALL   ??osal_msg_receive?relay
-   \   000027   8A..         MOV     ?V0 + 4,R2
-   \   000029   8B..         MOV     ?V0 + 5,R3
-   \   00002B   AE..         MOV     R6,?V0 + 4
-   \   00002D   AF..         MOV     R7,?V0 + 5
-   \   00002F   EE           MOV     A,R6
-   \   000030   4F           ORL     A,R7
-   \   000031   7003         JNZ     $+5
-   \   000033   02....       LJMP    ??SAPI_ProcessEvent_5 & 0xFFFF
-   \   000036   8E82         MOV     DPL,R6
-   \   000038   8F83         MOV     DPH,R7
-   \   00003A   E0           MOVX    A,@DPTR
-   \   00003B   24E6         ADD     A,#-0x1a
-   \   00003D   603D         JZ      ??SAPI_ProcessEvent_6
-   \   00003F   2449         ADD     A,#0x49
-   \   000041   6076         JZ      ??SAPI_ProcessEvent_7
-   \   000043   14           DEC     A
-   \   000044   7003         JNZ     $+5
-   \   000046   02....       LJMP    ??SAPI_ProcessEvent_8 & 0xFFFF
-   \   000049   14           DEC     A
-   \   00004A   6016         JZ      ??SAPI_ProcessEvent_9
-   \   00004C   24F3         ADD     A,#-0xd
-   \   00004E   7003         JNZ     $+5
-   \   000050   02....       LJMP    ??SAPI_ProcessEvent_10 & 0xFFFF
-   \   000053   14           DEC     A
-   \   000054   7003         JNZ     $+5
-   \   000056   02....       LJMP    ??SAPI_ProcessEvent_11 & 0xFFFF
-   \   000059   14           DEC     A
-   \   00005A   60B9         JZ      ??SAPI_ProcessEvent_2
-   \   00005C   24E5         ADD     A,#-0x1b
-   \   00005E   600B         JZ      ??SAPI_ProcessEvent_12
-   \   000060   80B9         SJMP    ??SAPI_ProcessEvent_4
-   \                     ??SAPI_ProcessEvent_9:
-   \   000062                ; Setup parameters for call to function SAPI_ProcessZDOMsgs
-   \   000062   EE           MOV     A,R6
-   \   000063   FA           MOV     R2,A
-   \   000064   EF           MOV     A,R7
-   \   000065   FB           MOV     R3,A
-   \   000066   12....       LCALL   ??SAPI_ProcessZDOMsgs?relay
-   \   000069   80B0         SJMP    ??SAPI_ProcessEvent_4
-   \                     ??SAPI_ProcessEvent_12:
-   \   00006B                ; Setup parameters for call to function zb_SendDataConfirm
-   \   00006B   A3           INC     DPTR
-   \   00006C   E0           MOVX    A,@DPTR
-   \   00006D   FA           MOV     R2,A
-   \   00006E   8E82         MOV     DPL,R6
-   \   000070   8F83         MOV     DPH,R7
-   \   000072   A3           INC     DPTR
-   \                     ??SAPI_ProcessEvent_13:
-   \   000073   A3           INC     DPTR
-   \   000074   A3           INC     DPTR
-   \   000075   E0           MOVX    A,@DPTR
-   \   000076   F9           MOV     R1,A
-   \   000077   12....       LCALL   ??zb_SendDataConfirm?relay
-   \   00007A   809F         SJMP    ??SAPI_ProcessEvent_4
-   \                     ??SAPI_ProcessEvent_6:
-   \   00007C                ; Setup parameters for call to function zb_ReceiveDataIndication
-   \   00007C   EE           MOV     A,R6
-   \   00007D   2422         ADD     A,#0x22
-   \   00007F   F582         MOV     DPL,A
-   \   000081   EF           MOV     A,R7
-   \   000082   3400         ADDC    A,#0x0
-   \   000084   F583         MOV     DPH,A
-   \   000086   12....       LCALL   ?PUSH_XSTACK8_X_TWO
-   \   000089   EE           MOV     A,R6
-   \   00008A   2420         ADD     A,#0x20
-   \   00008C   F582         MOV     DPL,A
-   \   00008E   EF           MOV     A,R7
-   \   00008F   3400         ADDC    A,#0x0
-   \   000091   F583         MOV     DPH,A
-   \   000093   12....       LCALL   ?PUSH_XSTACK8_X_TWO
-   \   000096   8E82         MOV     DPL,R6
-   \   000098   8F83         MOV     DPH,R7
-   \   00009A   A3           INC     DPTR
-   \   00009B   A3           INC     DPTR
-   \   00009C   A3           INC     DPTR
-   \   00009D   A3           INC     DPTR
-   \   00009E   E0           MOVX    A,@DPTR
-   \   00009F   FC           MOV     R4,A
-   \   0000A0   A3           INC     DPTR
-   \   0000A1   E0           MOVX    A,@DPTR
-   \   0000A2   FD           MOV     R5,A
-   \   0000A3   8E82         MOV     DPL,R6
-   \   0000A5   8F83         MOV     DPH,R7
-   \   0000A7   A3           INC     DPTR
-   \   0000A8   A3           INC     DPTR
-   \   0000A9   A3           INC     DPTR
-   \   0000AA   A3           INC     DPTR
-   \   0000AB   12....       LCALL   ?Subroutine9 & 0xFFFF
-   \                     ??CrossCallReturnLabel_25:
-   \   0000AE   12....       LCALL   ??zb_ReceiveDataIndication?relay
-   \   0000B1   7404         MOV     A,#0x4
-   \   0000B3   12....       LCALL   ?DEALLOC_XSTACK8
-   \   0000B6   02....       LJMP    ??SAPI_ProcessEvent_4 & 0xFFFF
-   \                     ??SAPI_ProcessEvent_7:
-   \   0000B9   A3           INC     DPTR
-   \   0000BA   E0           MOVX    A,@DPTR
-   \   0000BB   6406         XRL     A,#0x6
-   \   0000BD   6014         JZ      ??SAPI_ProcessEvent_14
-   \   0000BF   8E82         MOV     DPL,R6
-   \   0000C1   8F83         MOV     DPH,R7
-   \   0000C3   A3           INC     DPTR
-   \   0000C4   E0           MOVX    A,@DPTR
-   \   0000C5   6407         XRL     A,#0x7
-   \   0000C7   600A         JZ      ??SAPI_ProcessEvent_14
-   \   0000C9   8E82         MOV     DPL,R6
-   \   0000CB   8F83         MOV     DPH,R7
-   \   0000CD   A3           INC     DPTR
-   \   0000CE   E0           MOVX    A,@DPTR
-   \   0000CF   6409         XRL     A,#0x9
-   \   0000D1   7005         JNZ     ??SAPI_ProcessEvent_15
-   \                     ??SAPI_ProcessEvent_14:
-   \   0000D3                ; Setup parameters for call to function zb_StartConfirm
-   \   0000D3   7900         MOV     R1,#0x0
-   \   0000D5   02....       LJMP    ??SAPI_ProcessEvent_3 & 0xFFFF
-   \                     ??SAPI_ProcessEvent_15:
-   \   0000D8   8E82         MOV     DPL,R6
-   \   0000DA   8F83         MOV     DPH,R7
-   \   0000DC   A3           INC     DPTR
-   \   0000DD   E0           MOVX    A,@DPTR
-   \   0000DE   6007         JZ      ??SAPI_ProcessEvent_16
-   \   0000E0   6401         XRL     A,#0x1
-   \   0000E2   6003         JZ      $+5
-   \   0000E4   02....       LJMP    ??SAPI_ProcessEvent_4 & 0xFFFF
-   \                     ??SAPI_ProcessEvent_16:
-   \   0000E7                ; Setup parameters for call to function zb_StartConfirm
-   \   0000E7   7922         MOV     R1,#0x22
-   \   0000E9   02....       LJMP    ??SAPI_ProcessEvent_3 & 0xFFFF
-   \                     ??SAPI_ProcessEvent_8:
-   \   0000EC                ; Setup parameters for call to function zb_AllowBindConfirm
-   \   0000EC   12....       LCALL   ?Subroutine9 & 0xFFFF
-   \                     ??CrossCallReturnLabel_26:
-   \   0000EF   12....       LCALL   ??zb_AllowBindConfirm?relay
-   \   0000F2   02....       LJMP    ??SAPI_ProcessEvent_4 & 0xFFFF
-   \                     ??SAPI_ProcessEvent_10:
-   \   0000F5                ; Setup parameters for call to function zb_SendDataConfirm
-   \   0000F5   A3           INC     DPTR
-   \   0000F6   E0           MOVX    A,@DPTR
-   \   0000F7   FA           MOV     R2,A
-   \   0000F8   8E82         MOV     DPL,R6
-   \   0000FA   8F83         MOV     DPH,R7
-   \   0000FC   02....       LJMP    ??SAPI_ProcessEvent_13 & 0xFFFF
-   \                     ??SAPI_ProcessEvent_11:
-   \   0000FF                ; Setup parameters for call to function zb_BindConfirm
-   \   0000FF   A3           INC     DPTR
-   \   000100   E0           MOVX    A,@DPTR
-   \   000101   F9           MOV     R1,A
-   \   000102   8E82         MOV     DPL,R6
-   \   000104   8F83         MOV     DPH,R7
-   \   000106   12....       LCALL   ?Subroutine9 & 0xFFFF
-   \                     ??CrossCallReturnLabel_27:
-   \   000109   12....       LCALL   ??zb_BindConfirm?relay
-   \   00010C   02....       LJMP    ??SAPI_ProcessEvent_4 & 0xFFFF
-    804              }
-    805          
-    806              // Return unprocessed events
-    807              return (events ^ SYS_EVENT_MSG);
-   \                     ??SAPI_ProcessEvent_5:
-   \   00010F   AA..         MOV     R2,?V0 + 0
-   \   000111   E5..         MOV     A,?V0 + 1
-   \   000113   6480         XRL     A,#0x80
-   \                     ??SAPI_ProcessEvent_17:
-   \   000115   FB           MOV     R3,A
-   \   000116   804A         SJMP    ??SAPI_ProcessEvent_18
-    808            }
-    809          
-    810            if ( events & ZB_ALLOW_BIND_TIMER )
-   \                     ??SAPI_ProcessEvent_0:
-   \   000118   EB           MOV     A,R3
-   \   000119   5440         ANL     A,#0x40
-   \   00011B   600B         JZ      ??SAPI_ProcessEvent_19
-    811            {
-    812              afSetMatch(sapi_epDesc.simpleDesc->EndPoint, FALSE);
-   \   00011D                ; Setup parameters for call to function afSetMatch
-   \   00011D   12....       LCALL   ?Subroutine4 & 0xFFFF
-    813              return (events ^ ZB_ALLOW_BIND_TIMER);
-   \                     ??CrossCallReturnLabel_16:
-   \   000120   AA..         MOV     R2,?V0 + 0
-   \   000122   E5..         MOV     A,?V0 + 1
-   \   000124   6440         XRL     A,#0x40
-   \   000126   80ED         SJMP    ??SAPI_ProcessEvent_17
-    814            }
-    815          
-    816            if ( events & ZB_BIND_TIMER )
-   \                     ??SAPI_ProcessEvent_19:
-   \   000128   EB           MOV     A,R3
-   \   000129   5420         ANL     A,#0x20
-   \   00012B   600D         JZ      ??SAPI_ProcessEvent_20
-    817            {
-    818              // Send bind confirm callback to application
-    819              SAPI_BindConfirm( sapi_bindInProgress, ZB_TIMEOUT );
-   \   00012D                ; Setup parameters for call to function zb_BindConfirm
-   \   00012D   7921         MOV     R1,#0x21
-   \   00012F   12....       LCALL   ?Subroutine6 & 0xFFFF
-    820              sapi_bindInProgress = 0xffff;
-    821          
-    822              return (events ^ ZB_BIND_TIMER);
-   \                     ??CrossCallReturnLabel_2:
-   \   000132   AA..         MOV     R2,?V0 + 0
-   \   000134   E5..         MOV     A,?V0 + 1
-   \   000136   6420         XRL     A,#0x20
-   \   000138   80DB         SJMP    ??SAPI_ProcessEvent_17
-    823            }
-    824          
-    825            if ( events & ZB_ENTRY_EVENT )
-   \                     ??SAPI_ProcessEvent_20:
-   \   00013A   EB           MOV     A,R3
-   \   00013B   5410         ANL     A,#0x10
-   \   00013D   6019         JZ      ??SAPI_ProcessEvent_21
-    826            {
-    827              uint8 startOptions;
-                           ^
-Warning[Pe177]: variable "startOptions" was declared but never referenced
-    828          
-    829              // Give indication to application of device startup
-    830          #if ( SAPI_CB_FUNC )
-    831              zb_HandleOsalEvent( ZB_ENTRY_EVENT );
-   \   00013F                ; Setup parameters for call to function zb_HandleOsalEvent
-   \   00013F   7A00         MOV     R2,#0x0
-   \   000141   7B10         MOV     R3,#0x10
-   \   000143   12....       LCALL   ??zb_HandleOsalEvent?relay
-    832          #endif
-    833          
-    834              // LED off cancels HOLD_AUTO_START blink set in the stack
-    835              HalLedSet (HAL_LED_4, HAL_LED_MODE_OFF);
-   \   000146                ; Setup parameters for call to function HalLedSet
-   \   000146   7A00         MOV     R2,#0x0
-   \   000148   7908         MOV     R1,#0x8
-   \   00014A   12....       LCALL   ??HalLedSet?relay
-    836          
-    837          //    zb_ReadConfiguration( ZCD_NV_STARTUP_OPTION, sizeof(uint8), &startOptions );
-    838          //    if ( startOptions & ZCD_STARTOPT_AUTO_START )
-    839          //    {
-    840                zb_StartRequest();
-   \   00014D                ; Setup parameters for call to function zb_StartRequest
-   \   00014D   12....       LCALL   ??zb_StartRequest?relay
-    841          //    }
-    842          //    else
-    843          //    {
-    844                // blink leds and wait for external input to config and restart
-    845          //      HalLedBlink(HAL_LED_2, 0, 50, 500);
-    846          //    }
-    847          
-    848              return (events ^ ZB_ENTRY_EVENT );
-   \   000150   AA..         MOV     R2,?V0 + 0
-   \   000152   E5..         MOV     A,?V0 + 1
-   \   000154   6410         XRL     A,#0x10
-   \   000156   80BD         SJMP    ??SAPI_ProcessEvent_17
-    849            }
-    850          
-    851            // This must be the last event to be processed
-    852            if ( events & ( ZB_USER_EVENTS ) )
-   \                     ??SAPI_ProcessEvent_21:
-   \   000158   EA           MOV     A,R2
-   \   000159   6003         JZ      ??SAPI_ProcessEvent_22
-    853            {
-    854              // User events are passed to the application
-    855          #if ( SAPI_CB_FUNC )
-    856              zb_HandleOsalEvent( events );
-   \   00015B                ; Setup parameters for call to function zb_HandleOsalEvent
-   \   00015B   12....       LCALL   ??zb_HandleOsalEvent?relay
-    857          #endif
-    858          
-    859              // Do not return here, return 0 later
-    860            }
-    861          
-    862            // Discard unknown events
-    863            return 0;
-   \                     ??SAPI_ProcessEvent_22:
-   \   00015E   7A00         MOV     R2,#0x0
-   \   000160   7B00         MOV     R3,#0x0
-   \                     ??SAPI_ProcessEvent_18:
-   \   000162   02....       LJMP    ?Subroutine2 & 0xFFFF
-    864          }
-
-   \                                 In  segment BANKED_CODE, align 1, keep-with-next
-   \                     ?Subroutine6:
-   \   000000   90....       MOV     DPTR,#sapi_bindInProgress
-   \   000003   E0           MOVX    A,@DPTR
-   \   000004   FA           MOV     R2,A
-   \   000005   A3           INC     DPTR
-   \   000006   E0           MOVX    A,@DPTR
-   \   000007   FB           MOV     R3,A
-   \   000008   12....       LCALL   ??zb_BindConfirm?relay
-   \   00000B   90....       MOV     DPTR,#sapi_bindInProgress
-   \   00000E   74FF         MOV     A,#-0x1
-   \   000010   F0           MOVX    @DPTR,A
+   \   000011                ; Setup parameters for call to function zb_StartConfirm
    \   000011   A3           INC     DPTR
-   \   000012   F0           MOVX    @DPTR,A
-   \   000013   22           RET
-    865          
-    866          /*********************************************************************
-    867           * @fn      SAPI_ProcessZDOMsgs()
-    868           *
-    869           * @brief   Process response messages
-    870           *
-    871           * @param   none
-    872           *
-    873           * @return  none
-    874           */
+   \   000012   E0           MOVX    A,@DPTR
+   \   000013   F9           MOV     R1,A
+   \                     ??SAPI_ProcessEvent_3:
+   \   000014   12....       LCALL   ??zb_StartConfirm?relay
+    789                    break;
+    790          
+    791                  default:
+    792                    // User messages should be handled by user or passed to the application
+    793                    if ( pMsg->event >= ZB_USER_MSG )
+    794                    {
+    795          
+    796                    }
+    797                    break;
+    798                }
+    799          
+    800                // Release the memory
+    801                osal_msg_deallocate( (uint8 *) pMsg );
+   \                     ??SAPI_ProcessEvent_4:
+   \   000017                ; Setup parameters for call to function osal_msg_deallocate
+   \   000017   AA..         MOV     R2,?V0 + 0
+   \   000019   AB..         MOV     R3,?V0 + 1
+   \   00001B   12....       LCALL   ??osal_msg_deallocate?relay
+    802          
+    803                // Next
+    804                pMsg = (osal_event_hdr_t *) osal_msg_receive( task_id );
+   \   00001E                ; Setup parameters for call to function osal_msg_receive
+   \   00001E   A9..         MOV     R1,?V0 + 2
+   \                     ??SAPI_ProcessEvent_1:
+   \   000020   12....       LCALL   ??osal_msg_receive?relay
+   \   000023   8A..         MOV     ?V0 + 0,R2
+   \   000025   8B..         MOV     ?V0 + 1,R3
+   \   000027   E5..         MOV     A,?V0 + 0
+   \   000029   45..         ORL     A,?V0 + 1
+   \   00002B   6052         JZ      ??SAPI_ProcessEvent_5
+   \   00002D   85..82       MOV     DPL,?V0 + 0
+   \   000030   85..83       MOV     DPH,?V0 + 1
+   \   000033   E0           MOVX    A,@DPTR
+   \   000034   242F         ADD     A,#0x2f
+   \   000036   6013         JZ      ??SAPI_ProcessEvent_6
+   \   000038   24FE         ADD     A,#-0x2
+   \   00003A   6006         JZ      ??SAPI_ProcessEvent_7
+   \   00003C   24F1         ADD     A,#-0xf
+   \   00003E   60D1         JZ      ??SAPI_ProcessEvent_2
+   \   000040   80D5         SJMP    ??SAPI_ProcessEvent_4
+   \                     ??SAPI_ProcessEvent_7:
+   \   000042                ; Setup parameters for call to function SAPI_ProcessZDOMsgs
+   \   000042   AA..         MOV     R2,?V0 + 0
+   \   000044   AB..         MOV     R3,?V0 + 1
+   \   000046   12....       LCALL   ??SAPI_ProcessZDOMsgs?relay
+   \   000049   80CC         SJMP    ??SAPI_ProcessEvent_4
+   \                     ??SAPI_ProcessEvent_6:
+   \   00004B   A3           INC     DPTR
+   \   00004C   E0           MOVX    A,@DPTR
+   \   00004D   6406         XRL     A,#0x6
+   \   00004F   6018         JZ      ??SAPI_ProcessEvent_8
+   \   000051   85..82       MOV     DPL,?V0 + 0
+   \   000054   85..83       MOV     DPH,?V0 + 1
+   \   000057   A3           INC     DPTR
+   \   000058   E0           MOVX    A,@DPTR
+   \   000059   6407         XRL     A,#0x7
+   \   00005B   600C         JZ      ??SAPI_ProcessEvent_8
+   \   00005D   85..82       MOV     DPL,?V0 + 0
+   \   000060   85..83       MOV     DPH,?V0 + 1
+   \   000063   A3           INC     DPTR
+   \   000064   E0           MOVX    A,@DPTR
+   \   000065   6409         XRL     A,#0x9
+   \   000067   7004         JNZ     ??SAPI_ProcessEvent_9
+   \                     ??SAPI_ProcessEvent_8:
+   \   000069                ; Setup parameters for call to function zb_StartConfirm
+   \   000069   7900         MOV     R1,#0x0
+   \   00006B   80A7         SJMP    ??SAPI_ProcessEvent_3
+   \                     ??SAPI_ProcessEvent_9:
+   \   00006D   85..82       MOV     DPL,?V0 + 0
+   \   000070   85..83       MOV     DPH,?V0 + 1
+   \   000073   A3           INC     DPTR
+   \   000074   E0           MOVX    A,@DPTR
+   \   000075   6004         JZ      ??SAPI_ProcessEvent_10
+   \   000077   6401         XRL     A,#0x1
+   \   000079   709C         JNZ     ??SAPI_ProcessEvent_4
+   \                     ??SAPI_ProcessEvent_10:
+   \   00007B                ; Setup parameters for call to function zb_StartConfirm
+   \   00007B   7922         MOV     R1,#0x22
+   \   00007D   8095         SJMP    ??SAPI_ProcessEvent_3
+    805              }
+    806          
+    807              // Return unprocessed events
+    808              return (events ^ SYS_EVENT_MSG);
+   \                     ??SAPI_ProcessEvent_5:
+   \   00007F   EE           MOV     A,R6
+   \   000080   FA           MOV     R2,A
+   \   000081   EF           MOV     A,R7
+   \   000082   6480         XRL     A,#0x80
+   \                     ??SAPI_ProcessEvent_11:
+   \   000084   FB           MOV     R3,A
+   \   000085   8048         SJMP    ??SAPI_ProcessEvent_12
+    809            }
+    810          
+    811            if ( events & ZB_ALLOW_BIND_TIMER )
+   \                     ??SAPI_ProcessEvent_0:
+   \   000087   EF           MOV     A,R7
+   \   000088   5440         ANL     A,#0x40
+   \   00008A   600A         JZ      ??SAPI_ProcessEvent_13
+    812            {
+    813              afSetMatch(sapi_epDesc.simpleDesc->EndPoint, FALSE);
+   \   00008C                ; Setup parameters for call to function afSetMatch
+   \   00008C   12....       LCALL   ?Subroutine3 & 0xFFFF
+    814              return (events ^ ZB_ALLOW_BIND_TIMER);
+   \                     ??CrossCallReturnLabel_12:
+   \   00008F   EE           MOV     A,R6
+   \   000090   FA           MOV     R2,A
+   \   000091   EF           MOV     A,R7
+   \   000092   6440         XRL     A,#0x40
+   \   000094   80EE         SJMP    ??SAPI_ProcessEvent_11
+    815            }
+    816          
+    817            if ( events & ZB_BIND_TIMER )
+   \                     ??SAPI_ProcessEvent_13:
+   \   000096   EF           MOV     A,R7
+   \   000097   5420         ANL     A,#0x20
+   \   000099   600D         JZ      ??SAPI_ProcessEvent_14
+    818            {
+    819              // Send bind confirm callback to application
+    820          //    SAPI_BindConfirm( sapi_bindInProgress, ZB_TIMEOUT );
+    821              sapi_bindInProgress = 0xffff;
+   \   00009B   90....       MOV     DPTR,#sapi_bindInProgress
+   \   00009E   74FF         MOV     A,#-0x1
+   \   0000A0   F0           MOVX    @DPTR,A
+   \   0000A1   A3           INC     DPTR
+   \   0000A2   F0           MOVX    @DPTR,A
+    822          
+    823              return (events ^ ZB_BIND_TIMER);
+   \   0000A3   EF           MOV     A,R7
+   \   0000A4   6420         XRL     A,#0x20
+   \   0000A6   80DC         SJMP    ??SAPI_ProcessEvent_11
+    824            }
+    825          
+    826            if ( events & ZB_ENTRY_EVENT )
+   \                     ??SAPI_ProcessEvent_14:
+   \   0000A8   EF           MOV     A,R7
+   \   0000A9   5410         ANL     A,#0x10
+   \   0000AB   6018         JZ      ??SAPI_ProcessEvent_15
+    827            {
+    828          //    uint8 startOptions;
+    829          
+    830              // Give indication to application of device startup
+    831          #if ( SAPI_CB_FUNC )
+    832              zb_HandleOsalEvent( ZB_ENTRY_EVENT );
+   \   0000AD                ; Setup parameters for call to function zb_HandleOsalEvent
+   \   0000AD   7A00         MOV     R2,#0x0
+   \   0000AF   7B10         MOV     R3,#0x10
+   \   0000B1   12....       LCALL   ??zb_HandleOsalEvent?relay
+    833          #endif
+    834          
+    835              // LED off cancels HOLD_AUTO_START blink set in the stack
+    836              HalLedSet (HAL_LED_4, HAL_LED_MODE_OFF);
+   \   0000B4                ; Setup parameters for call to function HalLedSet
+   \   0000B4   7A00         MOV     R2,#0x0
+   \   0000B6   7908         MOV     R1,#0x8
+   \   0000B8   12....       LCALL   ??HalLedSet?relay
+    837          
+    838          //    zb_ReadConfiguration( ZCD_NV_STARTUP_OPTION, sizeof(uint8), &startOptions );
+    839          //    if ( startOptions & ZCD_STARTOPT_AUTO_START )
+    840          //    {
+    841                zb_StartRequest();
+   \   0000BB                ; Setup parameters for call to function zb_StartRequest
+   \   0000BB   12....       LCALL   ??zb_StartRequest?relay
+    842          //    }
+    843          //    else
+    844          //    {
+    845                // blink leds and wait for external input to config and restart
+    846          //      HalLedBlink(HAL_LED_2, 0, 50, 500);
+    847          //    }
+    848          
+    849              return (events ^ ZB_ENTRY_EVENT );
+   \   0000BE   EE           MOV     A,R6
+   \   0000BF   FA           MOV     R2,A
+   \   0000C0   EF           MOV     A,R7
+   \   0000C1   6410         XRL     A,#0x10
+   \   0000C3   80BF         SJMP    ??SAPI_ProcessEvent_11
+    850            }
+    851          
+    852            // This must be the last event to be processed
+    853            if ( events & ( ZB_USER_EVENTS ) )
+   \                     ??SAPI_ProcessEvent_15:
+   \   0000C5   EE           MOV     A,R6
+   \   0000C6   6003         JZ      ??SAPI_ProcessEvent_16
+    854            {
+    855              // User events are passed to the application
+    856          #if ( SAPI_CB_FUNC )
+    857              zb_HandleOsalEvent( events );
+   \   0000C8                ; Setup parameters for call to function zb_HandleOsalEvent
+   \   0000C8   12....       LCALL   ??zb_HandleOsalEvent?relay
+    858          #endif
+    859          
+    860              // Do not return here, return 0 later
+    861            }
+    862          
+    863            // Discard unknown events
+    864            return 0;
+   \                     ??SAPI_ProcessEvent_16:
+   \   0000CB   7A00         MOV     R2,#0x0
+   \   0000CD   7B00         MOV     R3,#0x0
+   \                     ??SAPI_ProcessEvent_12:
+   \   0000CF   7F06         MOV     R7,#0x6
+   \   0000D1   02....       LJMP    ?BANKED_LEAVE_XDATA
+    865          }
+    866          
+    867          /*********************************************************************
+    868           * @fn      SAPI_ProcessZDOMsgs()
+    869           *
+    870           * @brief   Process response messages
+    871           *
+    872           * @param   none
+    873           *
+    874           * @return  none
+    875           */
 
    \                                 In  segment BANKED_CODE, align 1, keep-with-next
-    875          void SAPI_ProcessZDOMsgs( zdoIncomingMsg_t *inMsg )
+    876          void SAPI_ProcessZDOMsgs( zdoIncomingMsg_t *inMsg )
    \                     SAPI_ProcessZDOMsgs:
-    876          {
+    877          {
    \   000000   74F6         MOV     A,#-0xa
    \   000002   12....       LCALL   ?BANKED_ENTER_XDATA
    \   000005                ; Saved register size: 10
    \   000005                ; Auto size: 9
    \   000005   74F7         MOV     A,#-0x9
    \   000007   12....       LCALL   ?ALLOC_XSTACK8
-    877            switch ( inMsg->clusterID )
+    878            switch ( inMsg->clusterID )
    \   00000A   EA           MOV     A,R2
    \   00000B   240C         ADD     A,#0xc
    \   00000D   F582         MOV     DPL,A
@@ -2109,18 +1858,18 @@ Warning[Pe177]: variable "startOptions" was declared but never referenced
    \   000026   ....         DW        ??SAPI_ProcessZDOMsgs_0
    \   000028   0680         DW        32774
    \   00002A   ....         DW        ??SAPI_ProcessZDOMsgs_1
-   \   00002C   ....         DW        ??CrossCallReturnLabel_3
-    878            {
-    879              case NWK_addr_rsp:
-    880                {
-    881                  // Send find device callback to application
-    882                  ZDO_NwkIEEEAddrResp_t *pNwkAddrRsp = ZDO_ParseAddrRsp( inMsg );
+   \   00002C   ....         DW        ??SAPI_ProcessZDOMsgs_2
+    879            {
+    880              case NWK_addr_rsp:
+    881                {
+    882                  // Send find device callback to application
+    883                  ZDO_NwkIEEEAddrResp_t *pNwkAddrRsp = ZDO_ParseAddrRsp( inMsg );
    \                     ??SAPI_ProcessZDOMsgs_0:
    \   00002E                ; Setup parameters for call to function ZDO_ParseAddrRsp
    \   00002E   12....       LCALL   ??ZDO_ParseAddrRsp?relay
    \   000031   8A82         MOV     DPL,R2
    \   000033   8B83         MOV     DPH,R3
-    883                  SAPI_FindDeviceConfirm( ZB_IEEE_SEARCH, (uint8*)&pNwkAddrRsp->nwkAddr, pNwkAddrRsp->extAddr );
+    884                  SAPI_FindDeviceConfirm( ZB_IEEE_SEARCH, (uint8*)&pNwkAddrRsp->nwkAddr, pNwkAddrRsp->extAddr );
    \   000035                ; Setup parameters for call to function zb_FindDeviceConfirm
    \   000035   E582         MOV     A,DPL
    \   000037   2403         ADD     A,#0x3
@@ -2133,14 +1882,14 @@ Warning[Pe177]: variable "startOptions" was declared but never referenced
    \   000042   AB83         MOV     R3,DPH
    \   000044   7901         MOV     R1,#0x1
    \   000046   12....       LCALL   ??zb_FindDeviceConfirm?relay
-    884                }
-    885                break;
-   \   000049   02....       LJMP    ??CrossCallReturnLabel_3 & 0xFFFF
-    886          
-    887              case Match_Desc_rsp:
-    888                {
-    889                  zAddrType_t dstAddr;
-    890                  ZDO_ActiveEndpointRsp_t *pRsp = ZDO_ParseEPListRsp( inMsg );
+    885                }
+    886                break;
+   \   000049   02....       LJMP    ??SAPI_ProcessZDOMsgs_2 & 0xFFFF
+    887          
+    888              case Match_Desc_rsp:
+    889                {
+    890                  zAddrType_t dstAddr;
+    891                  ZDO_ActiveEndpointRsp_t *pRsp = ZDO_ParseEPListRsp( inMsg );
    \                     ??SAPI_ProcessZDOMsgs_1:
    \   00004C                ; Setup parameters for call to function ZDO_ParseEPListRsp
    \   00004C   12....       LCALL   ??ZDO_ParseEPListRsp?relay
@@ -2148,25 +1897,25 @@ Warning[Pe177]: variable "startOptions" was declared but never referenced
    \   000051   8B..         MOV     ?V0 + 1,R3
    \   000053   AE..         MOV     R6,?V0 + 0
    \   000055   AF..         MOV     R7,?V0 + 1
-    891          
-    892                  if ( sapi_bindInProgress != 0xffff )
+    892          
+    893                  if ( sapi_bindInProgress != 0xffff )
    \   000057   90....       MOV     DPTR,#sapi_bindInProgress
    \   00005A   E0           MOVX    A,@DPTR
    \   00005B   F4           CPL     A
-   \   00005C   7003         JNZ     ??SAPI_ProcessZDOMsgs_2
+   \   00005C   7003         JNZ     ??SAPI_ProcessZDOMsgs_3
    \   00005E   A3           INC     DPTR
    \   00005F   E0           MOVX    A,@DPTR
    \   000060   F4           CPL     A
-   \                     ??SAPI_ProcessZDOMsgs_2:
-   \   000061   606B         JZ      ??CrossCallReturnLabel_3
-    893                  {
-    894                    // Create a binding table entry
-    895                    dstAddr.addrMode = Addr16Bit;
+   \                     ??SAPI_ProcessZDOMsgs_3:
+   \   000061   6071         JZ      ??SAPI_ProcessZDOMsgs_2
+    894                  {
+    895                    // Create a binding table entry
+    896                    dstAddr.addrMode = Addr16Bit;
    \   000063   7408         MOV     A,#0x8
    \   000065   12....       LCALL   ?XSTACK_DISP0_8
    \   000068   7402         MOV     A,#0x2
    \   00006A   F0           MOVX    @DPTR,A
-    896                    dstAddr.addr.shortAddr = pRsp->nwkAddr;
+    897                    dstAddr.addr.shortAddr = pRsp->nwkAddr;
    \   00006B   8E82         MOV     DPL,R6
    \   00006D   8F83         MOV     DPH,R7
    \   00006F   A3           INC     DPTR
@@ -2182,9 +1931,9 @@ Warning[Pe177]: variable "startOptions" was declared but never referenced
    \   00007D   A3           INC     DPTR
    \   00007E   E9           MOV     A,R1
    \   00007F   F0           MOVX    @DPTR,A
-    897          
-    898                    if ( APSME_BindRequest( sapi_epDesc.simpleDesc->EndPoint,
-    899                               sapi_bindInProgress, &dstAddr, pRsp->epList[0] ) == ZSuccess )
+    898          
+    899                    if ( APSME_BindRequest( sapi_epDesc.simpleDesc->EndPoint,
+    900                               sapi_bindInProgress, &dstAddr, pRsp->epList[0] ) == ZSuccess )
    \   000080                ; Setup parameters for call to function APSME_BindRequest
    \   000080   8E82         MOV     DPL,R6
    \   000082   8F83         MOV     DPH,R7
@@ -2201,15 +1950,15 @@ Warning[Pe177]: variable "startOptions" was declared but never referenced
    \   000095   AC82         MOV     R4,DPL
    \   000097   AD83         MOV     R5,DPH
    \   000099   90....       MOV     DPTR,#sapi_bindInProgress
-   \   00009C   12....       LCALL   ?Subroutine5 & 0xFFFF
+   \   00009C   12....       LCALL   ?Subroutine4 & 0xFFFF
    \                     ??CrossCallReturnLabel_1:
    \   00009F   12....       LCALL   ??APSME_BindRequest?relay
    \   0000A2   7401         MOV     A,#0x1
    \   0000A4   12....       LCALL   ?DEALLOC_XSTACK8
    \   0000A7   E9           MOV     A,R1
-   \   0000A8   7024         JNZ     ??CrossCallReturnLabel_3
-    900                    {
-    901                      osal_stop_timerEx(sapi_TaskID,  ZB_BIND_TIMER);
+   \   0000A8   702A         JNZ     ??SAPI_ProcessZDOMsgs_2
+    901                    {
+    902                      osal_stop_timerEx(sapi_TaskID,  ZB_BIND_TIMER);
    \   0000AA                ; Setup parameters for call to function osal_stop_timerEx
    \   0000AA   7A00         MOV     R2,#0x0
    \   0000AC   7B20         MOV     R3,#0x20
@@ -2217,131 +1966,131 @@ Warning[Pe177]: variable "startOptions" was declared but never referenced
    \   0000B1   E0           MOVX    A,@DPTR
    \   0000B2   F9           MOV     R1,A
    \   0000B3   12....       LCALL   ??osal_stop_timerEx?relay
-    902                      osal_start_timerEx( ZDAppTaskID, ZDO_NWK_UPDATE_NV, 250 );
+    903                      osal_start_timerEx( ZDAppTaskID, ZDO_NWK_UPDATE_NV, 250 );
    \   0000B6                ; Setup parameters for call to function osal_start_timerEx
-   \   0000B6   12....       LCALL   ?Subroutine8 & 0xFFFF
-    903          
-    904                      // Find IEEE addr
-    905                      ZDP_IEEEAddrReq( pRsp->nwkAddr, ZDP_ADDR_REQTYPE_SINGLE, 0, 0 );
-   \                     ??CrossCallReturnLabel_12:
+   \   0000B6   12....       LCALL   ?Subroutine6 & 0xFFFF
+    904          
+    905                      // Find IEEE addr
+    906                      ZDP_IEEEAddrReq( pRsp->nwkAddr, ZDP_ADDR_REQTYPE_SINGLE, 0, 0 );
+   \                     ??CrossCallReturnLabel_8:
    \   0000B9                ; Setup parameters for call to function ZDP_IEEEAddrReq
    \   0000B9   7D00         MOV     R5,#0x0
    \   0000BB   7C00         MOV     R4,#0x0
    \   0000BD   7900         MOV     R1,#0x0
    \   0000BF   8E82         MOV     DPL,R6
    \   0000C1   8F83         MOV     DPH,R7
-   \   0000C3   12....       LCALL   ??Subroutine16_0 & 0xFFFF
-   \                     ??CrossCallReturnLabel_24:
-   \   0000C6   12....       LCALL   ??ZDP_IEEEAddrReq?relay
-    906          #if defined ( MT_SAPI_CB_FUNC )
-    907                      zb_MTCallbackBindConfirm( sapi_bindInProgress, ZB_SUCCESS );
-    908          #endif              
-    909                      // Send bind confirm callback to application
-    910          #if ( SAPI_CB_FUNC )
-    911                      zb_BindConfirm( sapi_bindInProgress, ZB_SUCCESS );
-   \   0000C9                ; Setup parameters for call to function zb_BindConfirm
-   \   0000C9   7900         MOV     R1,#0x0
-   \   0000CB   12....       LCALL   ?Subroutine6 & 0xFFFF
-    912          #endif
-    913                      sapi_bindInProgress = 0xffff;
-    914                    }
-    915                  }
-    916                }
-    917                break;
-    918            }
-    919          }
-   \                     ??CrossCallReturnLabel_3:
-   \   0000CE   7409         MOV     A,#0x9
-   \   0000D0   02....       LJMP    ?Subroutine3 & 0xFFFF
+   \   0000C3   A3           INC     DPTR
+   \   0000C4   E0           MOVX    A,@DPTR
+   \   0000C5   FA           MOV     R2,A
+   \   0000C6   A3           INC     DPTR
+   \   0000C7   E0           MOVX    A,@DPTR
+   \   0000C8   FB           MOV     R3,A
+   \   0000C9   12....       LCALL   ??ZDP_IEEEAddrReq?relay
+    907          #if defined ( MT_SAPI_CB_FUNC )
+    908                      zb_MTCallbackBindConfirm( sapi_bindInProgress, ZB_SUCCESS );
+    909          #endif              
+    910                      // Send bind confirm callback to application
+    911          #if ( SAPI_CB_FUNC )
+    912          //            zb_BindConfirm( sapi_bindInProgress, ZB_SUCCESS );
+    913          #endif
+    914                      sapi_bindInProgress = 0xffff;
+   \   0000CC   90....       MOV     DPTR,#sapi_bindInProgress
+   \   0000CF   74FF         MOV     A,#-0x1
+   \   0000D1   F0           MOVX    @DPTR,A
+   \   0000D2   A3           INC     DPTR
+   \   0000D3   F0           MOVX    @DPTR,A
+    915                    }
+    916                  }
+    917                }
+    918                break;
+    919            }
+    920          }
+   \                     ??SAPI_ProcessZDOMsgs_2:
+   \   0000D4   7409         MOV     A,#0x9
+   \   0000D6   02....       LJMP    ?Subroutine2 & 0xFFFF
+    921          
+    922          /*********************************************************************
+    923           * @fn      SAPI_Init
+    924           *
+    925           * @brief   Initialization function for the Simple API Task.
+    926           *          This is called during initialization and should contain
+    927           *          any application specific initialization (ie. hardware
+    928           *          initialization/setup, table initialization, power up
+    929           *          notification ... ).
+    930           *
+    931           * @param   task_id - the ID assigned by OSAL.  This ID should be
+    932           *                    used to send messages and set timers.
+    933           *
+    934           * @return  none
+    935           */
 
    \                                 In  segment BANKED_CODE, align 1, keep-with-next
-   \                     ??Subroutine16_0:
-   \   000000   A3           INC     DPTR
-   \   000001                REQUIRE ??Subroutine17_0
-   \   000001                ; // Fall through to label ??Subroutine17_0
-    920          
-    921          /*********************************************************************
-    922           * @fn      SAPI_Init
-    923           *
-    924           * @brief   Initialization function for the Simple API Task.
-    925           *          This is called during initialization and should contain
-    926           *          any application specific initialization (ie. hardware
-    927           *          initialization/setup, table initialization, power up
-    928           *          notification ... ).
-    929           *
-    930           * @param   task_id - the ID assigned by OSAL.  This ID should be
-    931           *                    used to send messages and set timers.
-    932           *
-    933           * @return  none
-    934           */
-
-   \                                 In  segment BANKED_CODE, align 1, keep-with-next
-    935          void SAPI_Init( byte task_id )
+    936          void SAPI_Init( byte task_id )
    \                     SAPI_Init:
-    936          {
+    937          {
    \   000000   74F7         MOV     A,#-0x9
    \   000002   12....       LCALL   ?BANKED_ENTER_XDATA
    \   000005                ; Saved register size: 9
    \   000005                ; Auto size: 0
    \   000005   E9           MOV     A,R1
    \   000006   FE           MOV     R6,A
-    937            sapi_TaskID = task_id;
+    938            sapi_TaskID = task_id;
    \   000007   90....       MOV     DPTR,#sapi_TaskID
    \   00000A   F0           MOVX    @DPTR,A
-    938            sapi_bindInProgress = 0xffff;
+    939            sapi_bindInProgress = 0xffff;
    \   00000B   90....       MOV     DPTR,#sapi_bindInProgress
    \   00000E   74FF         MOV     A,#-0x1
    \   000010   F0           MOVX    @DPTR,A
    \   000011   A3           INC     DPTR
    \   000012   F0           MOVX    @DPTR,A
-    939          
-    940            sapi_epDesc.task_id = &sapi_TaskID;
+    940          
+    941            sapi_epDesc.task_id = &sapi_TaskID;
    \   000013   90....       MOV     DPTR,#sapi_epDesc + 1
    \   000016   74..         MOV     A,#sapi_TaskID & 0xff
    \   000018   F0           MOVX    @DPTR,A
    \   000019   A3           INC     DPTR
    \   00001A   74..         MOV     A,#(sapi_TaskID >> 8) & 0xff
    \   00001C   F0           MOVX    @DPTR,A
-    941            sapi_epDesc.endPoint = 0;
+    942            sapi_epDesc.endPoint = 0;
    \   00001D   90....       MOV     DPTR,#sapi_epDesc
    \   000020   E4           CLR     A
    \   000021   F0           MOVX    @DPTR,A
-    942            
-    943          #if ( SAPI_CB_FUNC )
-    944            sapi_epDesc.endPoint = zb_SimpleDesc.EndPoint;
+    943            
+    944          #if ( SAPI_CB_FUNC )
+    945            sapi_epDesc.endPoint = zb_SimpleDesc.EndPoint;
    \   000022   90....       MOV     DPTR,#zb_SimpleDesc
    \   000025   E0           MOVX    A,@DPTR
    \   000026   90....       MOV     DPTR,#sapi_epDesc
    \   000029   F0           MOVX    @DPTR,A
-    945            sapi_epDesc.task_id = &sapi_TaskID;
-    946            sapi_epDesc.simpleDesc = (SimpleDescriptionFormat_t *)&zb_SimpleDesc;
+    946            sapi_epDesc.task_id = &sapi_TaskID;
+    947            sapi_epDesc.simpleDesc = (SimpleDescriptionFormat_t *)&zb_SimpleDesc;
    \   00002A   90....       MOV     DPTR,#sapi_epDesc + 3
    \   00002D   74..         MOV     A,#zb_SimpleDesc & 0xff
    \   00002F   F0           MOVX    @DPTR,A
    \   000030   A3           INC     DPTR
    \   000031   74..         MOV     A,#(zb_SimpleDesc >> 8) & 0xff
    \   000033   F0           MOVX    @DPTR,A
-    947            sapi_epDesc.latencyReq = noLatencyReqs;
+    948            sapi_epDesc.latencyReq = noLatencyReqs;
    \   000034   A3           INC     DPTR
    \   000035   E4           CLR     A
    \   000036   F0           MOVX    @DPTR,A
-    948          
-    949            // Register the endpoint/interface description with the AF
-    950            afRegister( &sapi_epDesc );
+    949          
+    950            // Register the endpoint/interface description with the AF
+    951            afRegister( &sapi_epDesc );
    \   000037                ; Setup parameters for call to function afRegister
    \   000037   7A..         MOV     R2,#sapi_epDesc & 0xff
    \   000039   7B..         MOV     R3,#(sapi_epDesc >> 8) & 0xff
    \   00003B   12....       LCALL   ??afRegister?relay
-    951          #endif
-    952          
-    953            // Turn off match descriptor response by default
-    954            afSetMatch(sapi_epDesc.simpleDesc->EndPoint, FALSE);
+    952          #endif
+    953          
+    954            // Turn off match descriptor response by default
+    955            afSetMatch(sapi_epDesc.simpleDesc->EndPoint, FALSE);
    \   00003E                ; Setup parameters for call to function afSetMatch
-   \   00003E   12....       LCALL   ?Subroutine4 & 0xFFFF
-    955          
-    956            // Register callback evetns from the ZDApp
-    957            ZDO_RegisterForZDOMsg( sapi_TaskID, NWK_addr_rsp );
-   \                     ??CrossCallReturnLabel_17:
+   \   00003E   12....       LCALL   ?Subroutine3 & 0xFFFF
+    956          
+    957            // Register callback evetns from the ZDApp
+    958            ZDO_RegisterForZDOMsg( sapi_TaskID, NWK_addr_rsp );
+   \                     ??CrossCallReturnLabel_13:
    \   000041                ; Setup parameters for call to function ZDO_RegisterForZDOMsg
    \   000041   7A00         MOV     R2,#0x0
    \   000043   7B80         MOV     R3,#-0x80
@@ -2349,7 +2098,7 @@ Warning[Pe177]: variable "startOptions" was declared but never referenced
    \   000048   E0           MOVX    A,@DPTR
    \   000049   F9           MOV     R1,A
    \   00004A   12....       LCALL   ??ZDO_RegisterForZDOMsg?relay
-    958            ZDO_RegisterForZDOMsg( sapi_TaskID, Match_Desc_rsp );
+    959            ZDO_RegisterForZDOMsg( sapi_TaskID, Match_Desc_rsp );
    \   00004D                ; Setup parameters for call to function ZDO_RegisterForZDOMsg
    \   00004D   7A06         MOV     R2,#0x6
    \   00004F   7B80         MOV     R3,#-0x80
@@ -2357,29 +2106,29 @@ Warning[Pe177]: variable "startOptions" was declared but never referenced
    \   000054   E0           MOVX    A,@DPTR
    \   000055   F9           MOV     R1,A
    \   000056   12....       LCALL   ??ZDO_RegisterForZDOMsg?relay
-    959            // Set an event to start the application
-    960            osal_set_event(task_id, ZB_ENTRY_EVENT);
+    960            // Set an event to start the application
+    961            osal_set_event(task_id, ZB_ENTRY_EVENT);
    \   000059                ; Setup parameters for call to function osal_set_event
    \   000059   7A00         MOV     R2,#0x0
    \   00005B   7B10         MOV     R3,#0x10
    \   00005D   EE           MOV     A,R6
    \   00005E   F9           MOV     R1,A
    \   00005F   12....       LCALL   ??osal_set_event?relay
-    961          }
+    962          }
    \   000062   02....       LJMP    ?Subroutine1 & 0xFFFF
-    962          /*********************************************************************
-    963           * @fn      SAPI_SendCback
-    964           *
-    965           * @brief   Sends a message to the sapi task ( itself ) so that a
-    966           *           callback can be generated later.
-    967           *
-    968           * @return  none
-    969           */
+    963          /*********************************************************************
+    964           * @fn      SAPI_SendCback
+    965           *
+    966           * @brief   Sends a message to the sapi task ( itself ) so that a
+    967           *           callback can be generated later.
+    968           *
+    969           * @return  none
+    970           */
 
    \                                 In  segment BANKED_CODE, align 1, keep-with-next
-    970          void SAPI_SendCback( uint8 event, uint8 status, uint16 data )
+    971          void SAPI_SendCback( uint8 event, uint8 status, uint16 data )
    \                     SAPI_SendCback:
-    971          {
+    972          {
    \   000000   74F4         MOV     A,#-0xc
    \   000002   12....       LCALL   ?BANKED_ENTER_XDATA
    \   000005                ; Saved register size: 12
@@ -2390,28 +2139,28 @@ Warning[Pe177]: variable "startOptions" was declared but never referenced
    \   00000A   FE           MOV     R6,A
    \   00000B   ED           MOV     A,R5
    \   00000C   FF           MOV     R7,A
-    972            sapi_CbackEvent_t *pMsg;
-    973          
-    974            pMsg = (sapi_CbackEvent_t *)osal_msg_allocate( sizeof(sapi_CbackEvent_t) );
+    973            sapi_CbackEvent_t *pMsg;
+    974          
+    975            pMsg = (sapi_CbackEvent_t *)osal_msg_allocate( sizeof(sapi_CbackEvent_t) );
    \   00000D                ; Setup parameters for call to function osal_msg_allocate
    \   00000D   7A04         MOV     R2,#0x4
    \   00000F   7B00         MOV     R3,#0x0
    \   000011   12....       LCALL   ??osal_msg_allocate?relay
-    975            if( pMsg )
+    976            if( pMsg )
    \   000014   EA           MOV     A,R2
    \   000015   4B           ORL     A,R3
    \   000016   601E         JZ      ??SAPI_SendCback_0
-    976            {
-    977              pMsg->hdr.event = event;
+    977            {
+    978              pMsg->hdr.event = event;
    \   000018   8A82         MOV     DPL,R2
    \   00001A   8B83         MOV     DPH,R3
    \   00001C   E5..         MOV     A,?V0 + 0
    \   00001E   F0           MOVX    @DPTR,A
-    978              pMsg->hdr.status = status;
+    979              pMsg->hdr.status = status;
    \   00001F   A3           INC     DPTR
    \   000020   E5..         MOV     A,?V0 + 1
    \   000022   F0           MOVX    @DPTR,A
-    979              pMsg->data = data;
+    980              pMsg->data = data;
    \   000023   8A82         MOV     DPL,R2
    \   000025   8B83         MOV     DPH,R3
    \   000027   A3           INC     DPTR
@@ -2421,24 +2170,18 @@ Warning[Pe177]: variable "startOptions" was declared but never referenced
    \   00002B   A3           INC     DPTR
    \   00002C   EF           MOV     A,R7
    \   00002D   F0           MOVX    @DPTR,A
-    980          
-    981              osal_msg_send( sapi_TaskID, (uint8 *)pMsg );
+    981          
+    982              osal_msg_send( sapi_TaskID, (uint8 *)pMsg );
    \   00002E                ; Setup parameters for call to function osal_msg_send
    \   00002E   90....       MOV     DPTR,#sapi_TaskID
    \   000031   E0           MOVX    A,@DPTR
    \   000032   F9           MOV     R1,A
    \   000033   12....       LCALL   ??osal_msg_send?relay
-    982            }
-    983          
-    984          }
+    983            }
+    984          
+    985          }
    \                     ??SAPI_SendCback_0:
    \   000036   02....       LJMP    ?Subroutine0 & 0xFFFF
-
-   \                                 In  segment BANKED_CODE, align 1, keep-with-next
-   \                     ?Subroutine9:
-   \   000000   A3           INC     DPTR
-   \   000001                REQUIRE ??Subroutine16_0
-   \   000001                ; // Fall through to label ??Subroutine16_0
 
    \                                 In  segment BANK_RELAYS, align 1
    \                     ??zb_SystemReset?relay:
@@ -2464,11 +2207,6 @@ Warning[Pe177]: variable "startOptions" was declared but never referenced
    \                     ??zb_AllowBind?relay:
    \   000000   12....       LCALL   ?BDISPATCH
    \   000003   ......       DC24    zb_AllowBind
-
-   \                                 In  segment BANK_RELAYS, align 1
-   \                     ??zb_SendDataRequest?relay:
-   \   000000   12....       LCALL   ?BDISPATCH
-   \   000003   ......       DC24    zb_SendDataRequest
 
    \                                 In  segment BANK_RELAYS, align 1
    \                     ??zb_ReadConfiguration?relay:
@@ -2509,128 +2247,117 @@ Warning[Pe177]: variable "startOptions" was declared but never referenced
    \                     ??SAPI_SendCback?relay:
    \   000000   12....       LCALL   ?BDISPATCH
    \   000003   ......       DC24    SAPI_SendCback
-    985          
-    986          #if OSAL_SAPI
-    987          /*********************************************************************
-    988           * @fn      osalInitTasks
-    989           *
-    990           * @brief   This function invokes the initialization function for each task.
-    991           *
-    992           * @param   void
-    993           *
-    994           * @return  none
-    995           */
-    996          void osalInitTasks( void )
-    997          {
-    998            uint8 taskID = 0;
-    999          
-   1000            tasksEvents = (uint16 *)osal_mem_alloc( sizeof( uint16 ) * tasksCnt);
-   1001            osal_memset( tasksEvents, 0, (sizeof( uint16 ) * tasksCnt));
-   1002          
-   1003            macTaskInit( taskID++ );
-   1004            nwk_init( taskID++ );
-   1005            Hal_Init( taskID++ );
-   1006          #if defined( MT_TASK )
-   1007            MT_TaskInit( taskID++ );
-   1008          #endif
-   1009            APS_Init( taskID++ );
-   1010            ZDApp_Init( taskID++ );
-   1011            SAPI_Init( taskID );
-   1012          }
-   1013          #endif
-   1014          
-   1015          /*********************************************************************
-   1016          *********************************************************************/
-   1017          
+    986          
+    987          #if OSAL_SAPI
+    988          /*********************************************************************
+    989           * @fn      osalInitTasks
+    990           *
+    991           * @brief   This function invokes the initialization function for each task.
+    992           *
+    993           * @param   void
+    994           *
+    995           * @return  none
+    996           */
+    997          void osalInitTasks( void )
+    998          {
+    999            uint8 taskID = 0;
+   1000          
+   1001            tasksEvents = (uint16 *)osal_mem_alloc( sizeof( uint16 ) * tasksCnt);
+   1002            osal_memset( tasksEvents, 0, (sizeof( uint16 ) * tasksCnt));
+   1003          
+   1004            macTaskInit( taskID++ );
+   1005            nwk_init( taskID++ );
+   1006            Hal_Init( taskID++ );
+   1007          #if defined( MT_TASK )
+   1008            MT_TaskInit( taskID++ );
+   1009          #endif
+   1010            APS_Init( taskID++ );
+   1011            ZDApp_Init( taskID++ );
+   1012            SAPI_Init( taskID );
+   1013          }
+   1014          #endif
+   1015          
+   1016          /*********************************************************************
+   1017          *********************************************************************/
+   1018          
 
    Maximum stack usage in bytes:
 
-     Function                      ISTACK PSTACK XSTACK
-     --------                      ------ ------ ------
-     SAPI_Init                         0      0      9
-       -> afRegister                   0      0     18
-       -> afSetMatch                   0      0     18
-       -> ZDO_RegisterForZDOMsg        0      0     18
-       -> ZDO_RegisterForZDOMsg        0      0     18
-       -> osal_set_event               0      0     18
-     SAPI_ProcessEvent                 0      0     18
-       -> osal_msg_receive             0      0     28
-       -> zb_StartConfirm              0      0     28
-       -> osal_msg_deallocate          0      0     28
-       -> osal_msg_receive             0      0     28
-       -> SAPI_ProcessZDOMsgs          0      0     28
-       -> zb_SendDataConfirm           0      0     28
-       -> zb_ReceiveDataIndication     0      0     36
-       -> zb_StartConfirm              0      0     28
-       -> zb_StartConfirm              0      0     28
-       -> zb_AllowBindConfirm          0      0     28
-       -> zb_SendDataConfirm           0      0     28
-       -> zb_BindConfirm               0      0     28
-       -> afSetMatch                   0      0     28
-       -> zb_BindConfirm               0      0     28
-       -> zb_HandleOsalEvent           0      0     28
-       -> HalLedSet                    0      0     28
-       -> zb_StartRequest              0      0     28
-       -> zb_HandleOsalEvent           0      0     28
-     SAPI_ProcessZDOMsgs               0      0     34
-       -> ZDO_ParseAddrRsp             0      0     38
-       -> zb_FindDeviceConfirm         0      0     38
-       -> ZDO_ParseEPListRsp           0      0     38
-       -> APSME_BindRequest            0      0     40
-       -> osal_stop_timerEx            0      0     38
-       -> osal_start_timerEx           0      0     38
-       -> ZDP_IEEEAddrReq              0      0     38
-       -> zb_BindConfirm               0      0     38
-     SAPI_SendCback                    1      0     38
-       -> osal_msg_allocate            0      0     24
-       -> osal_msg_send                0      0     24
-     zb_AllowBind                      0      0      9
-       -> HalLedSet                    0      0     18
-       -> osal_stop_timerEx            0      0     18
-       -> afSetMatch                   0      0     18
-       -> afSetMatch                   0      0     18
-       -> osal_start_timerEx           0      0     18
-     zb_BindDevice                     0      0     31
-       -> sAddrExtCpy                  0      0     46
-       -> APSME_BindRequest            0      0     48
-       -> ZDP_NwkAddrReq               0      0     46
-       -> osal_start_timerEx           0      0     46
-       -> SAPI_SendCback               0      0     46
-       -> ZDO_AnyClusterMatches        0      0     50
-       -> ZDP_MatchDescReq             0      0     62
-       -> ZDO_AnyClusterMatches        0      0     50
-       -> ZDP_MatchDescReq             0      0     62
-       -> osal_start_timerEx           0      0     46
-       -> bindRemoveEntry              0      0     46
-       -> bindFind                     0      0     46
-       -> osal_start_timerEx           0      0     46
-     zb_FindDeviceRequest              0      0      9
-       -> ZDP_NwkAddrReq               0      0     18
-     zb_GetDeviceInfo                  0      0     14
-       -> osal_memcpy                  0      0     28
-       -> osal_memcpy                  0      0     28
-       -> osal_memcpy                  0      0     28
-       -> osal_memcpy                  0      0     28
-       -> osal_memcpy                  0      0     28
-       -> osal_memcpy                  0      0     28
-       -> osal_memcpy                  0      0     28
-       -> osal_memcpy                  0      0     28
-     zb_PermitJoiningRequest           0      0      0
-     zb_ReadConfiguration              0      0     17
-       -> osal_nv_item_len             0      0     24
-       -> osal_nv_read                 0      0     32
-     zb_SendDataRequest                1      0     40
-       -> NLME_IsAddressBroadcast      0      0     52
-       -> AF_DataRequest               0      0     70
-       -> SAPI_SendCback               0      0     52
-     zb_StartRequest                   2      0     15
-       -> zb_ReadConfiguration         4      0      2
-       -> SAPI_SendCback               4      0      2
-       -> ZDOInitDevice                4      0      2
-     zb_SystemReset                    0      0      0
-       -> Onboard_soft_reset           0      0      0
-     zb_WriteConfiguration             0      0     14
-       -> osal_nv_write                0      0     28
+     Function                   ISTACK PSTACK XSTACK
+     --------                   ------ ------ ------
+     SAPI_Init                      0      0      9
+       -> afRegister                0      0     18
+       -> afSetMatch                0      0     18
+       -> ZDO_RegisterForZDOMsg     0      0     18
+       -> ZDO_RegisterForZDOMsg     0      0     18
+       -> osal_set_event            0      0     18
+     SAPI_ProcessEvent              0      0     14
+       -> osal_msg_receive          0      0     28
+       -> zb_StartConfirm           0      0     28
+       -> osal_msg_deallocate       0      0     28
+       -> osal_msg_receive          0      0     28
+       -> SAPI_ProcessZDOMsgs       0      0     28
+       -> zb_StartConfirm           0      0     28
+       -> zb_StartConfirm           0      0     28
+       -> afSetMatch                0      0     28
+       -> zb_HandleOsalEvent        0      0     28
+       -> HalLedSet                 0      0     28
+       -> zb_StartRequest           0      0     28
+       -> zb_HandleOsalEvent        0      0     28
+     SAPI_ProcessZDOMsgs            0      0     34
+       -> ZDO_ParseAddrRsp          0      0     38
+       -> zb_FindDeviceConfirm      0      0     38
+       -> ZDO_ParseEPListRsp        0      0     38
+       -> APSME_BindRequest         0      0     40
+       -> osal_stop_timerEx         0      0     38
+       -> osal_start_timerEx        0      0     38
+       -> ZDP_IEEEAddrReq           0      0     38
+     SAPI_SendCback                 1      0     35
+       -> osal_msg_allocate         0      0     24
+       -> osal_msg_send             0      0     24
+     zb_AllowBind                   0      0      9
+       -> HalLedSet                 0      0     18
+       -> osal_stop_timerEx         0      0     18
+       -> afSetMatch                0      0     18
+       -> afSetMatch                0      0     18
+       -> osal_start_timerEx        0      0     18
+     zb_BindDevice                  0      0     31
+       -> sAddrExtCpy               0      0     46
+       -> APSME_BindRequest         0      0     48
+       -> ZDP_NwkAddrReq            0      0     46
+       -> osal_start_timerEx        0      0     46
+       -> SAPI_SendCback            0      0     46
+       -> ZDO_AnyClusterMatches     0      0     50
+       -> ZDP_MatchDescReq          0      0     62
+       -> ZDO_AnyClusterMatches     0      0     50
+       -> ZDP_MatchDescReq          0      0     62
+       -> osal_start_timerEx        0      0     46
+       -> bindRemoveEntry           0      0     46
+       -> bindFind                  0      0     46
+       -> osal_start_timerEx        0      0     46
+     zb_FindDeviceRequest           0      0      9
+       -> ZDP_NwkAddrReq            0      0     18
+     zb_GetDeviceInfo               0      0     14
+       -> osal_memcpy               0      0     28
+       -> osal_memcpy               0      0     28
+       -> osal_memcpy               0      0     28
+       -> osal_memcpy               0      0     28
+       -> osal_memcpy               0      0     28
+       -> osal_memcpy               0      0     28
+       -> osal_memcpy               0      0     28
+       -> osal_memcpy               0      0     28
+     zb_PermitJoiningRequest        0      0      0
+     zb_ReadConfiguration           0      0     17
+       -> osal_nv_item_len          0      0     24
+       -> osal_nv_read              0      0     32
+     zb_StartRequest                2      0     15
+       -> zb_ReadConfiguration      4      0      2
+       -> SAPI_SendCback            4      0      2
+       -> ZDOInitDevice             4      0      2
+     zb_SystemReset                 0      0      0
+       -> Onboard_soft_reset        0      0      0
+     zb_WriteConfiguration          0      0     14
+       -> osal_nv_write             0      0     28
 
 
    Segment part sizes:
@@ -2642,42 +2369,34 @@ Warning[Pe177]: variable "startOptions" was declared but never referenced
      sapi_bindInProgress                2
      zb_SystemReset                     6
      zb_StartRequest                   77
-     zb_BindDevice                    459
+     zb_BindDevice                    461
      ?Subroutine0                       5
-     ?Subroutine10                      5
-     ?Subroutine7                      20
-     ?Subroutine8                      11
-     ??Subroutine14_0                   6
-     ?Subroutine12                      4
-     ?Subroutine13                     12
-     ??Subroutine17_0                   6
-     ?Subroutine5                       9
-     ?Subroutine11                      6
+     ?Subroutine7                       5
+     ?Subroutine5                      20
+     ?Subroutine6                      11
+     ??Subroutine10_0                   6
+     ?Subroutine4                       9
+     ?Subroutine8                       6
+     ?Subroutine9                      12
      zb_PermitJoiningRequest            5
      zb_AllowBind                      77
      ?Subroutine1                       5
-     ?Subroutine4                       2
-     ??Subroutine15_0                   7
-     zb_SendDataRequest               205
-     ?Subroutine2                       5
+     ?Subroutine3                       2
+     ??Subroutine11_0                   7
      zb_ReadConfiguration              69
      zb_WriteConfiguration             43
-     ?Subroutine3                       8
+     ?Subroutine2                       8
      zb_GetDeviceInfo                 138
      zb_FindDeviceRequest              24
-     SAPI_ProcessEvent                357
-     ?Subroutine6                      20
-     SAPI_ProcessZDOMsgs              211
-     ??Subroutine16_0                   1
+     SAPI_ProcessEvent                212
+     SAPI_ProcessZDOMsgs              217
      SAPI_Init                        101
      SAPI_SendCback                    57
-     ?Subroutine9                       1
      ??zb_SystemReset?relay             6
      ??zb_StartRequest?relay            6
      ??zb_BindDevice?relay              6
      ??zb_PermitJoiningRequest?relay    6
      ??zb_AllowBind?relay               6
-     ??zb_SendDataRequest?relay         6
      ??zb_ReadConfiguration?relay       6
      ??zb_WriteConfiguration?relay      6
      ??zb_GetDeviceInfo?relay           6
@@ -2688,12 +2407,12 @@ Warning[Pe177]: variable "startOptions" was declared but never referenced
      ??SAPI_SendCback?relay             6
 
  
- 1 962 bytes in segment BANKED_CODE
-    84 bytes in segment BANK_RELAYS
+ 1 583 bytes in segment BANKED_CODE
+    78 bytes in segment BANK_RELAYS
      9 bytes in segment XDATA_Z
  
- 2 046 bytes of CODE  memory
+ 1 661 bytes of CODE  memory
      9 bytes of XDATA memory
 
 Errors: none
-Warnings: 1
+Warnings: none

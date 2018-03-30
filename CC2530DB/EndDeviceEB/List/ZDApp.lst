@@ -1,13 +1,13 @@
 ###############################################################################
 #                                                                             #
-# IAR C/C++ Compiler V8.10.3.10338/W32 for 8051         08/Sep/2017  21:42:39 #
+# IAR C/C++ Compiler V8.10.3.10338/W32 for 8051         30/Mar/2018  14:24:13 #
 # Copyright 2004-2011 IAR Systems AB.                                         #
 #                                                                             #
 #    Core               =  plain                                              #
 #    Code model         =  banked                                             #
 #    Data model         =  large                                              #
 #    Calling convention =  xdata reentrant                                    #
-#    Constant location  =  data_rom                                           #
+#    Constant location  =  data                                               #
 #    Dptr setup         =  1,16                                               #
 #    Source file        =  D:\ProgramData\Hardware\zigbee\Components\stack\zd #
 #                          o\ZDApp.c                                          #
@@ -38,7 +38,7 @@
 #                          -DMAC_MAX_FRAME_SIZE=116                           #
 #                          -DZDNWKMGR_MIN_TRANSMISSIONS=20 "-DCONST=const     #
 #                          __code" -DGENERIC=__generic                        #
-#                          -DRFD_RCVC_ALWAYS_ON=FALSE -DPOLL_RATE=1000        #
+#                          -DRFD_RCVC_ALWAYS_ON=TRUE -DPOLL_RATE=1000         #
 #                          -DQUEUED_POLL_RATE=100 -DRESPONSE_POLL_RATE=100)   #
 #                          -DREJOIN_POLL_RATE=440 D:\ProgramData\Hardware\zig #
 #                          bee\Components\stack\zdo\ZDApp.c -D NWK_AUTO_POLL  #
@@ -55,9 +55,9 @@
 #                          --no_code_motion --debug --core=plain --dptr=16,1  #
 #                          --data_model=large --code_model=banked             #
 #                          --calling_convention=xdata_reentrant               #
-#                          --place_constants=data_rom --nr_virtual_regs 16    #
-#                          -I D:\ProgramData\Hardware\zigbee\Projects\zstack\ #
-#                          Samples\SensorSys\CC2530DB\ -I                     #
+#                          --place_constants=data --nr_virtual_regs 16 -I     #
+#                          D:\ProgramData\Hardware\zigbee\Projects\zstack\Sam #
+#                          ples\SensorSys\CC2530DB\ -I                        #
 #                          D:\ProgramData\Hardware\zigbee\Projects\zstack\Sam #
 #                          ples\SensorSys\CC2530DB\..\Source\ -I              #
 #                          D:\ProgramData\Hardware\zigbee\Projects\zstack\Sam #
@@ -1526,7 +1526,7 @@ D:\ProgramData\Hardware\zigbee\Components\stack\zdo\ZDApp.c
     781              osal_pwrmgr_device( PWRMGR_ALWAYS_ON );
    \                     ??ZDApp_NetworkStartEvt_1:
    \   000015                ; Setup parameters for call to function osal_pwrmgr_device
-   \   000015   7900         MOV     R1,#0x0
+   \   000015   7901         MOV     R1,#0x1
    \   000017   12....       LCALL   ??osal_pwrmgr_device?relay
     782              osal_set_event( ZDAppTaskID, ZDO_STATE_CHANGE_EVT );
    \   00001A                ; Setup parameters for call to function osal_set_event
@@ -7022,6 +7022,18 @@ D:\ProgramData\Hardware\zigbee\Components\stack\zdo\ZDApp.c
    \   000013   02....       LJMP    ?Subroutine2 & 0xFFFF
    3037          }
 
+   \                                 In  segment XDATA_I, align 1, keep-with-next
+   \                     __Constant_1:
+   \   000000                DS 4
+   \   000004                REQUIRE `?<Initializer for __Constant_1>`
+   \   000004                REQUIRE __INIT_XDATA_I
+
+   \                                 In  segment XDATA_I, align 1, keep-with-next
+   \                     __Constant_3e8:
+   \   000000                DS 4
+   \   000004                REQUIRE `?<Initializer for __Constant_3e8>`
+   \   000004                REQUIRE __INIT_XDATA_I
+
    \                                 In  segment XDATA_ID, align 1, keep-with-next
    \                     `?<Initializer for zdoDiscCounter>`:
    \   000000   01           DB 1
@@ -7041,12 +7053,12 @@ D:\ProgramData\Hardware\zigbee\Components\stack\zdo\ZDApp.c
    \                     `?<Initializer for ZDApp_SavedPollRate>`:
    \   000000   E803         DW 1000
 
-   \                                 In  segment XDATA_ROM_C, align 1
-   \                     __Constant_1:
+   \                                 In  segment XDATA_ID, align 1, keep-with-next
+   \                     `?<Initializer for __Constant_1>`:
    \   000000   01000000     DD 1
 
-   \                                 In  segment XDATA_ROM_C, align 1
-   \                     __Constant_3e8:
+   \                                 In  segment XDATA_ID, align 1, keep-with-next
+   \                     `?<Initializer for __Constant_3e8>`:
    \   000000   E8030000     DD 1000
 
    \                                 In  segment BANK_RELAYS, align 1
@@ -7792,12 +7804,14 @@ D:\ProgramData\Hardware\zigbee\Components\stack\zdo\ZDApp.c
      ?Subroutine41                                 17
      ZDO_RegisterForZdoCB                          27
      ZDO_DeregisterForZdoCB                        22
+     __Constant_1                                   4
+     __Constant_3e8                                 4
      ?<Initializer for zdoDiscCounter>              1
      ?<Initializer for continueJoining>             1
      ?<Initializer for ZDApp_epDesc>                6
      ?<Initializer for ZDApp_SavedPollRate>         2
-     __Constant_1                                   4
-     __Constant_3e8                                 4
+     ?<Initializer for __Constant_1>                4
+     ?<Initializer for __Constant_3e8>              4
      ??ZDApp_Init?relay                             6
      ??ZDApp_SecInit?relay                          6
      ??ZDApp_event_loop?relay                       6
@@ -7867,14 +7881,12 @@ D:\ProgramData\Hardware\zigbee\Components\stack\zdo\ZDApp.c
  
  5 222 bytes in segment BANKED_CODE
    390 bytes in segment BANK_RELAYS
-    10 bytes in segment XDATA_I
-    10 bytes in segment XDATA_ID
-     8 bytes in segment XDATA_ROM_C
+    18 bytes in segment XDATA_I
+    18 bytes in segment XDATA_ID
     55 bytes in segment XDATA_Z
  
- 5 622 bytes of CODE  memory
-     0 bytes of CONST memory (+ 8 bytes shared)
-    65 bytes of XDATA memory
+ 5 622 bytes of CODE  memory (+ 8 bytes shared)
+    65 bytes of XDATA memory (+ 8 bytes shared)
 
 Errors: none
 Warnings: none

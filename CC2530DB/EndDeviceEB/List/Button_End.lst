@@ -1,13 +1,13 @@
 ###############################################################################
 #                                                                             #
-# IAR C/C++ Compiler V8.10.3.10338/W32 for 8051         08/Sep/2017  21:42:43 #
+# IAR C/C++ Compiler V8.10.3.10338/W32 for 8051         30/Mar/2018  14:24:04 #
 # Copyright 2004-2011 IAR Systems AB.                                         #
 #                                                                             #
 #    Core               =  plain                                              #
 #    Code model         =  banked                                             #
 #    Data model         =  large                                              #
 #    Calling convention =  xdata reentrant                                    #
-#    Constant location  =  data_rom                                           #
+#    Constant location  =  data                                               #
 #    Dptr setup         =  1,16                                               #
 #    Source file        =  D:\ProgramData\Hardware\zigbee\Projects\zstack\Sam #
 #                          ples\SensorSys\Source\Button_End.c                 #
@@ -38,7 +38,7 @@
 #                          -DMAC_MAX_FRAME_SIZE=116                           #
 #                          -DZDNWKMGR_MIN_TRANSMISSIONS=20 "-DCONST=const     #
 #                          __code" -DGENERIC=__generic                        #
-#                          -DRFD_RCVC_ALWAYS_ON=FALSE -DPOLL_RATE=1000        #
+#                          -DRFD_RCVC_ALWAYS_ON=TRUE -DPOLL_RATE=1000         #
 #                          -DQUEUED_POLL_RATE=100 -DRESPONSE_POLL_RATE=100)   #
 #                          -DREJOIN_POLL_RATE=440 D:\ProgramData\Hardware\zig #
 #                          bee\Projects\zstack\Samples\SensorSys\Source\Butto #
@@ -56,9 +56,9 @@
 #                          --no_code_motion --debug --core=plain --dptr=16,1  #
 #                          --data_model=large --code_model=banked             #
 #                          --calling_convention=xdata_reentrant               #
-#                          --place_constants=data_rom --nr_virtual_regs 16    #
-#                          -I D:\ProgramData\Hardware\zigbee\Projects\zstack\ #
-#                          Samples\SensorSys\CC2530DB\ -I                     #
+#                          --place_constants=data --nr_virtual_regs 16 -I     #
+#                          D:\ProgramData\Hardware\zigbee\Projects\zstack\Sam #
+#                          ples\SensorSys\CC2530DB\ -I                        #
 #                          D:\ProgramData\Hardware\zigbee\Projects\zstack\Sam #
 #                          ples\SensorSys\CC2530DB\..\Source\ -I              #
 #                          D:\ProgramData\Hardware\zigbee\Projects\zstack\Sam #
@@ -127,555 +127,883 @@ D:\ProgramData\Hardware\zigbee\Projects\zstack\Samples\SensorSys\Source\Button_E
       6          #include "sapi.h"
       7          
       8          #include "SensorSys_End.h"
-      9          #include "DebugTrace.h"
-     10          
-     11          #if !defined( WIN32 )
-     12          	#include "OnBoard.h"
-     13          #endif
-     14          
-     15          /* HAL */
-     16          #include "hal_led.h"
-     17          #include "hal_key.h"
-     18          #include "hal_uart.h"
-     19          
-     20          /*********************************************************************
-     21           * MACROS
-     22           */
-     23          
-     24          /*********************************************************************
-     25           * CONSTANTS
-     26           */
-     27          
-     28          /*********************************************************************
-     29           * TYPEDEFS
-     30           */
-     31          
-     32          /*********************************************************************
-     33           * GLOBAL VARIABLES
-     34           */
-     35          
+      9          #include "device.h"
+     10          #include "DebugTrace.h"
+     11          
+     12          #if !defined( WIN32 )
+     13          	#include "OnBoard.h"
+     14          #endif
+     15          
+     16          /* HAL */
+     17          #include "hal_led.h"
+     18          #include "hal_key.h"
+     19          #include "hal_uart.h"
+     20          
+     21          /*********************************************************************
+     22           * MACROS
+     23           */
+     24          
+     25          /*********************************************************************
+     26           * CONSTANTS
+     27           */
+     28          
+     29          /*********************************************************************
+     30           * TYPEDEFS
+     31           */
+     32          
+     33          /*********************************************************************
+     34           * GLOBAL VARIABLES
+     35           */
      36          
-     37          
+
+   \                                 In  segment XDATA_Z, align 1, keep-with-next
+     37          uint8 buttonCnt = 0;
+   \                     buttonCnt:
+   \   000000                DS 1
+   \   000001                REQUIRE __INIT_XDATA_Z
      38          
      39          
      40          
-     41          // Button 端点的簇ID
-     42          // This list should be filled with Application specific Cluster IDs.
+     41          
+     42          // Button 端点的簇ID
+     43          // This list should be filled with Application specific Cluster IDs.
 
-   \                                 In  segment XDATA_ROM_C, align 1
-     43          const cId_t Button_ClusterList[BUTTON_MAX_CLUSTERS] =
+   \                                 In  segment XDATA_I, align 1, keep-with-next
+     44          const cId_t Button_ClusterList[BUTTON_MAX_CLUSTERS] =
    \                     Button_ClusterList:
-   \   000000   0300         DW 3
-   \   000002   0000         DW 0
-     44          {
-     45          	BUTTON_CLUSTERID
-     46          };
-     47          
-     48          // Button 端点简单描述符
-
-   \                                 In  segment XDATA_ROM_C, align 1
-     49          const SimpleDescriptionFormat_t Button_SimpleDesc =
-   \                     Button_SimpleDesc:
-   \   000000   0A           DB 10
-   \   000001   040F         DW 3844
-   \   000003   0100         DW 1
-   \   000005   00           DB 0
-   \   000006   02           DB 2
-   \   000007   ....         DW Button_ClusterList
-   \   000009   02           DB 2
-   \   00000A   ....         DW Button_ClusterList
-     50          {
-     51          	BUTTON_ENDPOINT,           //  int Endpoint;
-     52          	SYS_PROFID,                //  uint16 AppProfId[2];
-     53          	SYS_DEVICEID,              //  uint16 AppDeviceId[2];
-     54          	SYS_DEVICE_VERSION,        //  int   AppDevVer:4;
-     55          	SYS_FLAGS,                 //  int   AppFlags:4;
-     56          	BUTTON_MAX_CLUSTERS,          //  byte  AppNumInClusters;
-     57          	(cId_t *)Button_ClusterList,  //  byte *pAppInClusterList;
-     58          	BUTTON_MAX_CLUSTERS,          //  byte  AppNumInClusters;
-     59          	(cId_t *)Button_ClusterList   //  byte *pAppInClusterList;
-     60          };
-     61          
-
-   \                                 In  segment XDATA_Z, align 1, keep-with-next
-     62          endPointDesc_t Button_epDesc;
-   \                     Button_epDesc:
    \   000000                DS 6
-   \   000006                REQUIRE __INIT_XDATA_Z
-     63          
-     64          /*********************************************************************
-     65           * EXTERNAL VARIABLES
-     66           */
-     67          extern uint8 myAppState;
-     68          
-     69          /*********************************************************************
-     70           * EXTERNAL FUNCTIONS
-     71           */
-     72          
+   \   000006                REQUIRE `?<Initializer for Button_ClusterList>`
+   \   000006                REQUIRE __INIT_XDATA_I
+     45          {
+     46              BUTTON_OPEN,
+     47              BUTTON_CLOSE,
+     48              BUTTON_TRIGGER
+     49          };
+     50          
+     51          // Button 端点简单描述符
+
+   \                                 In  segment XDATA_I, align 1, keep-with-next
+     52          SimpleDescriptionFormat_t Button_SimpleDesc[BUTTON_NUM_MAX] =
+   \                     Button_SimpleDesc:
+   \   000000                DS 36
+   \   000024                REQUIRE `?<Initializer for Button_SimpleDesc>`
+   \   000024                REQUIRE __INIT_XDATA_I
+     53          {
+     54          	BUTTON_ENDPOINT,           //  int Endpoint;
+     55          	SYS_PROFID,                //  uint16 AppProfId[2];
+     56          	SYS_DEVICEID,              //  uint16 AppDeviceId[2];
+     57          	SYS_DEVICE_VERSION,        //  int   AppDevVer:4;
+     58          	SYS_FLAGS,                 //  int   AppFlags:4;
+     59          	BUTTON_MAX_CLUSTERS,          //  byte  AppNumInClusters;
+     60          	(cId_t *)Button_ClusterList,  //  byte *pAppInClusterList;
+     61          	BUTTON_MAX_CLUSTERS,          //  byte  AppNumInClusters;
+     62          	(cId_t *)Button_ClusterList   //  byte *pAppInClusterList;
+     63          };
+     64          
+
+   \                                 In  segment XDATA_Z, align 1, keep-with-next
+     65          endPointDesc_t Button_epDesc[BUTTON_NUM_MAX];
+   \                     Button_epDesc:
+   \   000000                DS 18
+   \   000012                REQUIRE __INIT_XDATA_Z
+     66          
+     67          /*********************************************************************
+     68           * EXTERNAL VARIABLES
+     69           */
+     70          extern uint8 myAppState;
+     71          extern uint8 keys_shift;
+     72          extern uint8 type_join;
      73          /*********************************************************************
-     74           * LOCAL VARIABLES
+     74           * EXTERNAL FUNCTIONS
      75           */
+     76          
+     77          /*********************************************************************
+     78           * LOCAL VARIABLES
+     79           */
+     80          
+     81          
 
    \                                 In  segment XDATA_Z, align 1, keep-with-next
-     76          static uint8 keys_shift = 0;
-   \                     keys_shift:
-   \   000000                DS 1
-   \   000001                REQUIRE __INIT_XDATA_Z
-
-   \                                 In  segment XDATA_Z, align 1, keep-with-next
-     77          static uint8 type_join;
-   \                     type_join:
-   \   000000                DS 1
-   \   000001                REQUIRE __INIT_XDATA_Z
-     78          
-
-   \                                 In  segment XDATA_Z, align 1, keep-with-next
-     79          byte Button_TaskID;
+     82          byte Button_TaskID;
    \                     Button_TaskID:
    \   000000                DS 1
    \   000001                REQUIRE __INIT_XDATA_Z
-     80          
+     83          
 
    \                                 In  segment XDATA_Z, align 1, keep-with-next
-     81          afAddrType_t Button_DstAddr;
+     84          afAddrType_t Button_DstAddr;
    \                     Button_DstAddr:
    \   000000                DS 12
    \   00000C                REQUIRE __INIT_XDATA_Z
-     82          
-     83          
-     84          /*********************************************************************
-     85           * LOCAL FUNCTIONS
-     86           */
-     87          void Button_Init( byte task_id );
-     88          UINT16 Button_ProcessEvent( byte task_id, UINT16 events );
-     89          void Button_HandleKeys( byte shift, byte keys );
-     90          
-     91          
-     92          /*********************************************************************
-     93           * @fn      Button_Init
-     94           *
-     95           * @brief   Initialization function for the Generic App Task.
-     96           *          This is called during initialization and should contain
-     97           *          any application specific initialization (ie. hardware
-     98           *          initialization/setup, table initialization, power up
-     99           *          notificaiton ... ).
-    100           *
-    101           * @param   task_id - the ID assigned by OSAL.  This ID should be
-    102           *                    used to send messages and set timers.
-    103           *
-    104           * @return  none
-    105           */
+     85          
+     86          
+     87          /*********************************************************************
+     88           * LOCAL FUNCTIONS
+     89           */
+     90          void Button_Init( byte task_id );
+     91          UINT16 Button_ProcessEvent( byte task_id, UINT16 events );
+     92          void Button_HandleKeys( byte shift, byte keys );
+     93          
+     94          static void Button_ReceiveDataIndication( uint16 source, uint8 endPoint, 
+     95                                        uint16 command, uint16 len, uint8 *pData  );
+     96          static void Button_AllowBindConfirm( uint16 source );
+     97          /*********************************************************************
+     98           * @fn      Button_Init
+     99           *
+    100           * @brief   Initialization function for the Generic App Task.
+    101           *          This is called during initialization and should contain
+    102           *          any application specific initialization (ie. hardware
+    103           *          initialization/setup, table initialization, power up
+    104           *          notificaiton ... ).
+    105           *
+    106           * @param   task_id - the ID assigned by OSAL.  This ID should be
+    107           *                    used to send messages and set timers.
+    108           *
+    109           * @return  none
+    110           */
 
    \                                 In  segment BANKED_CODE, align 1, keep-with-next
-    106          void Button_Init( byte task_id )
+    111          void Button_Init( byte task_id )
    \                     Button_Init:
-    107          {
+    112          {
    \   000000   74F7         MOV     A,#-0x9
    \   000002   12....       LCALL   ?BANKED_ENTER_XDATA
    \   000005                ; Saved register size: 9
    \   000005                ; Auto size: 0
    \   000005   E9           MOV     A,R1
-    108          	Button_TaskID = task_id;
+    113                  char i;
+    114          	Button_TaskID = task_id;
    \   000006   90....       MOV     DPTR,#Button_TaskID
    \   000009   F0           MOVX    @DPTR,A
-    109          
-    110          	// Device hardware initialization can be added here or in main() (Zmain.c).
-    111          	// If the hardware is application specific - add it here.
-    112          	// If the hardware is other parts of the device add it in main().
-    113          
-    114          	Button_DstAddr.addrMode = (afAddrMode_t)AddrNotPresent;
+    115          
+    116          	// Device hardware initialization can be added here or in main() (Zmain.c).
+    117          	// If the hardware is application specific - add it here.
+    118          	// If the hardware is other parts of the device add it in main().
+    119          
+    120          	Button_DstAddr.addrMode = (afAddrMode_t)AddrNotPresent;
    \   00000A   90....       MOV     DPTR,#Button_DstAddr + 8
    \   00000D   E4           CLR     A
    \   00000E   F0           MOVX    @DPTR,A
-    115          	Button_DstAddr.endPoint = 0;
+    121          	Button_DstAddr.endPoint = 0;
    \   00000F   A3           INC     DPTR
    \   000010   F0           MOVX    @DPTR,A
-    116          	Button_DstAddr.addr.shortAddr = 0;
+    122          	Button_DstAddr.addr.shortAddr = 0;
    \   000011   90....       MOV     DPTR,#Button_DstAddr
    \   000014   F0           MOVX    @DPTR,A
    \   000015   A3           INC     DPTR
    \   000016   F0           MOVX    @DPTR,A
-    117          
-    118          	// Fill out the endpoint description.
-    119          	Button_epDesc.endPoint = BUTTON_ENDPOINT;
-   \   000017   90....       MOV     DPTR,#Button_epDesc
-   \   00001A   740A         MOV     A,#0xa
-   \   00001C   F0           MOVX    @DPTR,A
-    120          	Button_epDesc.task_id = &Button_TaskID;
-   \   00001D   A3           INC     DPTR
-   \   00001E   74..         MOV     A,#Button_TaskID & 0xff
-   \   000020   F0           MOVX    @DPTR,A
-   \   000021   A3           INC     DPTR
-   \   000022   74..         MOV     A,#(Button_TaskID >> 8) & 0xff
-   \   000024   F0           MOVX    @DPTR,A
-    121          	Button_epDesc.simpleDesc
-    122          						= (SimpleDescriptionFormat_t *)&Button_SimpleDesc;
-   \   000025   A3           INC     DPTR
-   \   000026   74..         MOV     A,#Button_SimpleDesc & 0xff
-   \   000028   F0           MOVX    @DPTR,A
-   \   000029   A3           INC     DPTR
-   \   00002A   74..         MOV     A,#(Button_SimpleDesc >> 8) & 0xff
-   \   00002C   F0           MOVX    @DPTR,A
-    123          	Button_epDesc.latencyReq = noLatencyReqs;
-   \   00002D   A3           INC     DPTR
-   \   00002E   E4           CLR     A
-   \   00002F   F0           MOVX    @DPTR,A
-    124          
-    125          	// Register the endpoint description with the AF
-    126          	afRegister( &Button_epDesc );
-   \   000030                ; Setup parameters for call to function afRegister
-   \   000030   7A..         MOV     R2,#Button_epDesc & 0xff
-   \   000032   7B..         MOV     R3,#(Button_epDesc >> 8) & 0xff
-   \   000034   12....       LCALL   ??afRegister?relay
-    127          
-    128          	// Register for all key events - This app will handle all key events
-    129          	RegisterForKeys( Button_TaskID );
-   \   000037                ; Setup parameters for call to function RegisterForKeys
-   \   000037   90....       MOV     DPTR,#Button_TaskID
-   \   00003A   E0           MOVX    A,@DPTR
-   \   00003B   F9           MOV     R1,A
-   \   00003C   12....       LCALL   ??RegisterForKeys?relay
-    130           
-    131          	//	ZDO_RegisterForZDOMsg( Button_TaskID, End_Device_Bind_rsp );
-    132          	ZDO_RegisterForZDOMsg( Button_TaskID, Match_Desc_rsp );
-   \   00003F                ; Setup parameters for call to function ZDO_RegisterForZDOMsg
-   \   00003F   7A06         MOV     R2,#0x6
-   \   000041   7B80         MOV     R3,#-0x80
-   \   000043   90....       MOV     DPTR,#Button_TaskID
-   \   000046   E0           MOVX    A,@DPTR
-   \   000047   F9           MOV     R1,A
-   \   000048   12....       LCALL   ??ZDO_RegisterForZDOMsg?relay
-    133          
-    134          	HalLedSet ( HAL_LED_1, HAL_LED_MODE_ON );
-   \   00004B                ; Setup parameters for call to function HalLedSet
-   \   00004B   12....       LCALL   ?Subroutine1 & 0xFFFF
-    135            HalLedSet ( HAL_LED_2, HAL_LED_MODE_ON );
-    136            HalLedSet ( HAL_LED_3, HAL_LED_MODE_ON );
-    137          
-    138          }
-   \                     ??CrossCallReturnLabel_0:
-   \   00004E                REQUIRE ?Subroutine0
-   \   00004E                ; // Fall through to label ?Subroutine0
+    123                  
+    124                  for( i=0; i<BUTTON_NUM_MAX; i++)
+   \   000017   FF           MOV     R7,A
+    125                  {
+    126                      // Fill out the endpoint description.
+    127                      Button_epDesc[i].endPoint = BUTTON_ENDPOINT+i;
+   \                     ??Button_Init_0:
+   \   000018   8F82         MOV     DPL,R7
+   \   00001A   A882         MOV     R0,DPL
+   \   00001C   E8           MOV     A,R0
+   \   00001D   75F006       MOV     B,#0x6
+   \   000020   A4           MUL     AB
+   \   000021   FA           MOV     R2,A
+   \   000022   ABF0         MOV     R3,B
+   \   000024   74..         MOV     A,#Button_epDesc & 0xff
+   \   000026   2A           ADD     A,R2
+   \   000027   FA           MOV     R2,A
+   \   000028   74..         MOV     A,#(Button_epDesc >> 8) & 0xff
+   \   00002A   3B           ADDC    A,R3
+   \   00002B   FB           MOV     R3,A
+   \   00002C   740A         MOV     A,#0xa
+   \   00002E   2F           ADD     A,R7
+   \   00002F   8A82         MOV     DPL,R2
+   \   000031   8B83         MOV     DPH,R3
+   \   000033   F0           MOVX    @DPTR,A
+    128                      Button_epDesc[i].task_id = &Button_TaskID;
+   \   000034   A3           INC     DPTR
+   \   000035   74..         MOV     A,#Button_TaskID & 0xff
+   \   000037   F0           MOVX    @DPTR,A
+   \   000038   A3           INC     DPTR
+   \   000039   74..         MOV     A,#(Button_TaskID >> 8) & 0xff
+   \   00003B   F0           MOVX    @DPTR,A
+    129                      Button_SimpleDesc[i] = Button_SimpleDesc[0];
+   \   00003C   E8           MOV     A,R0
+   \   00003D   75F00C       MOV     B,#0xc
+   \   000040   A4           MUL     AB
+   \   000041   F8           MOV     R0,A
+   \   000042   A9F0         MOV     R1,B
+   \   000044   74..         MOV     A,#Button_SimpleDesc & 0xff
+   \   000046   28           ADD     A,R0
+   \   000047   F8           MOV     R0,A
+   \   000048   74..         MOV     A,#(Button_SimpleDesc >> 8) & 0xff
+   \   00004A   39           ADDC    A,R1
+   \   00004B   F9           MOV     R1,A
+   \   00004C   90....       MOV     DPTR,#Button_SimpleDesc
+   \   00004F   E8           MOV     A,R0
+   \   000050   FC           MOV     R4,A
+   \   000051   E9           MOV     A,R1
+   \   000052   FD           MOV     R5,A
+   \   000053   740C         MOV     A,#0xc
+   \   000055   12....       LCALL   ?MOVE_LONG8_XDATA_XDATA
+    130                      Button_epDesc[i].simpleDesc
+    131          						= (SimpleDescriptionFormat_t *)&(Button_SimpleDesc[i]);
+   \   000058   8A82         MOV     DPL,R2
+   \   00005A   8B83         MOV     DPH,R3
+   \   00005C   A3           INC     DPTR
+   \   00005D   A3           INC     DPTR
+   \   00005E   A3           INC     DPTR
+   \   00005F   E8           MOV     A,R0
+   \   000060   F0           MOVX    @DPTR,A
+   \   000061   A3           INC     DPTR
+   \   000062   E9           MOV     A,R1
+   \   000063   F0           MOVX    @DPTR,A
+    132                      Button_SimpleDesc[i].EndPoint += i;
+   \   000064   8882         MOV     DPL,R0
+   \   000066   8983         MOV     DPH,R1
+   \   000068   E0           MOVX    A,@DPTR
+   \   000069   2F           ADD     A,R7
+   \   00006A   F0           MOVX    @DPTR,A
+    133          	    Button_epDesc[i].latencyReq = noLatencyReqs;
+   \   00006B   8A82         MOV     DPL,R2
+   \   00006D   8B83         MOV     DPH,R3
+   \   00006F   A3           INC     DPTR
+   \   000070   A3           INC     DPTR
+   \   000071   A3           INC     DPTR
+   \   000072   A3           INC     DPTR
+   \   000073   A3           INC     DPTR
+   \   000074   E4           CLR     A
+   \   000075   F0           MOVX    @DPTR,A
+    134                      
+    135                      // Register the endpoint description with the AF
+    136          	    afRegister( &(Button_epDesc[i]) );
+   \   000076                ; Setup parameters for call to function afRegister
+   \   000076   12....       LCALL   ??afRegister?relay
+    137                  }
+   \   000079   0F           INC     R7
+   \   00007A   EF           MOV     A,R7
+   \   00007B   C3           CLR     C
+   \   00007C   9403         SUBB    A,#0x3
+   \   00007E   4098         JC      ??Button_Init_0
+    138          
+    139          	// Register for all key events - This app will handle all key events
+    140          	RegisterForKeys( Button_TaskID );
+   \   000080                ; Setup parameters for call to function RegisterForKeys
+   \   000080   90....       MOV     DPTR,#Button_TaskID
+   \   000083   E0           MOVX    A,@DPTR
+   \   000084   F9           MOV     R1,A
+   \   000085   12....       LCALL   ??RegisterForKeys?relay
+    141           
+    142          	//	ZDO_RegisterForZDOMsg( Button_TaskID, End_Device_Bind_rsp );
+    143          	ZDO_RegisterForZDOMsg( Button_TaskID, Match_Desc_rsp );
+   \   000088                ; Setup parameters for call to function ZDO_RegisterForZDOMsg
+   \   000088   7A06         MOV     R2,#0x6
+   \   00008A   7B80         MOV     R3,#-0x80
+   \   00008C   90....       MOV     DPTR,#Button_TaskID
+   \   00008F   E0           MOVX    A,@DPTR
+   \   000090   F9           MOV     R1,A
+   \   000091   12....       LCALL   ??ZDO_RegisterForZDOMsg?relay
+    144          
+    145          	HalLedSet ( HAL_LED_1, HAL_LED_MODE_ON );
+   \   000094                ; Setup parameters for call to function HalLedSet
+   \   000094   7A01         MOV     R2,#0x1
+   \   000096   7901         MOV     R1,#0x1
+   \   000098   12....       LCALL   ??HalLedSet?relay
+    146                  HalLedSet ( HAL_LED_2, HAL_LED_MODE_ON );
+   \   00009B                ; Setup parameters for call to function HalLedSet
+   \   00009B   7A01         MOV     R2,#0x1
+   \   00009D   7902         MOV     R1,#0x2
+   \   00009F   12....       LCALL   ??HalLedSet?relay
+    147                  HalLedSet ( HAL_LED_3, HAL_LED_MODE_ON );
+   \   0000A2                ; Setup parameters for call to function HalLedSet
+   \   0000A2   7A01         MOV     R2,#0x1
+   \   0000A4   7904         MOV     R1,#0x4
+   \   0000A6   12....       LCALL   ??HalLedSet?relay
+    148          
+    149          }
+   \   0000A9                REQUIRE ?Subroutine0
+   \   0000A9                ; // Fall through to label ?Subroutine0
 
    \                                 In  segment BANKED_CODE, align 1, keep-with-next
    \                     ?Subroutine0:
    \   000000   7F01         MOV     R7,#0x1
    \   000002   02....       LJMP    ?BANKED_LEAVE_XDATA
+    150          
+    151          /*********************************************************************
+    152           * @fn      Button_ProcessEvent
+    153           *
+    154           * @brief   Generic Application Task event processor.  This function
+    155           *          is called to process all events for the task.  Events
+    156           *          include timers, messages and any other user defined events.
+    157           *
+    158           * @param   task_id  - The OSAL assigned task ID.
+    159           * @param   events - events to process.  This is a bit map and can
+    160           *                   contain more than one event.
+    161           *
+    162           * @return  none
+    163           */
 
    \                                 In  segment BANKED_CODE, align 1, keep-with-next
-   \                     ?Subroutine1:
-   \   000000   7A01         MOV     R2,#0x1
-   \   000002   7901         MOV     R1,#0x1
-   \   000004   12....       LCALL   ??HalLedSet?relay
-   \   000007                ; Setup parameters for call to function HalLedSet
-   \   000007                ; Setup parameters for call to function HalLedSet
-   \   000007   7A01         MOV     R2,#0x1
-   \   000009   7902         MOV     R1,#0x2
-   \   00000B   12....       LCALL   ??HalLedSet?relay
-   \   00000E                ; Setup parameters for call to function HalLedSet
-   \   00000E                ; Setup parameters for call to function HalLedSet
-   \   00000E   7A01         MOV     R2,#0x1
-   \   000010   7904         MOV     R1,#0x4
-   \   000012   12....       LCALL   ??HalLedSet?relay
-   \   000015   22           RET
-    139          
-    140          /*********************************************************************
-    141           * @fn      Button_ProcessEvent
-    142           *
-    143           * @brief   Generic Application Task event processor.  This function
-    144           *          is called to process all events for the task.  Events
-    145           *          include timers, messages and any other user defined events.
-    146           *
-    147           * @param   task_id  - The OSAL assigned task ID.
-    148           * @param   events - events to process.  This is a bit map and can
-    149           *                   contain more than one event.
-    150           *
-    151           * @return  none
-    152           */
-
-   \                                 In  segment BANKED_CODE, align 1, keep-with-next
-    153          UINT16 Button_ProcessEvent( byte task_id, UINT16 events )
+    164          UINT16 Button_ProcessEvent( byte task_id, UINT16 events )
    \                     Button_ProcessEvent:
-    154          {
+    165          {
    \   000000   74F2         MOV     A,#-0xe
    \   000002   12....       LCALL   ?BANKED_ENTER_XDATA
    \   000005                ; Saved register size: 14
    \   000005                ; Auto size: 0
    \   000005   8A..         MOV     ?V0 + 0,R2
    \   000007   8B..         MOV     ?V0 + 1,R3
-    155          	afIncomingMSGPacket_t *MSGpkt = NULL;
-    156          	(void)task_id;  // Intentionally unreferenced parameter
-    157          
-    158          	if ( events & SYS_EVENT_MSG )
+    166              afIncomingMSGPacket_t *MSGpkt = NULL;
+    167              (void)task_id;  // Intentionally unreferenced parameter
+    168          
+    169              if ( events & SYS_EVENT_MSG )
    \   000009   EB           MOV     A,R3
    \   00000A   5480         ANL     A,#0x80
-   \   00000C   603F         JZ      ??Button_ProcessEvent_0
-    159          	{
-    160              MSGpkt = (afIncomingMSGPacket_t *)osal_msg_receive( task_id );
-   \   00000E                ; Setup parameters for call to function osal_msg_receive
-   \   00000E   8025         SJMP    ??Button_ProcessEvent_1
-    161              while ( MSGpkt )
-    162              {
-    163                switch ( MSGpkt->hdr.event )
+   \   00000C   7003         JNZ     $+5
+   \   00000E   02....       LJMP    ??Button_ProcessEvent_0 & 0xFFFF
+    170              {
+    171                  MSGpkt = (afIncomingMSGPacket_t *)osal_msg_receive( task_id );
+   \   000011                ; Setup parameters for call to function osal_msg_receive
+   \   000011   8016         SJMP    ??Button_ProcessEvent_1
+    172                  while ( MSGpkt )
+    173                  {
+    174                    switch ( MSGpkt->hdr.event )
+    175                    {
+    176                      case KEY_CHANGE:
+    177                          Button_HandleKeys( ((keyChange_t *)MSGpkt)->state, ((keyChange_t *)MSGpkt)->keys );
+    178                          break;
+    179                  
+    180                      case AF_INCOMING_MSG_CMD:
+    181                          Button_ReceiveDataIndication( MSGpkt->srcAddr.addr.shortAddr, MSGpkt->endPoint, MSGpkt->clusterId,
+    182                                                  MSGpkt->cmd.DataLength, MSGpkt->cmd.Data);
+    183                          break;
+    184                        
+    185                      case ZDO_MATCH_DESC_RSP_SENT:
+    186                          Button_AllowBindConfirm( ((ZDO_MatchDescRspSent_t *)MSGpkt)->nwkAddr );
    \                     ??Button_ProcessEvent_2:
-   \   000010   8E82         MOV     DPL,R6
-   \   000012   8F83         MOV     DPH,R7
-   \   000014   E0           MOVX    A,@DPTR
-   \   000015   64C0         XRL     A,#0xc0
-   \   000017   7010         JNZ     ??Button_ProcessEvent_3
-    164                {
-    165                	case KEY_CHANGE:
-    166                		Button_HandleKeys( ((keyChange_t *)MSGpkt)->state, ((keyChange_t *)MSGpkt)->keys );
-   \   000019                ; Setup parameters for call to function Button_HandleKeys
-   \   000019   A3           INC     DPTR
-   \   00001A   A3           INC     DPTR
-   \   00001B   A3           INC     DPTR
-   \   00001C   E0           MOVX    A,@DPTR
-   \   00001D   FA           MOV     R2,A
-   \   00001E   8E82         MOV     DPL,R6
-   \   000020   8F83         MOV     DPH,R7
-   \   000022   A3           INC     DPTR
-   \   000023   A3           INC     DPTR
-   \   000024   E0           MOVX    A,@DPTR
-   \   000025   F9           MOV     R1,A
-   \   000026   12....       LCALL   ??Button_HandleKeys?relay
-    167                	break;
-    168                }
-    169                // Release the memory
-    170                osal_msg_deallocate( (uint8 *)MSGpkt );
+   \   000013                ; Setup parameters for call to function Sys_AllowBindConfirm
+   \   000013   A3           INC     DPTR
+   \   000014   A3           INC     DPTR
+   \   000015   E0           MOVX    A,@DPTR
+   \   000016   FA           MOV     R2,A
+   \   000017   A3           INC     DPTR
+   \   000018   E0           MOVX    A,@DPTR
+   \   000019   FB           MOV     R3,A
+   \   00001A   12....       LCALL   ??Sys_AllowBindConfirm?relay
+    187                          break;
+    188                    }
+    189                    // Release the memory
+    190                    osal_msg_deallocate( (uint8 *)MSGpkt );
    \                     ??Button_ProcessEvent_3:
-   \   000029                ; Setup parameters for call to function osal_msg_deallocate
-   \   000029   EE           MOV     A,R6
-   \   00002A   FA           MOV     R2,A
-   \   00002B   EF           MOV     A,R7
-   \   00002C   FB           MOV     R3,A
-   \   00002D   12....       LCALL   ??osal_msg_deallocate?relay
-    171          
-    172                // Next
-    173                MSGpkt = (afIncomingMSGPacket_t *)osal_msg_receive( Button_TaskID );
-   \   000030                ; Setup parameters for call to function osal_msg_receive
-   \   000030   90....       MOV     DPTR,#Button_TaskID
-   \   000033   E0           MOVX    A,@DPTR
-   \   000034   F9           MOV     R1,A
+   \   00001D                ; Setup parameters for call to function osal_msg_deallocate
+   \   00001D   EE           MOV     A,R6
+   \   00001E   FA           MOV     R2,A
+   \   00001F   EF           MOV     A,R7
+   \   000020   FB           MOV     R3,A
+   \   000021   12....       LCALL   ??osal_msg_deallocate?relay
+    191              
+    192                    // Next
+    193                    MSGpkt = (afIncomingMSGPacket_t *)osal_msg_receive( Button_TaskID );
+   \   000024                ; Setup parameters for call to function osal_msg_receive
+   \   000024   90....       MOV     DPTR,#Button_TaskID
+   \   000027   E0           MOVX    A,@DPTR
+   \   000028   F9           MOV     R1,A
    \                     ??Button_ProcessEvent_1:
-   \   000035   12....       LCALL   ??osal_msg_receive?relay
-   \   000038   8A..         MOV     ?V0 + 4,R2
-   \   00003A   8B..         MOV     ?V0 + 5,R3
-   \   00003C   AE..         MOV     R6,?V0 + 4
-   \   00003E   AF..         MOV     R7,?V0 + 5
-    174              }
-   \   000040   EE           MOV     A,R6
-   \   000041   4F           ORL     A,R7
-   \   000042   70CC         JNZ     ??Button_ProcessEvent_2
-    175              return (events ^ SYS_EVENT_MSG);
-   \   000044   AA..         MOV     R2,?V0 + 0
-   \   000046   E5..         MOV     A,?V0 + 1
-   \   000048   6480         XRL     A,#0x80
-   \   00004A   FB           MOV     R3,A
-   \   00004B   8004         SJMP    ??Button_ProcessEvent_4
-    176          	}
-    177            return 0;
-   \                     ??Button_ProcessEvent_0:
-   \   00004D   7A00         MOV     R2,#0x0
-   \   00004F   7B00         MOV     R3,#0x0
+   \   000029   12....       LCALL   ??osal_msg_receive?relay
+   \   00002C   8A..         MOV     ?V0 + 4,R2
+   \   00002E   8B..         MOV     ?V0 + 5,R3
+   \   000030   AE..         MOV     R6,?V0 + 4
+   \   000032   AF..         MOV     R7,?V0 + 5
+   \   000034   EE           MOV     A,R6
+   \   000035   4F           ORL     A,R7
+   \   000036   6072         JZ      ??Button_ProcessEvent_4
+   \   000038   8E82         MOV     DPL,R6
+   \   00003A   8F83         MOV     DPH,R7
+   \   00003C   E0           MOVX    A,@DPTR
+   \   00003D   24E6         ADD     A,#-0x1a
+   \   00003F   601C         JZ      ??Button_ProcessEvent_5
+   \   000041   245A         ADD     A,#0x5a
+   \   000043   6006         JZ      ??Button_ProcessEvent_6
+   \   000045   24EE         ADD     A,#-0x12
+   \   000047   60CA         JZ      ??Button_ProcessEvent_2
+   \   000049   80D2         SJMP    ??Button_ProcessEvent_3
+   \                     ??Button_ProcessEvent_6:
+   \   00004B                ; Setup parameters for call to function Button_HandleKeys
+   \   00004B   A3           INC     DPTR
+   \   00004C   A3           INC     DPTR
+   \   00004D   A3           INC     DPTR
+   \   00004E   E0           MOVX    A,@DPTR
+   \   00004F   FA           MOV     R2,A
+   \   000050   8E82         MOV     DPL,R6
+   \   000052   8F83         MOV     DPH,R7
+   \   000054   A3           INC     DPTR
+   \   000055   A3           INC     DPTR
+   \   000056   E0           MOVX    A,@DPTR
+   \   000057   F9           MOV     R1,A
+   \   000058   12....       LCALL   ??Button_HandleKeys?relay
+   \   00005B   80C0         SJMP    ??Button_ProcessEvent_3
+   \                     ??Button_ProcessEvent_5:
+   \   00005D                ; Setup parameters for call to function Button_ReceiveDataIndication
+   \   00005D   EE           MOV     A,R6
+   \   00005E   2422         ADD     A,#0x22
+   \   000060   F582         MOV     DPL,A
+   \   000062   EF           MOV     A,R7
+   \   000063   3400         ADDC    A,#0x0
+   \   000065   F583         MOV     DPH,A
+   \   000067   12....       LCALL   ?PUSH_XSTACK8_X_TWO
+   \   00006A   EE           MOV     A,R6
+   \   00006B   2420         ADD     A,#0x20
+   \   00006D   F582         MOV     DPL,A
+   \   00006F   EF           MOV     A,R7
+   \   000070   3400         ADDC    A,#0x0
+   \   000072   F583         MOV     DPH,A
+   \   000074   12....       LCALL   ?PUSH_XSTACK8_X_TWO
+   \   000077   8E82         MOV     DPL,R6
+   \   000079   8F83         MOV     DPH,R7
+   \   00007B   A3           INC     DPTR
+   \   00007C   A3           INC     DPTR
+   \   00007D   A3           INC     DPTR
+   \   00007E   A3           INC     DPTR
+   \   00007F   E0           MOVX    A,@DPTR
+   \   000080   FC           MOV     R4,A
+   \   000081   A3           INC     DPTR
+   \   000082   E0           MOVX    A,@DPTR
+   \   000083   FD           MOV     R5,A
+   \   000084   EE           MOV     A,R6
+   \   000085   2414         ADD     A,#0x14
+   \   000087   F582         MOV     DPL,A
+   \   000089   EF           MOV     A,R7
+   \   00008A   3400         ADDC    A,#0x0
+   \   00008C   F583         MOV     DPH,A
+   \   00008E   E0           MOVX    A,@DPTR
+   \   00008F   F9           MOV     R1,A
+   \   000090   8E82         MOV     DPL,R6
+   \   000092   8F83         MOV     DPH,R7
+   \   000094   A3           INC     DPTR
+   \   000095   A3           INC     DPTR
+   \   000096   A3           INC     DPTR
+   \   000097   A3           INC     DPTR
+   \   000098   A3           INC     DPTR
+   \   000099   A3           INC     DPTR
+   \   00009A   E0           MOVX    A,@DPTR
+   \   00009B   FA           MOV     R2,A
+   \   00009C   A3           INC     DPTR
+   \   00009D   E0           MOVX    A,@DPTR
+   \   00009E   FB           MOV     R3,A
+   \   00009F   12....       LCALL   ??Button_ReceiveDataIndication?relay
+   \   0000A2   7404         MOV     A,#0x4
+   \   0000A4   12....       LCALL   ?DEALLOC_XSTACK8
+   \   0000A7   02....       LJMP    ??Button_ProcessEvent_3 & 0xFFFF
+    194                  }
+    195                  return (events ^ SYS_EVENT_MSG);
    \                     ??Button_ProcessEvent_4:
-   \   000051   7F06         MOV     R7,#0x6
-   \   000053   02....       LJMP    ?BANKED_LEAVE_XDATA
-    178          }
-    179          
-    180          /*********************************************************************
-    181           * @fn      Button_HandleKeys
-    182           *
-    183           * @brief   Handles all key events for this device.
-    184           *
-    185           * @param   shift - true if in shift/alt.
-    186           * @param   keys - bit field for key events. Valid entries:
-    187           *                 HAL_KEY_SW_4
-    188           *                 HAL_KEY_SW_3
-    189           *                 HAL_KEY_SW_2
-    190           *                 HAL_KEY_SW_1
-    191           *
-    192           * @return  none
-    193           */
+   \   0000AA   AA..         MOV     R2,?V0 + 0
+   \   0000AC   E5..         MOV     A,?V0 + 1
+   \   0000AE   6480         XRL     A,#0x80
+   \   0000B0   FB           MOV     R3,A
+   \   0000B1   8004         SJMP    ??Button_ProcessEvent_7
+    196              }
+    197              return 0;
+   \                     ??Button_ProcessEvent_0:
+   \   0000B3   7A00         MOV     R2,#0x0
+   \   0000B5   7B00         MOV     R3,#0x0
+   \                     ??Button_ProcessEvent_7:
+   \   0000B7   7F06         MOV     R7,#0x6
+   \   0000B9   02....       LJMP    ?BANKED_LEAVE_XDATA
+    198          }
+    199          
+    200          /*********************************************************************
+    201           * @fn      Button_HandleKeys
+    202           *
+    203           * @brief   Handles all key events for this device.
+    204           *
+    205           * @param   shift - true if in shift/alt.
+    206           * @param   keys - bit field for key events. Valid entries:
+    207           *                 HAL_KEY_SW_4
+    208           *                 HAL_KEY_SW_3
+    209           *                 HAL_KEY_SW_2
+    210           *                 HAL_KEY_SW_1
+    211           *
+    212           * @return  none
+    213           */
 
    \                                 In  segment BANKED_CODE, align 1, keep-with-next
-    194          void Button_HandleKeys( byte shift, byte keys )
+    214          void Button_HandleKeys( byte shift, byte keys )
    \                     Button_HandleKeys:
-    195          {
+    215          {
    \   000000   74F7         MOV     A,#-0x9
    \   000002   12....       LCALL   ?BANKED_ENTER_XDATA
    \   000005                ; Saved register size: 9
-   \   000005                ; Auto size: 2
-   \   000005   74FE         MOV     A,#-0x2
-   \   000007   12....       LCALL   ?ALLOC_XSTACK8
-   \   00000A   EA           MOV     A,R2
-   \   00000B   FE           MOV     R6,A
-    196          	uint8 startOptions;
-    197          	uint8 logicalType;
-    198          	// Shift is used to make each button/switch dual purpose.
-    199          	if ( keys_shift )
-   \   00000C   90....       MOV     DPTR,#keys_shift
-   \   00000F   E0           MOVX    A,@DPTR
-   \   000010   6022         JZ      ??Button_HandleKeys_0
-    200          	{
-    201          		// Allow Binding
-    202          		if ( keys & HAL_KEY_SW_1 )
-   \   000012   EE           MOV     A,R6
-   \   000013   A2E0         MOV     C,0xE0 /* A   */.0
-   \   000015   506F         JNC     ??Button_HandleKeys_1
-    203          		{
-    204          			if(type_join)
-   \   000017   90....       MOV     DPTR,#type_join
-   \   00001A   E0           MOVX    A,@DPTR
-   \   00001B   6069         JZ      ??Button_HandleKeys_1
-    205          			{
-    206          				Sensor_AllowBind(10);
-   \   00001D                ; Setup parameters for call to function Sensor_AllowBind
-   \   00001D   790A         MOV     R1,#0xa
-   \   00001F   12....       LCALL   ??Sensor_AllowBind?relay
-    207          				HalLedSet(HAL_LED_1, HAL_LED_MODE_OFF);
-   \   000022                ; Setup parameters for call to function HalLedSet
-   \   000022   7A00         MOV     R2,#0x0
-   \   000024   7901         MOV     R1,#0x1
-   \   000026   12....       LCALL   ??HalLedSet?relay
-    208          			// osal_start_timerEx(Sys_TaskID, CLOSE_BIND_EVT, 10000);
-    209          			
-    210          				keys_shift = 0;
-   \   000029   90....       MOV     DPTR,#keys_shift
-   \   00002C   E4           CLR     A
-   \   00002D   F0           MOVX    @DPTR,A
-    211          				type_join = 0;
-   \   00002E   90....       MOV     DPTR,#type_join
-   \   000031   F0           MOVX    @DPTR,A
-   \   000032   8052         SJMP    ??Button_HandleKeys_1
-    212          			}
-    213          			else
-    214          			{
-    215          				// wrong endpoint the presend send to
-    216          			}
-    217          		}
-    218          		if ( keys & HAL_KEY_SW_2 )
-    219          		{
-    220          		}
-    221          		if ( keys & HAL_KEY_SW_3 )
-    222          		{
-    223          		}
-    224          		if ( keys & HAL_KEY_SW_4 )
-    225          		{
-    226          		}
-    227          	}
-    228          	else
-    229          	{
-    230          		if ( keys & HAL_KEY_SW_1 )
-   \                     ??Button_HandleKeys_0:
-   \   000034   EE           MOV     A,R6
-   \   000035   A2E0         MOV     C,0xE0 /* A   */.0
-   \   000037   504D         JNC     ??Button_HandleKeys_1
-    231          		{
-    232          			if ( myAppState == APP_INIT )
-   \   000039   90....       MOV     DPTR,#myAppState
-   \   00003C   E0           MOVX    A,@DPTR
-   \   00003D   703D         JNZ     ??Button_HandleKeys_2
-    233          		    {
-    234          		        // In the init state, keys are used to indicate the logical mode.
-    235          		        // The Switch device is always an end-device
-    236          		        logicalType = ZG_DEVICETYPE_ENDDEVICE;
-   \   00003F   7401         MOV     A,#0x1
-   \   000041   12....       LCALL   ?XSTACK_DISP0_8
-   \   000044   7402         MOV     A,#0x2
-   \   000046   F0           MOVX    @DPTR,A
-    237          		        zb_WriteConfiguration(ZCD_NV_LOGICAL_TYPE, sizeof(uint8), &logicalType);
-   \   000047                ; Setup parameters for call to function zb_WriteConfiguration
-   \   000047   AC82         MOV     R4,DPL
-   \   000049   AD83         MOV     R5,DPH
-   \   00004B   7A01         MOV     R2,#0x1
-   \   00004D   7987         MOV     R1,#-0x79
-   \   00004F   12....       LCALL   ??zb_WriteConfiguration?relay
-    238          
-    239          		        // Do more configuration if necessary and then restart device with auto-start bit set
-    240          
-    241          		        zb_ReadConfiguration( ZCD_NV_STARTUP_OPTION, sizeof(uint8), &startOptions );
-   \   000052                ; Setup parameters for call to function zb_ReadConfiguration
-   \   000052   85..82       MOV     DPL,?XSP + 0
-   \   000055   85..83       MOV     DPH,?XSP + 1
-   \   000058   AC82         MOV     R4,DPL
-   \   00005A   AD83         MOV     R5,DPH
-   \   00005C   7A01         MOV     R2,#0x1
-   \   00005E   7903         MOV     R1,#0x3
-   \   000060   12....       LCALL   ??zb_ReadConfiguration?relay
-    242          		        startOptions = ZCD_STARTOPT_AUTO_START;
-   \   000063   85..82       MOV     DPL,?XSP + 0
-   \   000066   85..83       MOV     DPH,?XSP + 1
-   \   000069   7404         MOV     A,#0x4
-   \   00006B   F0           MOVX    @DPTR,A
-    243          		        zb_WriteConfiguration( ZCD_NV_STARTUP_OPTION, sizeof(uint8), &startOptions );
-   \   00006C                ; Setup parameters for call to function zb_WriteConfiguration
-   \   00006C   AC82         MOV     R4,DPL
-   \   00006E   AD83         MOV     R5,DPH
-   \   000070   7A01         MOV     R2,#0x1
-   \   000072   7903         MOV     R1,#0x3
-   \   000074   12....       LCALL   ??zb_WriteConfiguration?relay
-    244          		        zb_SystemReset();
-   \   000077                ; Setup parameters for call to function zb_SystemReset
-   \   000077   12....       LCALL   ??zb_SystemReset?relay
-   \   00007A   800A         SJMP    ??Button_HandleKeys_1
-    245          
-    246              		}
-    247          			else
-    248          			{
-    249          				HalLedSet ( HAL_LED_1, HAL_LED_MODE_ON );
-   \                     ??Button_HandleKeys_2:
-   \   00007C                ; Setup parameters for call to function HalLedSet
-   \   00007C   12....       LCALL   ?Subroutine1 & 0xFFFF
-    250          	 			HalLedSet ( HAL_LED_2, HAL_LED_MODE_ON );
-    251          				HalLedSet ( HAL_LED_3, HAL_LED_MODE_ON );
-    252          				HalLedSet ( HAL_LED_4, HAL_LED_MODE_ON );
-   \                     ??CrossCallReturnLabel_1:
-   \   00007F                ; Setup parameters for call to function HalLedSet
-   \   00007F   7A01         MOV     R2,#0x1
-   \   000081   7908         MOV     R1,#0x8
-   \   000083   12....       LCALL   ??HalLedSet?relay
-    253          			}
-    254          		}
-    255          
-    256          		if ( keys & HAL_KEY_SW_2 )
-    257          		{
-    258          		/*
-    259          			HalLedSet ( HAL_LED_4, HAL_LED_MODE_OFF );
-    260          
-    261          			// 想绑定另一个端点
-    262          			dstAddr.addrMode = Addr16Bit;
-    263          			dstAddr.addr.shortAddr = 0x0000; 
-    264          			ZDP_EndDeviceBindReq( &dstAddr, NLME_GetShortAddr(), 
-    265          														Button_epDesc.endPoint,
-    266          														SENSORSYS_PROFID,
-    267          														SENSORSYS_MAX_CLUSTERS, (cId_t *)Button_ClusterList,
-    268          														SENSORSYS_MAX_CLUSTERS, (cId_t *)Button_ClusterList,
-    269          														FALSE );*/
-    270          		}
-    271          
-    272          		if ( keys & HAL_KEY_SW_3 )
-    273          		{
-    274          		}
-    275          		
-    276          		if ( keys & HAL_KEY_SW_4 )
-    277          		{
-    278          		/*	HalLedSet ( HAL_LED_4, HAL_LED_MODE_OFF );
-    279          			dstAddr.addrMode = AddrBroadcast;
-    280          			dstAddr.addr.shortAddr = NWK_BROADCAST_SHORTADDR;
-    281          			ZDP_MatchDescReq( &dstAddr, NWK_BROADCAST_SHORTADDR,
-    282          												SENSORSYS_PROFID,
-    283          												SENSORSYS_MAX_CLUSTERS, (cId_t *)Button_ClusterList,
-    284          												SENSORSYS_MAX_CLUSTERS, (cId_t *)Button_ClusterList,
-    285          												FALSE );
-    286          		*/
-    287          		}
-    288          	}
-    289          }
+   \   000005                ; Auto size: 0
+   \   000005   E9           MOV     A,R1
+   \   000006   FE           MOV     R6,A
+   \   000007   EA           MOV     A,R2
+   \   000008   FF           MOV     R7,A
+    216            if(shift)
+   \   000009   EE           MOV     A,R6
+   \   00000A   601A         JZ      ??Button_HandleKeys_0
+    217            {
+    218                  if ( keys & HAL_KEY_SW_1 )
+   \   00000C   EF           MOV     A,R7
+   \   00000D   A2E0         MOV     C,0xE0 /* A   */.0
+   \   00000F   5003         JNC     ??Button_HandleKeys_1
+    219                  {
+    220                    zb_SystemReset();
+   \   000011                ; Setup parameters for call to function zb_SystemReset
+   \   000011   12....       LCALL   ??zb_SystemReset?relay
+    221                  }
+    222                  if ( keys & HAL_KEY_SW_2 )
    \                     ??Button_HandleKeys_1:
-   \   000086   7402         MOV     A,#0x2
-   \   000088   12....       LCALL   ?DEALLOC_XSTACK8
-   \   00008B   02....       LJMP    ?Subroutine0 & 0xFFFF
+   \   000014   EF           MOV     A,R7
+   \   000015   A2E1         MOV     C,0xE0 /* A   */.1
+   \   000017   5003         JNC     ??Button_HandleKeys_2
+    223                  {
+    224                    zb_SystemReset();
+   \   000019                ; Setup parameters for call to function zb_SystemReset
+   \   000019   12....       LCALL   ??zb_SystemReset?relay
+    225                  }
+    226                  if ( keys & HAL_KEY_SW_3 )
+   \                     ??Button_HandleKeys_2:
+   \   00001C   EF           MOV     A,R7
+   \   00001D   A2E4         MOV     C,0xE0 /* A   */.4
+   \   00001F   5020         JNC     ??Button_HandleKeys_3
+    227                  {
+    228                    zb_SystemReset();
+   \   000021                ; Setup parameters for call to function zb_SystemReset
+   \   000021   12....       LCALL   ??zb_SystemReset?relay
+   \   000024   801B         SJMP    ??Button_HandleKeys_3
+    229                  }
+    230                  if ( keys & HAL_KEY_SW_4 )
+    231                  {
+    232                  }
+    233                  if ( keys & HAL_KEY_SW_6 )  // Physical Button S1
+    234                  {
+    235                      // Send to Watch Endpoint ? Send to Button Endpoint ?
+    236                  }
+    237            }
+    238            
+    239            else
+    240            {
+    241          //	uint8 startOptions;
+    242          //	uint8 logicalType;
+    243          	// Shift is used to make each button/switch dual purpose.
+    244          	if ( keys_shift )
+   \                     ??Button_HandleKeys_0:
+   \   000026   90....       MOV     DPTR,#keys_shift
+   \   000029   E0           MOVX    A,@DPTR
+   \   00002A   6015         JZ      ??Button_HandleKeys_3
+    245          	{
+    246          		// Allow Binding
+    247          		if ( keys & HAL_KEY_SW_1 )
+   \   00002C   EF           MOV     A,R7
+   \   00002D   A2E0         MOV     C,0xE0 /* A   */.0
+   \   00002F   5010         JNC     ??Button_HandleKeys_3
+    248          		{
+    249          			if(type_join)
+   \   000031   90....       MOV     DPTR,#type_join
+   \   000034   E0           MOVX    A,@DPTR
+   \   000035   600A         JZ      ??Button_HandleKeys_3
+    250          			{
+    251          				Sys_AllowBind(10);
+   \   000037                ; Setup parameters for call to function Sys_AllowBind
+   \   000037   790A         MOV     R1,#0xa
+   \   000039   12....       LCALL   ??Sys_AllowBind?relay
+    252                                          
+    253          			// osal_start_timerEx(Sys_TaskID, CLOSE_BIND_EVT, 10000);
+    254          			
+    255          				keys_shift = 0;
+   \   00003C   90....       MOV     DPTR,#keys_shift
+   \   00003F   E4           CLR     A
+   \   000040   F0           MOVX    @DPTR,A
+    256          			}
+    257          			else
+    258          			{
+    259          				// wrong endpoint the presend send to
+    260          			}
+    261          		}
+    262          		if ( keys & HAL_KEY_SW_2 )
+    263          		{
+    264          		}
+    265          		if ( keys & HAL_KEY_SW_3 )
+    266          		{
+    267          		}
+    268          		if ( keys & HAL_KEY_SW_4 )
+    269          		{
+    270          		}
+    271          	}
+    272          	else
+    273          	{
+    274          		if ( keys & HAL_KEY_SW_1 )
+    275          		{
+    276                            
+    277                            /*
+    278          		    if ( myAppState == APP_INIT )
+    279          		    {
+    280          		        // In the init state, keys are used to indicate the logical mode.
+    281          		        // The Switch device is always an end-device
+    282          		        logicalType = ZG_DEVICETYPE_ENDDEVICE;
+    283          		        zb_WriteConfiguration(ZCD_NV_LOGICAL_TYPE, sizeof(uint8), &logicalType);
+    284          
+    285          		        // Do more configuration if necessary and then restart device with auto-start bit set
+    286          
+    287          		        zb_ReadConfiguration( ZCD_NV_STARTUP_OPTION, sizeof(uint8), &startOptions );
+    288          		        startOptions = ZCD_STARTOPT_AUTO_START;
+    289          		        zb_WriteConfiguration( ZCD_NV_STARTUP_OPTION, sizeof(uint8), &startOptions );
+    290          		        zb_SystemReset();
+    291          
+    292              		    }*/
+    293          		  //  else
+    294          		//    {
+    295          
+    296          	//	    }
+    297          		}
+    298          
+    299          		if ( keys & HAL_KEY_SW_2 )
+    300          		{
+    301          		/*
+    302          			HalLedSet ( HAL_LED_4, HAL_LED_MODE_OFF );
+    303          
+    304          			// 想绑定另一个端�?			dstAddr.addrMode = Addr16Bit;
+    305          			dstAddr.addr.shortAddr = 0x0000; 
+    306          			ZDP_EndDeviceBindReq( &dstAddr, NLME_GetShortAddr(), 
+    307          														Button_epDesc.endPoint,
+    308          														SENSORSYS_PROFID,
+    309          														SENSORSYS_MAX_CLUSTERS, (cId_t *)Button_ClusterList,
+    310          														SENSORSYS_MAX_CLUSTERS, (cId_t *)Button_ClusterList,
+    311          														FALSE );*/
+    312          		}
+    313          
+    314          		if ( keys & HAL_KEY_SW_3 )
+    315          		{
+    316          		}
+    317          		
+    318          		if ( keys & HAL_KEY_SW_4 )
+    319          		{
+    320          		/*	HalLedSet ( HAL_LED_4, HAL_LED_MODE_OFF );
+    321          			dstAddr.addrMode = AddrBroadcast;
+    322          			dstAddr.addr.shortAddr = NWK_BROADCAST_SHORTADDR;
+    323          			ZDP_MatchDescReq( &dstAddr, NWK_BROADCAST_SHORTADDR,
+    324          												SENSORSYS_PROFID,
+    325          												SENSORSYS_MAX_CLUSTERS, (cId_t *)Button_ClusterList,
+    326          												SENSORSYS_MAX_CLUSTERS, (cId_t *)Button_ClusterList,
+    327          												FALSE );
+    328          		*/
+    329          		}
+    330          	}
+    331            }
+    332          }
+   \                     ??Button_HandleKeys_3:
+   \   000041   02....       LJMP    ?Subroutine0 & 0xFFFF
+    333          
+    334          /******************************************************************************
+    335           * @fn          Button_ReceiveDataIndication
+    336           *
+    337           * @brief       The SAPI_ReceiveDataIndication callback function is called
+    338           *              asynchronously by the ZigBee stack to notify the application
+    339           *              when data is received from a peer device.
+    340           *
+    341           * @param       source - The short address of the peer device that sent the data
+    342           *              command - The commandId associated with the data
+    343           *              len - The number of bytes in the pData parameter
+    344           *              pData - The data sent by the peer device
+    345           *
+    346           * @return      none
+    347           */
+
+   \                                 In  segment BANKED_CODE, align 1, keep-with-next
+    348          void Button_ReceiveDataIndication( uint16 source, uint8 endPoint, uint16 command, uint16 len, uint8 *pData  )
+   \                     Button_ReceiveDataIndication:
+    349          {
+   \   000000   74F7         MOV     A,#-0x9
+   \   000002   12....       LCALL   ?BANKED_ENTER_XDATA
+   \   000005                ; Saved register size: 9
+   \   000005                ; Auto size: 0
+   \   000005   E9           MOV     A,R1
+    350            // ButtonAction(endPoint-BUTTON_ENDPOINT, command);
+    351            switch (endPoint)
+   \   000006   24F6         ADD     A,#-0xa
+   \   000008   6009         JZ      ??Button_ReceiveDataIndication_0
+   \   00000A   14           DEC     A
+   \   00000B   6039         JZ      ??Button_ReceiveDataIndication_1
+   \   00000D   14           DEC     A
+   \   00000E   6064         JZ      ??Button_ReceiveDataIndication_2
+   \   000010   02....       LJMP    ??Button_ReceiveDataIndication_3 & 0xFFFF
+    352            {
+    353              case BUTTON_ENDPOINT:
+    354                {
+    355                  if (command == BUTTON_OPEN)
+   \                     ??Button_ReceiveDataIndication_0:
+   \   000013   7401         MOV     A,#0x1
+   \   000015   6C           XRL     A,R4
+   \   000016   7001         JNZ     ??Button_ReceiveDataIndication_4
+   \   000018   ED           MOV     A,R5
+   \                     ??Button_ReceiveDataIndication_4:
+   \   000019   7009         JNZ     ??Button_ReceiveDataIndication_5
+    356                  {
+    357                      Button_HandleKeys( 1, HAL_KEY_SW_1 );
+   \   00001B                ; Setup parameters for call to function Button_HandleKeys
+   \   00001B   7A01         MOV     R2,#0x1
+   \   00001D   7901         MOV     R1,#0x1
+   \   00001F   12....       LCALL   ??Button_HandleKeys?relay
+   \   000022   802A         SJMP    ??Button_ReceiveDataIndication_6
+    358                  }
+    359                  if (command == BUTTON_CLOSE)
+   \                     ??Button_ReceiveDataIndication_5:
+   \   000024   7402         MOV     A,#0x2
+   \   000026   6C           XRL     A,R4
+   \   000027   7001         JNZ     ??Button_ReceiveDataIndication_7
+   \   000029   ED           MOV     A,R5
+   \                     ??Button_ReceiveDataIndication_7:
+   \   00002A   7009         JNZ     ??Button_ReceiveDataIndication_8
+    360                  {
+    361                      Button_HandleKeys( 1, HAL_KEY_SW_2 );
+   \   00002C                ; Setup parameters for call to function Button_HandleKeys
+   \   00002C   7A02         MOV     R2,#0x2
+   \   00002E   7901         MOV     R1,#0x1
+   \   000030   12....       LCALL   ??Button_HandleKeys?relay
+   \   000033   802A         SJMP    ??Button_ReceiveDataIndication_9
+    362                  }
+    363                  if (command == BUTTON_TRIGGER)
+   \                     ??Button_ReceiveDataIndication_8:
+   \   000035   7403         MOV     A,#0x3
+   \   000037   6C           XRL     A,R4
+   \   000038   7001         JNZ     ??Button_ReceiveDataIndication_10
+   \   00003A   ED           MOV     A,R5
+   \                     ??Button_ReceiveDataIndication_10:
+   \   00003B   702B         JNZ     ??Button_ReceiveDataIndication_11
+    364                  {
+    365                      Button_HandleKeys( 1, HAL_KEY_SW_3 );
+   \   00003D                ; Setup parameters for call to function Button_HandleKeys
+   \   00003D   7A10         MOV     R2,#0x10
+   \   00003F   7901         MOV     R1,#0x1
+   \   000041   12....       LCALL   ??Button_HandleKeys?relay
+   \   000044   802A         SJMP    ??Button_ReceiveDataIndication_12
+    366                  }
+    367                }
+    368              case (BUTTON_ENDPOINT+1):
+    369                {
+    370                  if (command == BUTTON_OPEN)
+   \                     ??Button_ReceiveDataIndication_1:
+   \   000046   7401         MOV     A,#0x1
+   \   000048   6C           XRL     A,R4
+   \   000049   7001         JNZ     ??Button_ReceiveDataIndication_13
+   \   00004B   ED           MOV     A,R5
+   \                     ??Button_ReceiveDataIndication_13:
+   \   00004C   7009         JNZ     ??Button_ReceiveDataIndication_14
+    371                  {
+    372                      Button_HandleKeys( 1, HAL_KEY_SW_2 );
+   \                     ??Button_ReceiveDataIndication_6:
+   \   00004E                ; Setup parameters for call to function Button_HandleKeys
+   \   00004E   7A02         MOV     R2,#0x2
+   \                     ??Button_ReceiveDataIndication_15:
+   \   000050   7901         MOV     R1,#0x1
+   \   000052   12....       LCALL   ??Button_HandleKeys?relay
+   \   000055   8025         SJMP    ??Button_ReceiveDataIndication_16
+    373                  }
+    374                  if (command == BUTTON_CLOSE)
+   \                     ??Button_ReceiveDataIndication_14:
+   \   000057   7402         MOV     A,#0x2
+   \   000059   6C           XRL     A,R4
+   \   00005A   7001         JNZ     ??Button_ReceiveDataIndication_17
+   \   00005C   ED           MOV     A,R5
+   \                     ??Button_ReceiveDataIndication_17:
+   \   00005D   7009         JNZ     ??Button_ReceiveDataIndication_11
+    375                  {
+    376                      Button_HandleKeys( 1, HAL_KEY_SW_2 );
+   \                     ??Button_ReceiveDataIndication_9:
+   \   00005F                ; Setup parameters for call to function Button_HandleKeys
+   \   00005F   7A02         MOV     R2,#0x2
+   \   000061   7901         MOV     R1,#0x1
+   \   000063   12....       LCALL   ??Button_HandleKeys?relay
+   \   000066   8025         SJMP    ??Button_ReceiveDataIndication_18
+    377                  }
+    378                  if (command == BUTTON_TRIGGER)
+   \                     ??Button_ReceiveDataIndication_11:
+   \   000068   7403         MOV     A,#0x3
+   \   00006A   6C           XRL     A,R4
+   \   00006B   7001         JNZ     ??Button_ReceiveDataIndication_19
+   \   00006D   ED           MOV     A,R5
+   \                     ??Button_ReceiveDataIndication_19:
+   \   00006E   7004         JNZ     ??Button_ReceiveDataIndication_2
+    379                  {
+    380                      Button_HandleKeys( 1, HAL_KEY_SW_3 );
+   \                     ??Button_ReceiveDataIndication_12:
+   \   000070                ; Setup parameters for call to function Button_HandleKeys
+   \   000070   7A10         MOV     R2,#0x10
+   \   000072   80DC         SJMP    ??Button_ReceiveDataIndication_15
+    381                  }
+    382                }
+    383              case (BUTTON_ENDPOINT+2):
+    384                {
+    385                  if (command == BUTTON_OPEN)
+   \                     ??Button_ReceiveDataIndication_2:
+   \   000074   7401         MOV     A,#0x1
+   \   000076   6C           XRL     A,R4
+   \   000077   7001         JNZ     ??Button_ReceiveDataIndication_20
+   \   000079   ED           MOV     A,R5
+   \                     ??Button_ReceiveDataIndication_20:
+   \   00007A   7009         JNZ     ??Button_ReceiveDataIndication_21
+    386                  {
+    387                      Button_HandleKeys( 1, HAL_KEY_SW_3 );
+   \                     ??Button_ReceiveDataIndication_16:
+   \   00007C                ; Setup parameters for call to function Button_HandleKeys
+   \   00007C   7A10         MOV     R2,#0x10
+   \                     ??Button_ReceiveDataIndication_22:
+   \   00007E   7901         MOV     R1,#0x1
+   \   000080   12....       LCALL   ??Button_HandleKeys?relay
+   \   000083   8014         SJMP    ??Button_ReceiveDataIndication_3
+    388                  } 
+    389                  if (command == BUTTON_CLOSE)
+   \                     ??Button_ReceiveDataIndication_21:
+   \   000085   7402         MOV     A,#0x2
+   \   000087   6C           XRL     A,R4
+   \   000088   7001         JNZ     ??Button_ReceiveDataIndication_23
+   \   00008A   ED           MOV     A,R5
+   \                     ??Button_ReceiveDataIndication_23:
+   \   00008B   7004         JNZ     ??Button_ReceiveDataIndication_24
+    390                  {
+    391                      Button_HandleKeys( 1, HAL_KEY_SW_2 );
+   \                     ??Button_ReceiveDataIndication_18:
+   \   00008D                ; Setup parameters for call to function Button_HandleKeys
+   \   00008D   7A02         MOV     R2,#0x2
+   \   00008F   80ED         SJMP    ??Button_ReceiveDataIndication_22
+    392                  }
+    393                  if (command == BUTTON_TRIGGER)
+   \                     ??Button_ReceiveDataIndication_24:
+   \   000091   7403         MOV     A,#0x3
+   \   000093   6C           XRL     A,R4
+   \   000094   7001         JNZ     ??Button_ReceiveDataIndication_25
+   \   000096   ED           MOV     A,R5
+   \                     ??Button_ReceiveDataIndication_25:
+   \   000097   60E3         JZ      ??Button_ReceiveDataIndication_16
+    394                  {
+    395                      Button_HandleKeys( 1, HAL_KEY_SW_3 );
+    396                  }
+    397                }
+    398            }
+    399          }
+   \                     ??Button_ReceiveDataIndication_3:
+   \   000099   02....       LJMP    ?Subroutine0 & 0xFFFF
+
+   \                                 In  segment XDATA_ID, align 1, keep-with-next
+   \                     `?<Initializer for Button_ClusterList>`:
+   \   000000   0100         DW 1
+   \   000002   0200         DW 2
+   \   000004   0300         DW 3
+
+   \                                 In  segment XDATA_ID, align 1, keep-with-next
+   \                     `?<Initializer for Button_SimpleDesc>`:
+   \   000000   0A           DB 10
+   \   000001   040F         DW 3844
+   \   000003   0100         DW 1
+   \   000005   00           DB 0
+   \   000006   03           DB 3
+   \   000007   ....         DW Button_ClusterList
+   \   000009   03           DB 3
+   \   00000A   ....         DW Button_ClusterList
+   \   00000C   00000000     DB 0, 0, 0, 0, 0, 0, 0, 0
+   \            00000000
+   \   000014   00000000     DB 0, 0, 0, 0, 0, 0, 0, 0
+   \            00000000
+   \   00001C   00000000     DB 0, 0, 0, 0, 0, 0, 0, 0
+   \            00000000
 
    \                                 In  segment BANK_RELAYS, align 1
    \                     ??Button_Init?relay:
@@ -692,64 +1020,91 @@ D:\ProgramData\Hardware\zigbee\Projects\zstack\Samples\SensorSys\Source\Button_E
    \   000000   12....       LCALL   ?BDISPATCH
    \   000003   ......       DC24    Button_HandleKeys
 
+   \                                 In  segment BANK_RELAYS, align 1
+   \                     ??Button_ReceiveDataIndication?relay:
+   \   000000   12....       LCALL   ?BDISPATCH
+   \   000003   ......       DC24    Button_ReceiveDataIndication
+    400          
+    401          /******************************************************************************
+    402           * @fn          Button_AllowBindConfirm
+    403           *
+    404           * @brief       Indicates when another device attempted to bind to this device
+    405           *
+    406           * @param
+    407           *
+    408           * @return      none
+    409           */
+    410          void Button_AllowBindConfirm( uint16 source )
+    411          {
+    412              Sys_AllowBindConfirm(source);
+    413          }
+
    Maximum stack usage in bytes:
 
-     Function                   ISTACK PSTACK XSTACK
-     --------                   ------ ------ ------
-     Button_HandleKeys              0      0     25
-       -> Sensor_AllowBind          0      0     22
-       -> HalLedSet                 0      0     22
-       -> zb_WriteConfiguration     0      0     22
-       -> zb_ReadConfiguration      0      0     22
-       -> zb_WriteConfiguration     0      0     22
-       -> zb_SystemReset            0      0     22
-       -> HalLedSet                 0      0     22
-       -> HalLedSet                 0      0     22
-       -> HalLedSet                 0      0     22
-       -> HalLedSet                 0      0     22
-     Button_Init                    0      0      9
-       -> afRegister                0      0     18
-       -> RegisterForKeys           0      0     18
-       -> ZDO_RegisterForZDOMsg     0      0     18
-       -> HalLedSet                 0      0     18
-       -> HalLedSet                 0      0     18
-       -> HalLedSet                 0      0     18
-     Button_ProcessEvent            0      0     14
-       -> osal_msg_receive          0      0     28
-       -> Button_HandleKeys         0      0     28
-       -> osal_msg_deallocate       0      0     28
-       -> osal_msg_receive          0      0     28
+     Function                       ISTACK PSTACK XSTACK
+     --------                       ------ ------ ------
+     Button_HandleKeys                  0      0     23
+       -> zb_SystemReset                0      0     18
+       -> zb_SystemReset                0      0     18
+       -> zb_SystemReset                0      0     18
+       -> Sys_AllowBind                 0      0     18
+     Button_Init                        1      0      9
+       -> afRegister                    0      0     18
+       -> RegisterForKeys               0      0     18
+       -> ZDO_RegisterForZDOMsg         0      0     18
+       -> HalLedSet                     0      0     18
+       -> HalLedSet                     0      0     18
+       -> HalLedSet                     0      0     18
+     Button_ProcessEvent                0      0     18
+       -> osal_msg_receive              0      0     28
+       -> Sys_AllowBindConfirm          0      0     28
+       -> osal_msg_deallocate           0      0     28
+       -> osal_msg_receive              0      0     28
+       -> Button_HandleKeys             0      0     28
+       -> Button_ReceiveDataIndication
+                                        0      0     36
+     Button_ReceiveDataIndication       0      0     27
+       -> Button_HandleKeys             0      0     18
+       -> Button_HandleKeys             0      0     18
+       -> Button_HandleKeys             0      0     18
+       -> Button_HandleKeys             0      0     18
+       -> Button_HandleKeys             0      0     18
+       -> Button_HandleKeys             0      0     18
+       -> Button_HandleKeys             0      0     18
+       -> Button_HandleKeys             0      0     18
 
 
    Segment part sizes:
 
-     Function/Label              Bytes
-     --------------              -----
-     Button_ClusterList             4
-     Button_SimpleDesc             12
-     Button_epDesc                  6
-     keys_shift                     1
-     type_join                      1
-     Button_TaskID                  1
-     Button_DstAddr                12
-     Button_Init                   78
-     ?Subroutine0                   5
-     ?Subroutine1                  22
-     Button_ProcessEvent           86
-     Button_HandleKeys            142
-     ??Button_Init?relay            6
-     ??Button_ProcessEvent?relay    6
-     ??Button_HandleKeys?relay      6
+     Function/Label                        Bytes
+     --------------                        -----
+     buttonCnt                                1
+     Button_ClusterList                       6
+     Button_SimpleDesc                       36
+     Button_epDesc                           18
+     Button_TaskID                            1
+     Button_DstAddr                          12
+     Button_Init                            169
+     ?Subroutine0                             5
+     Button_ProcessEvent                    188
+     Button_HandleKeys                       68
+     Button_ReceiveDataIndication           156
+     ?<Initializer for Button_ClusterList>    6
+     ?<Initializer for Button_SimpleDesc>    36
+     ??Button_Init?relay                      6
+     ??Button_ProcessEvent?relay              6
+     ??Button_HandleKeys?relay                6
+     ??Button_ReceiveDataIndication?relay     6
 
  
- 333 bytes in segment BANKED_CODE
-  18 bytes in segment BANK_RELAYS
-  16 bytes in segment XDATA_ROM_C
-  21 bytes in segment XDATA_Z
+ 586 bytes in segment BANKED_CODE
+  24 bytes in segment BANK_RELAYS
+  42 bytes in segment XDATA_I
+  42 bytes in segment XDATA_ID
+  32 bytes in segment XDATA_Z
  
- 351 bytes of CODE  memory
-  16 bytes of CONST memory
-  21 bytes of XDATA memory
+ 652 bytes of CODE  memory
+  74 bytes of XDATA memory
 
 Errors: none
 Warnings: none

@@ -1,13 +1,13 @@
 ###############################################################################
 #                                                                             #
-# IAR C/C++ Compiler V8.10.3.10338/W32 for 8051         08/Sep/2017  21:42:37 #
+# IAR C/C++ Compiler V8.10.3.10338/W32 for 8051         30/Mar/2018  14:24:01 #
 # Copyright 2004-2011 IAR Systems AB.                                         #
 #                                                                             #
 #    Core               =  plain                                              #
 #    Code model         =  banked                                             #
 #    Data model         =  large                                              #
 #    Calling convention =  xdata reentrant                                    #
-#    Constant location  =  data_rom                                           #
+#    Constant location  =  data                                               #
 #    Dptr setup         =  1,16                                               #
 #    Source file        =  D:\ProgramData\Hardware\zigbee\Components\osal\mcu #
 #                          \cc2530\OSAL_Nv.c                                  #
@@ -38,7 +38,7 @@
 #                          -DMAC_MAX_FRAME_SIZE=116                           #
 #                          -DZDNWKMGR_MIN_TRANSMISSIONS=20 "-DCONST=const     #
 #                          __code" -DGENERIC=__generic                        #
-#                          -DRFD_RCVC_ALWAYS_ON=FALSE -DPOLL_RATE=1000        #
+#                          -DRFD_RCVC_ALWAYS_ON=TRUE -DPOLL_RATE=1000         #
 #                          -DQUEUED_POLL_RATE=100 -DRESPONSE_POLL_RATE=100)   #
 #                          -DREJOIN_POLL_RATE=440 D:\ProgramData\Hardware\zig #
 #                          bee\Components\osal\mcu\cc2530\OSAL_Nv.c -D        #
@@ -56,9 +56,9 @@
 #                          --no_code_motion --debug --core=plain --dptr=16,1  #
 #                          --data_model=large --code_model=banked             #
 #                          --calling_convention=xdata_reentrant               #
-#                          --place_constants=data_rom --nr_virtual_regs 16    #
-#                          -I D:\ProgramData\Hardware\zigbee\Projects\zstack\ #
-#                          Samples\SensorSys\CC2530DB\ -I                     #
+#                          --place_constants=data --nr_virtual_regs 16 -I     #
+#                          D:\ProgramData\Hardware\zigbee\Projects\zstack\Sam #
+#                          ples\SensorSys\CC2530DB\ -I                        #
 #                          D:\ProgramData\Hardware\zigbee\Projects\zstack\Sam #
 #                          ples\SensorSys\CC2530DB\..\Source\ -I              #
 #                          D:\ProgramData\Hardware\zigbee\Projects\zstack\Sam #
@@ -202,12 +202,12 @@ D:\ProgramData\Hardware\zigbee\Components\osal\mcu\cc2530\OSAL_Nv.c
      81          
      82          #define OSAL_NV_MAX_HOT         3
 
-   \                                 In  segment XDATA_ROM_C, align 1
+   \                                 In  segment XDATA_I, align 1, keep-with-next
      83          static const uint16 hotIds[OSAL_NV_MAX_HOT] = {
    \                     hotIds:
-   \   000000   8200         DW 130
-   \   000002   3A00         DW 58
-   \   000004   3B00         DW 59
+   \   000000                DS 6
+   \   000006                REQUIRE `?<Initializer for hotIds>`
+   \   000006                REQUIRE __INIT_XDATA_I
      84            ZCD_NV_NWKKEY,
      85            ZCD_NV_NWK_ACTIVE_KEY_INFO,
      86            ZCD_NV_NWK_ALTERN_KEY_INFO,
@@ -5136,6 +5136,12 @@ D:\ProgramData\Hardware\zigbee\Components\osal\mcu\cc2530\OSAL_Nv.c
    \   00005A   02....       LJMP    ?Subroutine3 & 0xFFFF
    1496          }
 
+   \                                 In  segment XDATA_ID, align 1, keep-with-next
+   \                     `?<Initializer for hotIds>`:
+   \   000000   8200         DW 130
+   \   000002   3A00         DW 58
+   \   000004   3B00         DW 59
+
    \                                 In  segment BANK_RELAYS, align 1
    \                     ??initNV?relay:
    \   000000   12....       LCALL   ?BDISPATCH
@@ -5478,6 +5484,7 @@ D:\ProgramData\Hardware\zigbee\Components\osal\mcu\cc2530\OSAL_Nv.c
      ?Subroutine20                11
      osal_nv_read                129
      osal_nv_delete               93
+     ?<Initializer for hotIds>     6
      ??initNV?relay                6
      ??setPageUse?relay            6
      ??initPage?relay              6
@@ -5505,13 +5512,13 @@ D:\ProgramData\Hardware\zigbee\Components\osal\mcu\cc2530\OSAL_Nv.c
  
   5 198 bytes in segment BANKED_CODE
     138 bytes in segment BANK_RELAYS
-      6 bytes in segment XDATA_ROM_C
+      6 bytes in segment XDATA_I
+      6 bytes in segment XDATA_ID
      35 bytes in segment XDATA_Z
  12 288 bytes in segment ZIGNV_ADDRESS_SPACE
  
-  5 336 bytes of CODE  memory
-      6 bytes of CONST memory
- 12 323 bytes of XDATA memory
+  5 342 bytes of CODE  memory
+ 12 329 bytes of XDATA memory
 
 Errors: none
 Warnings: none

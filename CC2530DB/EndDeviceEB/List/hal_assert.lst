@@ -1,13 +1,13 @@
 ###############################################################################
 #                                                                             #
-# IAR C/C++ Compiler V8.10.3.10338/W32 for 8051         08/Sep/2017  21:42:37 #
+# IAR C/C++ Compiler V8.10.3.10338/W32 for 8051         30/Mar/2018  14:24:13 #
 # Copyright 2004-2011 IAR Systems AB.                                         #
 #                                                                             #
 #    Core               =  plain                                              #
 #    Code model         =  banked                                             #
 #    Data model         =  large                                              #
 #    Calling convention =  xdata reentrant                                    #
-#    Constant location  =  data_rom                                           #
+#    Constant location  =  data                                               #
 #    Dptr setup         =  1,16                                               #
 #    Source file        =  D:\ProgramData\Hardware\zigbee\Components\hal\comm #
 #                          on\hal_assert.c                                    #
@@ -38,7 +38,7 @@
 #                          -DMAC_MAX_FRAME_SIZE=116                           #
 #                          -DZDNWKMGR_MIN_TRANSMISSIONS=20 "-DCONST=const     #
 #                          __code" -DGENERIC=__generic                        #
-#                          -DRFD_RCVC_ALWAYS_ON=FALSE -DPOLL_RATE=1000        #
+#                          -DRFD_RCVC_ALWAYS_ON=TRUE -DPOLL_RATE=1000         #
 #                          -DQUEUED_POLL_RATE=100 -DRESPONSE_POLL_RATE=100)   #
 #                          -DREJOIN_POLL_RATE=440 D:\ProgramData\Hardware\zig #
 #                          bee\Components\hal\common\hal_assert.c -D          #
@@ -56,9 +56,9 @@
 #                          --no_code_motion --debug --core=plain --dptr=16,1  #
 #                          --data_model=large --code_model=banked             #
 #                          --calling_convention=xdata_reentrant               #
-#                          --place_constants=data_rom --nr_virtual_regs 16    #
-#                          -I D:\ProgramData\Hardware\zigbee\Projects\zstack\ #
-#                          Samples\SensorSys\CC2530DB\ -I                     #
+#                          --place_constants=data --nr_virtual_regs 16 -I     #
+#                          D:\ProgramData\Hardware\zigbee\Projects\zstack\Sam #
+#                          ples\SensorSys\CC2530DB\ -I                        #
 #                          D:\ProgramData\Hardware\zigbee\Projects\zstack\Sam #
 #                          ples\SensorSys\CC2530DB\..\Source\ -I              #
 #                          D:\ProgramData\Hardware\zigbee\Projects\zstack\Sam #
@@ -726,16 +726,34 @@ D:\ProgramData\Hardware\zigbee\Components\hal\common\hal_assert.c
    \   000000                DS 1
    \   000001                REQUIRE __INIT_XDATA_Z
 
-   \                                 In  segment XDATA_ROM_C, align 1
+   \                                 In  segment XDATA_I, align 1, keep-with-next
    \                     __Constant_0:
+   \   000000                DS 4
+   \   000004                REQUIRE `?<Initializer for __Constant_0>`
+   \   000004                REQUIRE __INIT_XDATA_I
+
+   \                                 In  segment XDATA_ID, align 1, keep-with-next
+   \                     `?<Initializer for __Constant_0>`:
    \   000000   00000000     DD 0
 
-   \                                 In  segment XDATA_ROM_C, align 1
+   \                                 In  segment XDATA_I, align 1, keep-with-next
    \                     __Constant_1:
+   \   000000                DS 4
+   \   000004                REQUIRE `?<Initializer for __Constant_1>`
+   \   000004                REQUIRE __INIT_XDATA_I
+
+   \                                 In  segment XDATA_ID, align 1, keep-with-next
+   \                     `?<Initializer for __Constant_1>`:
    \   000000   01000000     DD 1
 
-   \                                 In  segment XDATA_ROM_C, align 1
+   \                                 In  segment XDATA_I, align 1, keep-with-next
    \                     __Constant_5800:
+   \   000000                DS 4
+   \   000004                REQUIRE `?<Initializer for __Constant_5800>`
+   \   000004                REQUIRE __INIT_XDATA_I
+
+   \                                 In  segment XDATA_ID, align 1, keep-with-next
+   \                     `?<Initializer for __Constant_5800>`:
    \   000000   00580000     DD 22528
 
    \                                 In  segment BANK_RELAYS, align 1
@@ -777,38 +795,41 @@ D:\ProgramData\Hardware\zigbee\Components\hal\common\hal_assert.c
 
    Segment part sizes:
 
-     Function/Label                Bytes
-     --------------                -----
-     _A_P0                            1
-     P0INP                            1
-     _A_P1                            1
-     SLEEPSTA                         1
-     CLKCONSTA                        1
-     _A_IEN0                          1
-     SLEEPCMD                         1
-     CLKCONCMD                        1
-     P1DIR                            1
-     halAssertHandler                14
-     halAssertHazardLights          405
-     ?Subroutine0                    21
-     escape                           1
-     __Constant_0                     4
-     __Constant_1                     4
-     __Constant_5800                  4
-     ??halAssertHandler?relay         6
-     ??halAssertHazardLights?relay    6
+     Function/Label                     Bytes
+     --------------                     -----
+     _A_P0                                 1
+     P0INP                                 1
+     _A_P1                                 1
+     SLEEPSTA                              1
+     CLKCONSTA                             1
+     _A_IEN0                               1
+     SLEEPCMD                              1
+     CLKCONCMD                             1
+     P1DIR                                 1
+     halAssertHandler                     14
+     halAssertHazardLights               405
+     ?Subroutine0                         21
+     escape                                1
+     __Constant_0                          4
+     ?<Initializer for __Constant_0>       4
+     __Constant_1                          4
+     ?<Initializer for __Constant_1>       4
+     __Constant_5800                       4
+     ?<Initializer for __Constant_5800>    4
+     ??halAssertHandler?relay              6
+     ??halAssertHazardLights?relay         6
 
  
  440 bytes in segment BANKED_CODE
   12 bytes in segment BANK_RELAYS
    9 bytes in segment SFR_AN
-  12 bytes in segment XDATA_ROM_C
+  12 bytes in segment XDATA_I
+  12 bytes in segment XDATA_ID
    1 byte  in segment XDATA_Z
  
- 452 bytes of CODE  memory
-   0 bytes of CONST memory (+ 12 bytes shared)
+ 452 bytes of CODE  memory (+ 12 bytes shared)
    0 bytes of DATA  memory (+  9 bytes shared)
-   1 byte  of XDATA memory
+   1 byte  of XDATA memory (+ 12 bytes shared)
 
 Errors: none
 Warnings: none

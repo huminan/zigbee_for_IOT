@@ -1,13 +1,13 @@
 ###############################################################################
 #                                                                             #
-# IAR C/C++ Compiler V8.10.3.10338/W32 for 8051         08/Sep/2017  21:42:42 #
+# IAR C/C++ Compiler V8.10.3.10338/W32 for 8051         30/Mar/2018  14:24:09 #
 # Copyright 2004-2011 IAR Systems AB.                                         #
 #                                                                             #
 #    Core               =  plain                                              #
 #    Code model         =  banked                                             #
 #    Data model         =  large                                              #
 #    Calling convention =  xdata reentrant                                    #
-#    Constant location  =  data_rom                                           #
+#    Constant location  =  data                                               #
 #    Dptr setup         =  1,16                                               #
 #    Source file        =  D:\ProgramData\Hardware\zigbee\Components\stack\af #
 #                          \AF.c                                              #
@@ -38,7 +38,7 @@
 #                          -DMAC_MAX_FRAME_SIZE=116                           #
 #                          -DZDNWKMGR_MIN_TRANSMISSIONS=20 "-DCONST=const     #
 #                          __code" -DGENERIC=__generic                        #
-#                          -DRFD_RCVC_ALWAYS_ON=FALSE -DPOLL_RATE=1000        #
+#                          -DRFD_RCVC_ALWAYS_ON=TRUE -DPOLL_RATE=1000         #
 #                          -DQUEUED_POLL_RATE=100 -DRESPONSE_POLL_RATE=100)   #
 #                          -DREJOIN_POLL_RATE=440 D:\ProgramData\Hardware\zig #
 #                          bee\Components\stack\af\AF.c -D NWK_AUTO_POLL -D   #
@@ -55,9 +55,9 @@
 #                          --no_code_motion --debug --core=plain --dptr=16,1  #
 #                          --data_model=large --code_model=banked             #
 #                          --calling_convention=xdata_reentrant               #
-#                          --place_constants=data_rom --nr_virtual_regs 16    #
-#                          -I D:\ProgramData\Hardware\zigbee\Projects\zstack\ #
-#                          Samples\SensorSys\CC2530DB\ -I                     #
+#                          --place_constants=data --nr_virtual_regs 16 -I     #
+#                          D:\ProgramData\Hardware\zigbee\Projects\zstack\Sam #
+#                          ples\SensorSys\CC2530DB\ -I                        #
 #                          D:\ProgramData\Hardware\zigbee\Projects\zstack\Sam #
 #                          ples\SensorSys\CC2530DB\..\Source\ -I              #
 #                          D:\ProgramData\Hardware\zigbee\Projects\zstack\Sam #
@@ -140,7 +140,7 @@ D:\ProgramData\Hardware\zigbee\Components\stack\af\AF.c
      22            its documentation for any purpose.
      23          
      24            YOU FURTHER ACKNOWLEDGE AND AGREE THAT THE SOFTWARE AND DOCUMENTATION ARE
-     25            PROVIDED “AS IS” WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+     25            PROVIDED “AS IS?WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESS OR IMPLIED,
      26            INCLUDING WITHOUT LIMITATION, ANY WARRANTY OF MERCHANTABILITY, TITLE,
      27            NON-INFRINGEMENT AND FITNESS FOR A PARTICULAR PURPOSE. IN NO EVENT SHALL
      28            TEXAS INSTRUMENTS OR ITS LICENSORS BE LIABLE OR OBLIGATED UNDER CONTRACT,
@@ -282,7 +282,7 @@ D:\ProgramData\Hardware\zigbee\Components\stack\af\AF.c
     142            if (ep != NULL)
    \   000014   EA           MOV     A,R2
    \   000015   4B           ORL     A,R3
-   \   000016   6035         JZ      ??afRegisterExtended_0
+   \   000016   6038         JZ      ??afRegisterExtended_0
     143            {
     144              ep->nextDesc = epList;
    \   000018   90....       MOV     DPTR,#epList
@@ -303,7 +303,7 @@ D:\ProgramData\Hardware\zigbee\Components\stack\af\AF.c
     147              ep->pfnDescCB = descFn;
     148              ep->apsfCfg.frameDelay = APSF_DEFAULT_INTERFRAME_DELAY;
     149              ep->apsfCfg.windowSize = APSF_DEFAULT_WINDOW_SIZE;
-    150              ep->flags = eEP_AllowMatch;  // Default to allow Match Descriptor.
+    150              ep->flags &= (eEP_AllowMatch ^ 0xFFFF);  // Default to disable Match Descriptor.
     151            }
    \                     ??CrossCallReturnLabel_30:
    \   00002F   EE           MOV     A,R6
@@ -327,11 +327,13 @@ D:\ProgramData\Hardware\zigbee\Components\stack\af\AF.c
    \   000048   12....       LCALL   ?Subroutine19 & 0xFFFF
    \                     ??CrossCallReturnLabel_24:
    \   00004B   A3           INC     DPTR
-   \   00004C   F0           MOVX    @DPTR,A
+   \   00004C   E0           MOVX    A,@DPTR
+   \   00004D   C2E0         CLR     0xE0 /* A   */.0
+   \   00004F   F0           MOVX    @DPTR,A
     152          
     153            return ep;
    \                     ??afRegisterExtended_0:
-   \   00004D   02....       LJMP    ?Subroutine0 & 0xFFFF
+   \   000050   02....       LJMP    ?Subroutine0 & 0xFFFF
     154          }
 
    \                                 In  segment BANKED_CODE, align 1, keep-with-next
@@ -3550,7 +3552,7 @@ D:\ProgramData\Hardware\zigbee\Components\stack\af\AF.c
      Function/Label                                 Bytes
      --------------                                 -----
      epList                                            2
-     afRegisterExtended                               80
+     afRegisterExtended                               83
      ?Subroutine21                                     4
      ?Subroutine29                                    10
      ?Subroutine19                                     7
@@ -3633,13 +3635,13 @@ D:\ProgramData\Hardware\zigbee\Components\stack\af\AF.c
      ??afAPSF_ConfigSet?relay                          6
 
  
- 3 008 bytes in segment BANKED_CODE
+ 3 011 bytes in segment BANKED_CODE
    114 bytes in segment BANK_RELAYS
      1 byte  in segment XDATA_I
      1 byte  in segment XDATA_ID
      2 bytes in segment XDATA_Z
  
- 3 123 bytes of CODE  memory
+ 3 126 bytes of CODE  memory
      3 bytes of XDATA memory
 
 Errors: none

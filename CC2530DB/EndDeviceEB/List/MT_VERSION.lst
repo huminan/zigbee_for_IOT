@@ -1,13 +1,13 @@
 ###############################################################################
 #                                                                             #
-# IAR C/C++ Compiler V8.10.3.10338/W32 for 8051         08/Sep/2017  21:42:44 #
+# IAR C/C++ Compiler V8.10.3.10338/W32 for 8051         30/Mar/2018  14:24:00 #
 # Copyright 2004-2011 IAR Systems AB.                                         #
 #                                                                             #
 #    Core               =  plain                                              #
 #    Code model         =  banked                                             #
 #    Data model         =  large                                              #
 #    Calling convention =  xdata reentrant                                    #
-#    Constant location  =  data_rom                                           #
+#    Constant location  =  data                                               #
 #    Dptr setup         =  1,16                                               #
 #    Source file        =  D:\ProgramData\Hardware\zigbee\Components\mt\MT_VE #
 #                          RSION.c                                            #
@@ -38,7 +38,7 @@
 #                          -DMAC_MAX_FRAME_SIZE=116                           #
 #                          -DZDNWKMGR_MIN_TRANSMISSIONS=20 "-DCONST=const     #
 #                          __code" -DGENERIC=__generic                        #
-#                          -DRFD_RCVC_ALWAYS_ON=FALSE -DPOLL_RATE=1000        #
+#                          -DRFD_RCVC_ALWAYS_ON=TRUE -DPOLL_RATE=1000         #
 #                          -DQUEUED_POLL_RATE=100 -DRESPONSE_POLL_RATE=100)   #
 #                          -DREJOIN_POLL_RATE=440 D:\ProgramData\Hardware\zig #
 #                          bee\Components\mt\MT_VERSION.c -D NWK_AUTO_POLL    #
@@ -55,9 +55,9 @@
 #                          --no_code_motion --debug --core=plain --dptr=16,1  #
 #                          --data_model=large --code_model=banked             #
 #                          --calling_convention=xdata_reentrant               #
-#                          --place_constants=data_rom --nr_virtual_regs 16    #
-#                          -I D:\ProgramData\Hardware\zigbee\Projects\zstack\ #
-#                          Samples\SensorSys\CC2530DB\ -I                     #
+#                          --place_constants=data --nr_virtual_regs 16 -I     #
+#                          D:\ProgramData\Hardware\zigbee\Projects\zstack\Sam #
+#                          ples\SensorSys\CC2530DB\ -I                        #
 #                          D:\ProgramData\Hardware\zigbee\Projects\zstack\Sam #
 #                          ples\SensorSys\CC2530DB\..\Source\ -I              #
 #                          D:\ProgramData\Hardware\zigbee\Projects\zstack\Sam #
@@ -167,9 +167,15 @@ D:\ProgramData\Hardware\zigbee\Components\mt\MT_VERSION.c
      47           * CONSTANTS
      48           *****************************************************************************/
 
-   \                                 In  segment XDATA_ROM_C, align 1
+   \                                 In  segment XDATA_I, align 1, keep-with-next
      49          const uint8 MTVersionString[5] = {
    \                     MTVersionString:
+   \   000000                DS 5
+   \   000005                REQUIRE `?<Initializer for MTVersionString>`
+   \   000005                REQUIRE __INIT_XDATA_I
+
+   \                                 In  segment XDATA_ID, align 1, keep-with-next
+   \                     `?<Initializer for MTVersionString>`:
    \   000000   02           DB 2
    \   000001   00           DB 0
    \   000002   02           DB 2
@@ -188,14 +194,17 @@ D:\ProgramData\Hardware\zigbee\Components\mt\MT_VERSION.c
 
    Segment part sizes:
 
-     Function/Label  Bytes
-     --------------  -----
-     MTVersionString    5
+     Function/Label                     Bytes
+     --------------                     -----
+     MTVersionString                       5
+     ?<Initializer for MTVersionString>    5
 
  
- 5 bytes in segment XDATA_ROM_C
+ 5 bytes in segment XDATA_I
+ 5 bytes in segment XDATA_ID
  
- 5 bytes of CONST memory
+ 5 bytes of CODE  memory
+ 5 bytes of XDATA memory
 
 Errors: none
 Warnings: none

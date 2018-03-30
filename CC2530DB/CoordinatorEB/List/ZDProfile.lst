@@ -1,6 +1,6 @@
 ###############################################################################
 #                                                                             #
-# IAR C/C++ Compiler V8.10.3.10338/W32 for 8051         29/Dec/2017  20:30:05 #
+# IAR C/C++ Compiler V8.10.3.10338/W32 for 8051         30/Mar/2018  16:46:32 #
 # Copyright 2004-2011 IAR Systems AB.                                         #
 #                                                                             #
 #    Core               =  plain                                              #
@@ -40,7 +40,7 @@
 #                          -DMAC_MAX_FRAME_SIZE=116                           #
 #                          -DZDNWKMGR_MIN_TRANSMISSIONS=20 "-DCONST=const     #
 #                          __code" -DGENERIC=__generic                        #
-#                          -DRFD_RCVC_ALWAYS_ON=FALSE -DPOLL_RATE=1000        #
+#                          -DRFD_RCVC_ALWAYS_ON=TRUE -DPOLL_RATE=1000         #
 #                          -DQUEUED_POLL_RATE=100 -DRESPONSE_POLL_RATE=100)   #
 #                          -DREJOIN_POLL_RATE=440 D:\ProgramData\Hardware\zig #
 #                          bee\Components\stack\zdo\ZDProfile.c -D            #
@@ -144,7 +144,7 @@ D:\ProgramData\Hardware\zigbee\Components\stack\zdo\ZDProfile.c
      22            its documentation for any purpose.
      23          
      24            YOU FURTHER ACKNOWLEDGE AND AGREE THAT THE SOFTWARE AND DOCUMENTATION ARE
-     25            PROVIDED “AS IS” WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+     25            PROVIDED “AS IS?WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESS OR IMPLIED,
      26            INCLUDING WITHOUT LIMITATION, ANY WARRANTY OF MERCHANTABILITY, TITLE,
      27            NON-INFRINGEMENT AND FITNESS FOR A PARTICULAR PURPOSE. IN NO EVENT SHALL
      28            TEXAS INSTRUMENTS OR ITS LICENSORS BE LIABLE OR OBLIGATED UNDER CONTRACT,
@@ -1129,175 +1129,120 @@ D:\ProgramData\Hardware\zigbee\Components\stack\zdo\ZDProfile.c
     402            if ( len >= ZDP_BUF_SZ-1 )
    \   000038   C3           CLR     C
    \   000039   944F         SUBB    A,#0x4f
-   \   00003B   4005         JC      ??ZDP_MatchDescReq_0
+   \   00003B   4004         JC      ??ZDP_MatchDescReq_0
     403            {
     404              return afStatus_MEM_FAIL;
    \   00003D   7910         MOV     R1,#0x10
-   \   00003F   02....       LJMP    ??ZDP_MatchDescReq_1 & 0xFFFF
+   \   00003F   805C         SJMP    ??ZDP_MatchDescReq_1
     405            }
     406          
     407            // The spec changed in Zigbee 2007 (2.4.3.1.7.1) to not allow sending
     408            // this command to 0xFFFF.  So, here we will filter this and replace 
     409            // with 0xFFFD to only send to devices with RX ON.  This includes the 
     410            // network address of interest.
-    411            if ( ((dstAddr->addrMode == AddrBroadcast) || (dstAddr->addrMode == Addr16Bit))
+    411          /*  if ( ((dstAddr->addrMode == AddrBroadcast) || (dstAddr->addrMode == Addr16Bit))
     412                && (dstAddr->addr.shortAddr == NWK_BROADCAST_SHORTADDR_DEVALL) )
-   \                     ??ZDP_MatchDescReq_0:
-   \   000042   8A82         MOV     DPL,R2
-   \   000044   8B83         MOV     DPH,R3
-   \   000046   A3           INC     DPTR
-   \   000047   A3           INC     DPTR
-   \   000048   A3           INC     DPTR
-   \   000049   A3           INC     DPTR
-   \   00004A   A3           INC     DPTR
-   \   00004B   A3           INC     DPTR
-   \   00004C   A3           INC     DPTR
-   \   00004D   A3           INC     DPTR
-   \   00004E   E0           MOVX    A,@DPTR
-   \   00004F   640F         XRL     A,#0xf
-   \   000051   6011         JZ      ??ZDP_MatchDescReq_2
-   \   000053   8A82         MOV     DPL,R2
-   \   000055   8B83         MOV     DPH,R3
-   \   000057   A3           INC     DPTR
-   \   000058   A3           INC     DPTR
-   \   000059   A3           INC     DPTR
-   \   00005A   A3           INC     DPTR
-   \   00005B   A3           INC     DPTR
-   \   00005C   A3           INC     DPTR
-   \   00005D   A3           INC     DPTR
-   \   00005E   A3           INC     DPTR
-   \   00005F   E0           MOVX    A,@DPTR
-   \   000060   6402         XRL     A,#0x2
-   \   000062   7018         JNZ     ??ZDP_MatchDescReq_3
-   \                     ??ZDP_MatchDescReq_2:
-   \   000064   8A82         MOV     DPL,R2
-   \   000066   8B83         MOV     DPH,R3
-   \   000068   E0           MOVX    A,@DPTR
-   \   000069   F4           CPL     A
-   \   00006A   7003         JNZ     ??ZDP_MatchDescReq_4
-   \   00006C   A3           INC     DPTR
-   \   00006D   E0           MOVX    A,@DPTR
-   \   00006E   F4           CPL     A
-   \                     ??ZDP_MatchDescReq_4:
-   \   00006F   700B         JNZ     ??ZDP_MatchDescReq_3
     413            {
     414              dstAddr->addr.shortAddr = NWK_BROADCAST_SHORTADDR_DEVRXON;
-   \   000071   8A82         MOV     DPL,R2
-   \   000073   8B83         MOV     DPH,R3
-   \   000075   74FD         MOV     A,#-0x3
-   \   000077   F0           MOVX    @DPTR,A
-   \   000078   A3           INC     DPTR
-   \   000079   74FF         MOV     A,#-0x1
-   \   00007B   F0           MOVX    @DPTR,A
     415            }
     416            if ( nwkAddr == NWK_BROADCAST_SHORTADDR_DEVALL )
-   \                     ??ZDP_MatchDescReq_3:
-   \   00007C   74FF         MOV     A,#-0x1
-   \   00007E   6C           XRL     A,R4
-   \   00007F   7003         JNZ     ??ZDP_MatchDescReq_5
-   \   000081   74FF         MOV     A,#-0x1
-   \   000083   6D           XRL     A,R5
-   \                     ??ZDP_MatchDescReq_5:
-   \   000084   7004         JNZ     ??ZDP_MatchDescReq_6
     417            {
     418              nwkAddr = NWK_BROADCAST_SHORTADDR_DEVRXON;
-   \   000086   7CFD         MOV     R4,#-0x3
-   \   000088   7DFF         MOV     R5,#-0x1
-    419            }
+    419            }*/
     420            
     421            *pBuf++ = LO_UINT16( nwkAddr );   // NWKAddrOfInterest
-   \                     ??ZDP_MatchDescReq_6:
-   \   00008A   EC           MOV     A,R4
-   \   00008B   8882         MOV     DPL,R0
-   \   00008D   8983         MOV     DPH,R1
-   \   00008F   F0           MOVX    @DPTR,A
-   \   000090   A3           INC     DPTR
+   \                     ??ZDP_MatchDescReq_0:
+   \   000041   EC           MOV     A,R4
+   \   000042   8882         MOV     DPL,R0
+   \   000044   8983         MOV     DPH,R1
+   \   000046   F0           MOVX    @DPTR,A
+   \   000047   A3           INC     DPTR
     422            *pBuf++ = HI_UINT16( nwkAddr );
-   \   000091   ED           MOV     A,R5
-   \   000092   12....       LCALL   ?Subroutine56 & 0xFFFF
+   \   000048   ED           MOV     A,R5
+   \   000049   12....       LCALL   ?Subroutine56 & 0xFFFF
     423          
     424            *pBuf++ = LO_UINT16( ProfileID );   // Profile ID
     425            *pBuf++ = HI_UINT16( ProfileID );
     426          
     427            *pBuf++ = NumInClusters; // Input cluster list
    \                     ??CrossCallReturnLabel_73:
-   \   000095   EE           MOV     A,R6
-   \   000096   12....       LCALL   ??Subroutine120_0 & 0xFFFF
+   \   00004C   EE           MOV     A,R6
+   \   00004D   12....       LCALL   ??Subroutine120_0 & 0xFFFF
     428            if ( NumInClusters )
    \                     ??CrossCallReturnLabel_231:
-   \   000099   6017         JZ      ??ZDP_MatchDescReq_7
+   \   000050   6017         JZ      ??ZDP_MatchDescReq_2
     429            {
     430              for (i=0; i<NumInClusters; ++i)  {
-   \   00009B   75..00       MOV     ?V0 + 0,#0x0
+   \   000052   75..00       MOV     ?V0 + 0,#0x0
     431                *pBuf++ = LO_UINT16( InClusterList[i] );
-   \                     ??ZDP_MatchDescReq_8:
-   \   00009E   E5..         MOV     A,?V0 + 0
-   \   0000A0   C3           CLR     C
-   \   0000A1   33           RLC     A
-   \   0000A2   FC           MOV     R4,A
-   \   0000A3   E4           CLR     A
-   \   0000A4   33           RLC     A
-   \   0000A5   FD           MOV     R5,A
-   \   0000A6   E5..         MOV     A,?V0 + 2
-   \   0000A8   2C           ADD     A,R4
-   \   0000A9   FC           MOV     R4,A
-   \   0000AA   E5..         MOV     A,?V0 + 3
-   \   0000AC   12....       LCALL   ?Subroutine13 & 0xFFFF
+   \                     ??ZDP_MatchDescReq_3:
+   \   000055   E5..         MOV     A,?V0 + 0
+   \   000057   C3           CLR     C
+   \   000058   33           RLC     A
+   \   000059   FC           MOV     R4,A
+   \   00005A   E4           CLR     A
+   \   00005B   33           RLC     A
+   \   00005C   FD           MOV     R5,A
+   \   00005D   E5..         MOV     A,?V0 + 2
+   \   00005F   2C           ADD     A,R4
+   \   000060   FC           MOV     R4,A
+   \   000061   E5..         MOV     A,?V0 + 3
+   \   000063   12....       LCALL   ?Subroutine13 & 0xFFFF
     432                *pBuf++ = HI_UINT16( InClusterList[i] );
     433              }
     434            }
    \                     ??CrossCallReturnLabel_2:
-   \   0000AF   9E           SUBB    A,R6
-   \   0000B0   40EC         JC      ??ZDP_MatchDescReq_8
+   \   000066   9E           SUBB    A,R6
+   \   000067   40EC         JC      ??ZDP_MatchDescReq_3
     435          
     436            *pBuf++ = NumOutClusters; // Output cluster list
-   \                     ??ZDP_MatchDescReq_7:
-   \   0000B2   EF           MOV     A,R7
-   \   0000B3   12....       LCALL   ?Subroutine51 & 0xFFFF
+   \                     ??ZDP_MatchDescReq_2:
+   \   000069   EF           MOV     A,R7
+   \   00006A   12....       LCALL   ?Subroutine51 & 0xFFFF
     437            if ( NumOutClusters )
    \                     ??CrossCallReturnLabel_234:
-   \   0000B6   6017         JZ      ??ZDP_MatchDescReq_9
+   \   00006D   6017         JZ      ??ZDP_MatchDescReq_4
     438            {
     439              for (i=0; i<NumOutClusters; ++i)  {
-   \   0000B8   75..00       MOV     ?V0 + 0,#0x0
+   \   00006F   75..00       MOV     ?V0 + 0,#0x0
     440                *pBuf++ = LO_UINT16( OutClusterList[i] );
-   \                     ??ZDP_MatchDescReq_10:
-   \   0000BB   E5..         MOV     A,?V0 + 0
-   \   0000BD   C3           CLR     C
-   \   0000BE   33           RLC     A
-   \   0000BF   FC           MOV     R4,A
-   \   0000C0   E4           CLR     A
-   \   0000C1   33           RLC     A
-   \   0000C2   FD           MOV     R5,A
-   \   0000C3   E5..         MOV     A,?V0 + 6
-   \   0000C5   2C           ADD     A,R4
-   \   0000C6   FC           MOV     R4,A
-   \   0000C7   E5..         MOV     A,?V0 + 7
-   \   0000C9   12....       LCALL   ?Subroutine13 & 0xFFFF
+   \                     ??ZDP_MatchDescReq_5:
+   \   000072   E5..         MOV     A,?V0 + 0
+   \   000074   C3           CLR     C
+   \   000075   33           RLC     A
+   \   000076   FC           MOV     R4,A
+   \   000077   E4           CLR     A
+   \   000078   33           RLC     A
+   \   000079   FD           MOV     R5,A
+   \   00007A   E5..         MOV     A,?V0 + 6
+   \   00007C   2C           ADD     A,R4
+   \   00007D   FC           MOV     R4,A
+   \   00007E   E5..         MOV     A,?V0 + 7
+   \   000080   12....       LCALL   ?Subroutine13 & 0xFFFF
     441                *pBuf++ = HI_UINT16( OutClusterList[i] );
     442              }
     443            }
    \                     ??CrossCallReturnLabel_3:
-   \   0000CC   9F           SUBB    A,R7
-   \   0000CD   40EC         JC      ??ZDP_MatchDescReq_10
+   \   000083   9F           SUBB    A,R7
+   \   000084   40EC         JC      ??ZDP_MatchDescReq_5
     444          
     445            return fillAndSend( &ZDP_TransID, dstAddr, Match_Desc_req, len );
-   \                     ??ZDP_MatchDescReq_9:
-   \   0000CF                ; Setup parameters for call to function fillAndSend
-   \   0000CF   75..06       MOV     ?V0 + 0,#0x6
-   \   0000D2   75..00       MOV     ?V0 + 1,#0x0
-   \   0000D5   78..         MOV     R0,#?V0 + 0
-   \   0000D7   12....       LCALL   ?PUSH_XSTACK_I_TWO
-   \   0000DA   A9..         MOV     R1,?V0 + 4
-   \   0000DC   EA           MOV     A,R2
-   \   0000DD   FC           MOV     R4,A
-   \   0000DE   EB           MOV     A,R3
-   \   0000DF   FD           MOV     R5,A
-   \   0000E0   12....       LCALL   ??Subroutine126_0 & 0xFFFF
+   \                     ??ZDP_MatchDescReq_4:
+   \   000086                ; Setup parameters for call to function fillAndSend
+   \   000086   75..06       MOV     ?V0 + 0,#0x6
+   \   000089   75..00       MOV     ?V0 + 1,#0x0
+   \   00008C   78..         MOV     R0,#?V0 + 0
+   \   00008E   12....       LCALL   ?PUSH_XSTACK_I_TWO
+   \   000091   A9..         MOV     R1,?V0 + 4
+   \   000093   EA           MOV     A,R2
+   \   000094   FC           MOV     R4,A
+   \   000095   EB           MOV     A,R3
+   \   000096   FD           MOV     R5,A
+   \   000097   12....       LCALL   ??Subroutine126_0 & 0xFFFF
    \                     ??CrossCallReturnLabel_267:
-   \   0000E3   12....       LCALL   ?DEALLOC_XSTACK8
+   \   00009A   12....       LCALL   ?DEALLOC_XSTACK8
    \                     ??ZDP_MatchDescReq_1:
-   \   0000E6   02....       LJMP    ??Subroutine108_0 & 0xFFFF
+   \   00009D   02....       LJMP    ??Subroutine108_0 & 0xFFFF
     446          }
 
    \                                 In  segment BANKED_CODE, align 1, keep-with-next
@@ -7083,7 +7028,7 @@ D:\ProgramData\Hardware\zigbee\Components\stack\zdo\ZDProfile.c
      ?Subroutine8                       11
      ??Subroutine93_0                    4
      ??Subroutine111_0                   4
-     ZDP_MatchDescReq                  233
+     ZDP_MatchDescReq                  160
      ?Subroutine13                      22
      ?Subroutine76                       5
      ??Subroutine105_0                   7
@@ -7253,14 +7198,14 @@ D:\ProgramData\Hardware\zigbee\Components\stack\zdo\ZDProfile.c
      ??ZDP_IncomingData?relay            6
 
  
- 6 535 bytes in segment BANKED_CODE
+ 6 462 bytes in segment BANKED_CODE
    204 bytes in segment BANK_RELAYS
     37 bytes in segment CODE_C
      2 bytes in segment XDATA_I
      2 bytes in segment XDATA_ID
     84 bytes in segment XDATA_Z
  
- 6 778 bytes of CODE  memory
+ 6 705 bytes of CODE  memory
     86 bytes of XDATA memory
 
 Errors: none
