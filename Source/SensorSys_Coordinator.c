@@ -67,6 +67,8 @@
 
 #include "SensorSys_Coor.h"
 #include "Bluetooth.h"
+#include "MT_UART.h"
+#include "MT.h"
 #include "device.h"
 #include "DebugTrace.h"
 
@@ -182,7 +184,7 @@ UINT16 Sys_ProcessEvent( byte task_id, UINT16 events );
 void Sys_ProcessZDOMsgs( zdoIncomingMsg_t *inMsg );
 
 void Sys_MessageMSGCB( afIncomingMSGPacket_t *pckt, byte task_id );
-void Sys_SendPreBindMessage( byte type_id, byte ep_id );
+void Sys_SendPreBindMessage( byte type_id );
 void Sys_SendDataRequest ( uint16 destination, endPointDesc_t *epDesc, uint16 commandId, uint8 len,
                           uint8 *pData, uint8 handle, uint8 ack, uint8 radius );
 void Sys_SendCback( uint8 event, uint8 status, uint16 data );
@@ -235,7 +237,7 @@ void Sys_Init( byte task_id )
   // osal_start_timerEx(task_id, CONFIG_OPTION_EVT, 5000);
   
   // USE Bluetooth
-  BluetoothInit();
+  BluetoothInit(task_id);
 }
 
 /*********************************************************************
@@ -255,7 +257,7 @@ UINT16 Sys_ProcessEvent( byte task_id, UINT16 events )
 {
   afIncomingMSGPacket_t *MSGpkt = NULL;
   afDataConfirm_t *afDataConfirm;
-
+  
   // Data Confirmation message fields
   byte sentEP;
   ZStatus_t sentStatus;
@@ -309,6 +311,12 @@ UINT16 Sys_ProcessEvent( byte task_id, UINT16 events )
         case SYSCB_DATA_CNF:        // Data sent CoNFirm CallBack function
           Sys_SendDataConfirm( (uint8)((sys_CbackEvent_t *)MSGpkt)->data,
                                     ((sys_CbackEvent_t *)MSGpkt)->hdr.status );
+          break;
+          
+        // Bluetooth cmd recived
+        case CMD_SERIAL_MSG:
+          Bluetooth_Handle(((mtOSALSerialData_t *)MSGpkt)->msg);
+          
           break;
 
         default:
@@ -392,78 +400,6 @@ void Sys_ProcessZDOMsgs( zdoIncomingMsg_t *inMsg /*, byte task_id */)
       }
 #endif
       break;
-      /*
-    case Match_Desc_rsp:
-      {
-        zAddrType_t dstAddr;
-        ZDO_ActiveEndpointRsp_t *pRsp = ZDO_ParseEPListRsp( inMsg );
-    
-        if ( sensor_bindInProgress != 0xffff )
-        {
-          // Create a binding table entry
-          dstAddr.addrMode = Addr16Bit;
-          dstAddr.addr.shortAddr = pRsp->nwkAddr;
-    
-          if ( APSME_BindRequest( Button_epDesc.simpleDesc->EndPoint,
-                     sensor_bindInProgress, &dstAddr, pRsp->epList[0] ) == ZSuccess )
-          {
-            osal_stop_timerEx(sapi_TaskID,  BUTTON_BIND_TIMER);
-            osal_start_timerEx( ZDAppTaskID, ZDO_NWK_UPDATE_NV, 250 );
-    
-            // Find IEEE addr
-            ZDP_IEEEAddrReq( pRsp->nwkAddr, ZDP_ADDR_REQTYPE_SINGLE, 0, 0 );
-            // Send bind confirm callback to application
-    #if ( SAPI_CB_FUNC )
-            Sys_BindConfirm( sensor_bindInProgress, ZB_SUCCESS );
-    #endif
-            sensor_bindInProgress = 0xffff;
-          }
-        }
-      }
-    break;*/
-/*
-    case Match_Desc_rsp:
-      { 
-        zAddrType_t dstAddr;
-        ZDO_ActiveEndpointRsp_t *pRsp = ZDO_ParseEPListRsp( inMsg );
-        if ( pRsp )
-        {
-          if ( pRsp->status == ZSuccess && pRsp->cnt )
-          {
-            switch (type_join)
-            {
-              case BUTTON_TYPE_ID:
-              {
-                for(int i=0; pRsp->cnt<i; i++)
-                {
-                  dstAddr.addrMode = (afAddrMode_t)Addr16Bit;
-                  dstAddr.addr.shortAddr = pRsp->nwkAddr;
-
-                  if ( APSME_BindRequest( Button_epDesc.simpleDesc->EndPoint,
-                        BUTTON_CLUSTERID, &dstAddr, pRsp->epList[i] ) == ZSuccess )
-                  {
-                    //Bind Success
-                    osal_start_timerEx( ZDAppTaskID, ZDO_NWK_UPDATE_NV,250);
-                    // 获取目的设备的短地址---干什么的？
-                    ZDP_IEEEAddrReq(pRsp->nwkAddr, ZDP_ADDR_REQTYPE_SINGLE, 0, 0);
-
-                    zb_BindConfirm(BUTTON_CLUSTERID, ZB_SUCCESS);
-                  }
-
-                  // Take the first endpoint, Can be changed to search through endpoints
-                  Button_DstAddr.endPoint = pRsp->epList[i];
-                }
-                HalLedSet( HAL_LED_4, HAL_LED_MODE_ON );
-              }
-
-              // case Led_TaskID:
-            }
-          }
-          osal_mem_free( pRsp );
-        }
-      }
-      break;
-      */
   }
 }
 
@@ -499,7 +435,7 @@ void Sys_MessageMSGCB( afIncomingMSGPacket_t *pkt, byte task_id )
  *
  * @return  none
  */
-void Sys_SendPreBindMessage( byte type_id, byte ep_id )
+void Sys_SendPreBindMessage( byte type_id )
 {
   afAddrType_t dstAddr;
 
@@ -509,7 +445,7 @@ void Sys_SendPreBindMessage( byte type_id, byte ep_id )
 
   char theMessageData[6] = "bind";
   theMessageData[4] = type_id;
-  theMessageData[5] = ep_id;
+//  theMessageData[5] = ep_id;
   
   if ( AF_DataRequest( &dstAddr, &Sys_epDesc,
                        SYS_CLUSTERID,
@@ -531,8 +467,8 @@ void Sys_SendPreBindMessage( byte type_id, byte ep_id )
           osal_start_timerEx(Motor_TaskID, MATCH_BIND_EVT, 5000);
           break;
           
-        case LED_TYPE_ID:
-          osal_start_timerEx(Led_TaskID, MATCH_BIND_EVT, 5000);
+        case SWITCH_TYPE_ID:
+          osal_start_timerEx(Switch_TaskID, MATCH_BIND_EVT, 5000);
           break;
     }
   }
@@ -757,7 +693,7 @@ const pTaskEventHandlerFn tasksArr[] = {
   Sys_ProcessEvent,
   Button_ProcessEvent,
   Motor_ProcessEvent,
-  Led_ProcessEvent,
+  Switch_ProcessEvent,
   SAPI_ProcessEvent
 };
 
@@ -793,6 +729,6 @@ void osalInitTasks( void )
   Sys_Init( taskID++ );
   Button_Init( taskID++ );
   Motor_Init( taskID++ );
-  Led_Init( taskID++ );
+  Switch_Init( taskID++ );
   SAPI_Init( taskID );
 }

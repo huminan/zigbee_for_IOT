@@ -43,6 +43,7 @@ uint8 buttonCnt;
 // This list should be filled with Application specific Cluster IDs.
 cId_t Button_ClusterList[BUTTON_MAX_CLUSTERS] =
 {
+  PORT_INIT_CLUSTER,
   BUTTON_OPEN,
   BUTTON_CLOSE,
   BUTTON_TRIGGER
@@ -385,8 +386,7 @@ void Button_HandleKeys( byte shift, byte keys )
     }
     if ( keys & HAL_KEY_SW_6 )
     {
-       Sys_SendDataRequest( 0xFFFE, &Motor_epDesc[motorCnt-1], MOTOR_STOP, 0,
-                           (uint8 *)NULL, sysSeqNumber, 0, 0 );
+       
     }
   }
   else
@@ -394,14 +394,12 @@ void Button_HandleKeys( byte shift, byte keys )
     if ( keys & HAL_KEY_SW_1 )
     {
       if(myAppState == APP_INIT) {
-        Sys_SendPreBindMessage(MOTOR_TYPE_ID, 1);
+        
         myAppState = APP_START;
       }
       else
       {
-        uint8 motorAction[] = "200,5 ,120,30,";
-        Sys_SendDataRequest( 0xFFFE, &Motor_epDesc[motorCnt-1], MOTOR_FORWARD, (byte)osal_strlen( motorAction ) + 1,
-                           motorAction, sysSeqNumber, 0, 0 );
+        
       }
     }
 

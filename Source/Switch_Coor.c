@@ -35,34 +35,35 @@
 /*********************************************************************
  * GLOBAL VARIABLES
  */
-byte Led_TaskID;
-uint8 ledCnt;
+byte Switch_TaskID;
+uint8 swCnt;
 
 
-// Led 端点的簇ID
+// Switch 端点的簇ID
 // This list should be filled with Application specific Cluster IDs.
-cId_t Led_ClusterList[LED_MAX_CLUSTERS] =
+cId_t Switch_ClusterList[SWITCH_MAX_CLUSTERS] =
 {
-    LED_LIGHT,
-    LED_DIM,
-    LED_FLASH
+    PORT_INIT_CLUSTER,
+    OPERATE_CLUSTER,
+    LOOP_OPERATE_CLUSTER,
+    DELETE_CLUSTER
 };
 
-// Led 端点简单描述符
-SimpleDescriptionFormat_t Led_SimpleDesc[LED_NUM_MAX] =
+// Switch 端点简单描述符
+SimpleDescriptionFormat_t Switch_SimpleDesc[SWITCH_NUM_MAX] =
 {
-	LED_ENDPOINT,           //  int Endpoint;
+	SWITCH_ENDPOINT,           //  int Endpoint;
 	SYS_PROFID,                //  uint16 AppProfId[2];
 	SYS_DEVICEID,              //  uint16 AppDeviceId[2];
 	SYS_DEVICE_VERSION,        //  int   AppDevVer:4;
 	SYS_FLAGS,                 //  int   AppFlags:4;
 	0,                          //  byte  AppNumInClusters;
 	NULL,                       //  byte *pAppInClusterList;
-	LED_MAX_CLUSTERS,          //  byte  AppNumOutClusters;
-	(cId_t *)Led_ClusterList   //  byte *pAppOutClusterList;
+	SWITCH_MAX_CLUSTERS,          //  byte  AppNumOutClusters;
+	(cId_t *)Switch_ClusterList   //  byte *pAppOutClusterList;
 };
 
-endPointDesc_t Led_epDesc[LED_NUM_MAX];
+endPointDesc_t Switch_epDesc[SWITCH_NUM_MAX];
 
 /*********************************************************************
  * EXTERNAL VARIABLES
@@ -75,20 +76,20 @@ endPointDesc_t Led_epDesc[LED_NUM_MAX];
 /*********************************************************************
  * LOCAL VARIABLES
  */
-afAddrType_t Led_DstAddr;
-uint16 led_bindInProgress;
+afAddrType_t Switch_DstAddr;
+uint16 switch_bindInProgress;
 
 /*********************************************************************
  * LOCAL FUNCTIONS
  */
-void Led_Init( byte task_id );
-void Led_ProcessZDOMsgs( zdoIncomingMsg_t *inMsg );
+void Switch_Init( byte task_id );
+void Switch_ProcessZDOMsgs( zdoIncomingMsg_t *inMsg );
 
-void Led_BindDevice ( uint8 create, uint8 endpoint, uint16 *commandId, uint8 *pDestination );
+void Switch_BindDevice ( uint8 create, uint8 endpoint, uint16 *commandId, uint8 *pDestination );
 
 static void SAPI_BindConfirm( uint16 commandId, uint8 status );
 /*********************************************************************
- * @fn      Led_Init
+ * @fn      Switch_Init
  *
  * @brief   Initialization function for the Generic App Task.
  *          This is called during initialization and should contain
@@ -101,42 +102,42 @@ static void SAPI_BindConfirm( uint16 commandId, uint8 status );
  *
  * @return  none
  */
-void Led_Init( byte task_id )
+void Switch_Init( byte task_id )
 {
   char i;
-  Led_TaskID = task_id;
-  ledCnt = 0;
+  Switch_TaskID = task_id;
+  swCnt = 0;
   
   // Device hardware initialization can be added here or in main() (Zmain.c).
   // If the hardware is application specific - add it here.
   // If the hardware is other parts of the device add it in main().
 
-  Led_DstAddr.addrMode = (afAddrMode_t)AddrNotPresent;
-  Led_DstAddr.endPoint = 0;
-  Led_DstAddr.addr.shortAddr = 0;
+  Switch_DstAddr.addrMode = (afAddrMode_t)AddrNotPresent;
+  Switch_DstAddr.endPoint = 0;
+  Switch_DstAddr.addr.shortAddr = 0;
 
-    for( i=0; i<LED_NUM_MAX; i++)
+    for( i=0; i<SWITCH_NUM_MAX; i++)
     {
         // Fill out the endpoint description.
-        Led_epDesc[i].endPoint = LED_ENDPOINT+i;
-        Led_epDesc[i].task_id = &Led_TaskID;
-        Led_SimpleDesc[i] = Led_SimpleDesc[0];
-        Led_epDesc[i].simpleDesc
-                                            = (SimpleDescriptionFormat_t *)&(Led_SimpleDesc[i]);
-        Led_SimpleDesc[i].EndPoint += i;
-        Led_epDesc[i].latencyReq = noLatencyReqs;
+        Switch_epDesc[i].endPoint = SWITCH_ENDPOINT+i;
+        Switch_epDesc[i].task_id = &Switch_TaskID;
+        Switch_SimpleDesc[i] = Switch_SimpleDesc[0];
+        Switch_epDesc[i].simpleDesc
+                                            = (SimpleDescriptionFormat_t *)&(Switch_SimpleDesc[i]);
+        Switch_SimpleDesc[i].EndPoint += i;
+        Switch_epDesc[i].latencyReq = noLatencyReqs;
         
         // Register the endpoint description with the AF
-        afRegister( &(Led_epDesc[i]) );
+        afRegister( &(Switch_epDesc[i]) );
     }
 
-  led_bindInProgress = 0xffff;
+  switch_bindInProgress = 0xffff;
 
-  ZDO_RegisterForZDOMsg( Led_TaskID, Match_Desc_rsp );
+  ZDO_RegisterForZDOMsg( Switch_TaskID, Match_Desc_rsp );
 }
 
 /*********************************************************************
- * @fn      Led_ProcessEvent
+ * @fn      Switch_ProcessEvent
  *
  * @brief   Generic Application Task event processor.  This function
  *          is called to process all events for the task.  Events
@@ -148,7 +149,7 @@ void Led_Init( byte task_id )
  *
  * @return  none
  */
-UINT16 Led_ProcessEvent( byte task_id, UINT16 events )
+UINT16 Switch_ProcessEvent( byte task_id, UINT16 events )
 {
   afIncomingMSGPacket_t *MSGpkt = NULL;
 
@@ -162,45 +163,45 @@ UINT16 Led_ProcessEvent( byte task_id, UINT16 events )
       switch ( MSGpkt->hdr.event )
       {
         case ZDO_CB_MSG:  // 收到被绑定节点的rsp
-          Led_ProcessZDOMsgs( (zdoIncomingMsg_t *)MSGpkt);
+          Switch_ProcessZDOMsgs( (zdoIncomingMsg_t *)MSGpkt);
           break;
       }
       // Release the memory
       osal_msg_deallocate( (uint8 *)MSGpkt );
 
       // Next
-      MSGpkt = (afIncomingMSGPacket_t *)osal_msg_receive( Led_TaskID );
+      MSGpkt = (afIncomingMSGPacket_t *)osal_msg_receive( Switch_TaskID );
     }
    return (events ^ SYS_EVENT_MSG);
   }
 
   if( events & MATCH_BIND_EVT ) // 广播 match 绑定
   {
-    if(ledCnt == LED_NUM_MAX)
+    if(swCnt == SWITCH_NUM_MAX)
     {
         // do something
     }
     else
     {
-        Led_BindDevice(TRUE, LED_ENDPOINT+ledCnt, Led_ClusterList, NULL); 
+        Switch_BindDevice(TRUE, SWITCH_ENDPOINT+swCnt, Switch_ClusterList, NULL); 
     }
     return (events ^ MATCH_BIND_EVT);
   }
   
-  if ( events & LED_BIND_TIMER )
+  if ( events & SWITCH_BIND_TIMER )
   {
     // Send bind confirm callback to application
-    SAPI_BindConfirm( led_bindInProgress, ZB_TIMEOUT );
-    led_bindInProgress = 0xffff;
+    SAPI_BindConfirm( switch_bindInProgress, ZB_TIMEOUT );
+    switch_bindInProgress = 0xffff;
 
-    return (events ^ LED_BIND_TIMER);
+    return (events ^ SWITCH_BIND_TIMER);
   }
   
   return 0;
 }
 
 /*********************************************************************
- * @fn      Led_ProcessZDOMsgs()
+ * @fn      Switch_ProcessZDOMsgs()
  *
  * @brief   Process response messages
  *
@@ -208,7 +209,7 @@ UINT16 Led_ProcessEvent( byte task_id, UINT16 events )
  *
  * @return  none
  */
-void Led_ProcessZDOMsgs( zdoIncomingMsg_t *inMsg )
+void Switch_ProcessZDOMsgs( zdoIncomingMsg_t *inMsg )
 {
   switch ( inMsg->clusterID )
   {
@@ -217,17 +218,17 @@ void Led_ProcessZDOMsgs( zdoIncomingMsg_t *inMsg )
         zAddrType_t dstAddr;
         ZDO_ActiveEndpointRsp_t *pRsp = ZDO_ParseEPListRsp( inMsg );
 
-        if ( led_bindInProgress != 0xffff )
+        if ( switch_bindInProgress != 0xffff )
         {
           uint8 ret = 0;
           // Create a binding table entry
           dstAddr.addrMode = Addr16Bit;
           dstAddr.addr.shortAddr = pRsp->nwkAddr;
 
-          for(char i=0; i<LED_MAX_CLUSTERS; i++)
+          for(char i=0; i<SWITCH_MAX_CLUSTERS; i++)
           {
-                if ( APSME_BindRequest( Led_epDesc[ledCnt].simpleDesc->EndPoint,
-                     led_bindInProgress+i, &dstAddr, pRsp->epList[0] ) != ZSuccess )
+                if ( APSME_BindRequest( Switch_epDesc[swCnt].simpleDesc->EndPoint,
+                     switch_bindInProgress+i, &dstAddr, pRsp->epList[0] ) != ZSuccess )
                 {
                     ret = 1;
                     break;
@@ -235,14 +236,14 @@ void Led_ProcessZDOMsgs( zdoIncomingMsg_t *inMsg )
           }
           if(ret == ZSuccess)
           {
-            osal_stop_timerEx(Led_TaskID,  LED_BIND_TIMER);
+            osal_stop_timerEx(Switch_TaskID,  SWITCH_BIND_TIMER);
             osal_start_timerEx( ZDAppTaskID, ZDO_NWK_UPDATE_NV, 250 );
             // Find IEEE addr
             ZDP_IEEEAddrReq( pRsp->nwkAddr, ZDP_ADDR_REQTYPE_SINGLE, 0, 0 );
             // Send bind confirm callback to application
-            Sys_BindConfirm( led_bindInProgress, ZB_SUCCESS );
-            led_bindInProgress = 0xffff;
-            ledCnt++;
+            Sys_BindConfirm( switch_bindInProgress, ZB_SUCCESS );
+            switch_bindInProgress = 0xffff;
+            swCnt++;
           }
           else
           {
@@ -257,7 +258,7 @@ void Led_ProcessZDOMsgs( zdoIncomingMsg_t *inMsg )
 }
 
 /******************************************************************************
- * @fn          Led_BindDevice
+ * @fn          Switch_BindDevice
  *
  * @brief       The zb_BindDevice function establishes or removes a ��binding? *              between two devices.  Once bound, an application can send
  *              messages to a device by referencing the commandId for the
@@ -270,14 +271,14 @@ void Led_ProcessZDOMsgs( zdoIncomingMsg_t *inMsg )
  * @return      The status of the bind operation is returned in the
  *              Sys_BindConfirm callback.
  */
-void Led_BindDevice ( uint8 create, uint8 endpoint, uint16 *commandId, uint8 *pDestination )
+void Switch_BindDevice ( uint8 create, uint8 endpoint, uint16 *commandId, uint8 *pDestination )
 {
   zAddrType_t destination;
   uint8 ret = ZB_ALREADY_IN_PROGRESS;
 
   if ( create )
   {
-    if (led_bindInProgress == 0xffff)
+    if (switch_bindInProgress == 0xffff)
     {
       if ( pDestination )
       {
@@ -299,30 +300,30 @@ void Led_BindDevice ( uint8 create, uint8 endpoint, uint16 *commandId, uint8 *pD
         ret = ZB_INVALID_PARAMETER;
         destination.addrMode = Addr16Bit;
         destination.addr.shortAddr = NWK_BROADCAST_SHORTADDR;
-        if ( ZDO_AnyClusterMatches( LED_MAX_CLUSTERS, commandId, Led_epDesc[ledCnt].simpleDesc->AppNumOutClusters,
-                                                Led_epDesc[ledCnt].simpleDesc->pAppOutClusterList ) )
+        if ( ZDO_AnyClusterMatches( SWITCH_MAX_CLUSTERS, commandId, Switch_epDesc[swCnt].simpleDesc->AppNumOutClusters,
+                                                Switch_epDesc[swCnt].simpleDesc->pAppOutClusterList ) )
         {
           // Try to match with a device in the allow bind mode
           ret = ZDP_MatchDescReq( &destination, NWK_BROADCAST_SHORTADDR,
-              Led_epDesc[ledCnt].simpleDesc->AppProfId, LED_MAX_CLUSTERS, commandId, 0, (cId_t *)NULL, 0 );
+              Switch_epDesc[swCnt].simpleDesc->AppProfId, SWITCH_MAX_CLUSTERS, commandId, 0, (cId_t *)NULL, 0 );
         }
-        else if ( ZDO_AnyClusterMatches( LED_MAX_CLUSTERS, commandId, Led_epDesc[ledCnt].simpleDesc->AppNumInClusters,
-                                                Led_epDesc[ledCnt].simpleDesc->pAppInClusterList ) )
+        else if ( ZDO_AnyClusterMatches( SWITCH_MAX_CLUSTERS, commandId, Switch_epDesc[swCnt].simpleDesc->AppNumInClusters,
+                                                Switch_epDesc[swCnt].simpleDesc->pAppInClusterList ) )
         {
           ret = ZDP_MatchDescReq( &destination, NWK_BROADCAST_SHORTADDR,
-              Led_epDesc[ledCnt].simpleDesc->AppProfId, 0, (cId_t *)NULL, LED_MAX_CLUSTERS, commandId, 0 );
+              Switch_epDesc[swCnt].simpleDesc->AppProfId, 0, (cId_t *)NULL, SWITCH_MAX_CLUSTERS, commandId, 0 );
         }
 
         if ( ret == ZB_SUCCESS )
         {
           // Set a timer to make sure bind completes
 #if ( ZG_BUILD_RTR_TYPE )
-          osal_start_timerEx(Led_TaskID, LED_BIND_TIMER, AIB_MaxBindingTime);
+          osal_start_timerEx(Switch_TaskID, SWITCH_BIND_TIMER, AIB_MaxBindingTime);
 #else
           // AIB_MaxBindingTime is not defined for an End Device
-          osal_start_timerEx(Led_TaskID, LED_BIND_TIMER, zgApsDefaultMaxBindingTime);
+          osal_start_timerEx(Switch_TaskID, SWITCH_BIND_TIMER, zgApsDefaultMaxBindingTime);
 #endif
-          led_bindInProgress = commandId[0];
+          switch_bindInProgress = commandId[0];
           return; // dont send cback event
         }
       }

@@ -43,6 +43,7 @@ uint8 buttonCnt = 0;
 // This list should be filled with Application specific Cluster IDs.
 const cId_t Button_ClusterList[BUTTON_MAX_CLUSTERS] =
 {
+    PORT_INIT_CLUSTER,
     BUTTON_OPEN,
     BUTTON_CLOSE,
     BUTTON_TRIGGER

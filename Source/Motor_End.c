@@ -45,9 +45,10 @@ uint8 motorCnt;
 // This list should be filled with Application specific Cluster IDs.
 cId_t Motor_ClusterList[MOTOR_MAX_CLUSTERS] =
 {
-    MOTOR_FORWARD,
-    MOTOR_BACKWARD,
-    MOTOR_STOP
+    PORT_INIT_CLUSTER,
+    OPERATE_CLUSTER,
+    LOOP_OPERATE_CLUSTER,
+    DELETE_CLUSTER
 };
 
 // Motor 端点简单描述符
@@ -66,15 +67,6 @@ SimpleDescriptionFormat_t Motor_SimpleDesc[MOTOR_NUM_MAX] =
 
 endPointDesc_t Motor_epDesc[MOTOR_NUM_MAX];
 
-typedef struct {
-  uint16 velocity[MOTOR_MAX_OPERATION];
-  uint16 delay[MOTOR_MAX_OPERATION];
-  uint8 total;      /* how much commands */
-  uint8 direct;     /* rotate direction */
-  uint8 status;     /* what is doing now */
-} MotorControl_t;
-
-
 /*********************************************************************
  * EXTERNAL VARIABLES
  */
@@ -91,7 +83,7 @@ extern uint8 type_join;
 
 afAddrType_t Motor_DstAddr;
 
-MotorControl_t MotorControl[MOTOR_NUM_MAX]; 
+SensorControl_t MotorControl[MOTOR_NUM_MAX]; 
 
 static uint16 motorTimeout[MOTOR_NUM_MAX] = {0, 0};
 /*********************************************************************
@@ -104,7 +96,7 @@ static void Motor_ReceiveDataIndication( uint16 source, uint8 endPoint,
                               uint16 command, uint16 len, uint8 *pData  );
 static void Motor_AllowBindConfirm( uint16 source );
 static void MotorAction( uint8 motor, uint16 command, uint16 len, uint8 *pData );
-static void MotorUpdate(uint8 motor);
+static void MotorUpdate(uint8 motor, uint8 first_boot);
 static uint8 MotorDone(void);
 /*********************************************************************
  * @fn      Motor_Init
@@ -147,6 +139,9 @@ void Motor_Init( byte task_id )
 						= (SimpleDescriptionFormat_t *)&(Motor_SimpleDesc[i]);
             Motor_SimpleDesc[i].EndPoint += i;
 	    Motor_epDesc[i].latencyReq = noLatencyReqs;
+            
+            // NULL -> pointer
+            MotorControl[i].msg = NULL;
             
             // Register the endpoint description with the AF
 	    afRegister( &(Motor_epDesc[i]) );
@@ -202,15 +197,45 @@ UINT16 Motor_ProcessEvent( byte task_id, UINT16 events )
         }
         return (events ^ SYS_EVENT_MSG);
     }
-    if ( events & MOTOR1_UPDATE_EVT )
+    if ( (events & 0xFF00) & MOTOR_UPDATE_EVT )
     {
-        MotorUpdate(0);
-        return (events ^ MOTOR1_UPDATE_EVT);
-    }
-    if ( events & MOTOR2_UPDATE_EVT )
-    {
-        MotorUpdate(1);
-        return (events ^ MOTOR2_UPDATE_EVT);
+        uint8 motor;
+        motor = (uint8)(events);
+        uint8 status_m;
+        status_m = MotorControl[motor].status;
+        if(MotorControl[motor].msg[status_m].hour)
+        {
+            if(MotorControl[motor].msg[status_m].min == 0)
+            {
+                (MotorControl[motor].msg[status_m].hour)--;
+                MotorControl[motor].msg[status_m].min = 59;
+            }
+            else
+              (MotorControl[motor].msg[status_m].min)--;
+            osal_start_timerEx(Motor_TaskID, MOTOR_UPDATE_EVT, 60000); // calc 1min
+        }
+        else
+        {
+            if(MotorControl[motor].msg[status_m].min == 0)
+            {
+                if(MotorControl[motor].msg[status_m].sec == 0)
+                {
+                    MotorUpdate(motor,0);
+                    return 0;
+                }
+                else
+                {
+                    osal_start_timerEx(Motor_TaskID, MOTOR_UPDATE_EVT, (MotorControl[motor].msg[status_m].sec)*1000);
+                    MotorControl[motor].msg[status_m].sec = 0;
+                }
+            }
+            else
+            {
+              (MotorControl[motor].msg[status_m].min)--;
+              osal_start_timerEx(Motor_TaskID, MOTOR_UPDATE_EVT, 60000); // calc 1min
+            }
+        }
+        return 0;
     }
     return 0;
 }
@@ -260,10 +285,54 @@ void Motor_AllowBindConfirm( uint16 source )
 void MotorAction( uint8 motor, uint16 command, uint16 len, uint8 *pData )
 {
   // pData contains : " velocity(r/min), delay(0xffff: never)(sec), velocity, delay, ... "
+  if(command == PORT_INIT_CLUSTER)
+  {
+    uint8 port;
+    port = *pData;
+    if(port < MOTOR_NUM_MAX)    // Port: 0, 1
+    {
+        P1DIR |= 0x03 << (port*2);
+        MotorControl[motor].port = port;
+        return;
+    }
+    else
+    {
+        // send error back
+        return;
+    }
+  }
   
+  
+  if(motor>=MOTOR_NUM_MAX)return;   // data error
+  if( len % OPERATE_MSG_NUM )return;  // data error: Must be 6 data each group
+
+  uint16 len_t;
+  sensor_msg_t *msg_t = NULL;
+  len_t = len/OPERATE_MSG_NUM;
+  msg_t = (sensor_msg_t *)malloc(sizeof(sensor_msg_t) * len_t);
+  uint16 v;
+  uint8 i;
+  for(i=0; i<len_t; i++)
+  {
+      if(pData[i*OPERATE_MSG_NUM] >= 1)      // direction
+        msg_t[i].value = 1;
+      else
+        msg_t[i].value = 0;
+      
+      v = (pData[i*OPERATE_MSG_NUM+1]<<8) | pData[i*OPERATE_MSG_NUM+2];
+      msg_t[i].level = 150000/TIMER3_INT_DELAY/v;  // velocity
+      msg_t[i].hour = pData[i*OPERATE_MSG_NUM+3];
+      msg_t[i].min = pData[i*OPERATE_MSG_NUM+4];
+      msg_t[i].sec = pData[i*OPERATE_MSG_NUM+5];
+  }
+  MotorControl[motor].msg = msg_t;
+  MotorControl[motor].total = len_t;
+  MotorControl[motor].status = 0;
+  MotorControl[motor].command = command;
+  
+  /**************************** use ',' devide datas
   // devide word between No.3 and No.4 ','
   if(motor>=MOTOR_NUM_MAX)return;   // data error
-  
   uint8 i;
   uint8 posx1, posx2;
   uint8 num = Num_Pos(len, pData);
@@ -292,56 +361,81 @@ void MotorAction( uint8 motor, uint16 command, uint16 len, uint8 *pData )
   MotorControl[motor].total = num/2;
   MotorControl[motor].direct = command;
   MotorControl[motor].status = 0;
+  */
   
-  switch(motor)
-  {
-  case 0:
-    osal_stop_timerEx(Motor_TaskID, MOTOR1_UPDATE_EVT);
-    osal_set_event(Motor_TaskID, MOTOR1_UPDATE_EVT);
-    break;
-  case 1:
-    osal_stop_timerEx(Motor_TaskID, MOTOR2_UPDATE_EVT);
-    osal_set_event(Motor_TaskID, MOTOR2_UPDATE_EVT);
-    break;
-  }
+  uint16 event_t;
+  event_t = MOTOR_UPDATE_EVT | motor;       // 0x5000 | 0x00??
+  
+  osal_stop_timerEx(Motor_TaskID, event_t);
+  MotorUpdate(motor, 1);
 }
 
-void MotorUpdate(uint8 motor)
+void MotorUpdate(uint8 motor, uint8 first_boot)
 {
-    if(MotorControl[motor].status == (MotorControl[motor].total)-1)
+    uint8 status_m;
+    status_m = MotorControl[motor].status;
+    if(status_m == (MotorControl[motor].total)-1)
     {
-        // STOP
-        // Sleep Pin -> low
-        (MotorControl[motor].status)++;
-        motorTimeout[motor] = 0;
-        if(MotorDone())
+        if(MotorControl[motor].command == LOOP_OPERATE_CLUSTER)
         {
-            HalTimerStop();
+            MotorControl[motor].status = 0x00;
+            status_m = 0xff;
         }
-        return;
+        else
+        {
+            // STOP
+            // Sleep Pin -> low
+            (MotorControl[motor].status)++;
+            motorTimeout[motor] = 0;
+            if(MotorDone())
+            {
+                HalTimerStop();
+                free(MotorControl[motor].msg);
+            }
+            return;
+        }
     }
-
     if(MotorDone())   // first boot
     {
-        MOTOR_DIR_1 = MotorControl[motor].direct;
-        motorTimeout[motor] = MotorControl[motor].velocity[MotorControl[motor].status];
-        HalTimerStart();
+      motorTimeout[motor] = MotorControl[motor].msg[status_m].level;
+      HalTimerStart();
     }
     else
     {
-        (MotorControl[motor].status)++;
-        motorTimeout[motor] = MotorControl[motor].velocity[MotorControl[motor].status];
+      if(!first_boot)
+      {
+          if(status_m == 0xff)
+          {
+            status_m = 0;
+          }
+          else
+          {
+            MotorControl[motor].status = status_m+1;
+            status_m++;
+          }
+      }
+      motorTimeout[motor] = MotorControl[motor].msg[status_m].level;
     }
     
-    switch(motor)
+    switch (MotorControl[motor].port)
     {
-    case 0:
-        osal_start_timerEx(Motor_TaskID, MOTOR1_UPDATE_EVT, (MotorControl[motor].delay[MotorControl[motor].status])*1000);
+      case 0:
+        MOTOR_DIR_1 = MotorControl[motor].msg[status_m].value;
         break;
-    case 1:
-        osal_start_timerEx(Motor_TaskID, MOTOR2_UPDATE_EVT, (MotorControl[motor].delay[MotorControl[motor].status])*1000);
+      case 1:
+        MOTOR_DIR_2 = MotorControl[motor].msg[status_m].value;
         break;
     }
+    
+    uint16 event_t;
+    event_t = MOTOR_UPDATE_EVT | motor;       // 0x5000 | 0x00??
+    /*
+    if(MotorControl[motor].msg[status_m].hour || MotorControl[motor].msg[status_m].min)
+      osal_start_timerEx(Motor_TaskID, event_t, 60000); // calc 1min
+    else
+      osal_start_timerEx(Motor_TaskID, event_t, (MotorControl[motor].msg[status_m].sec)*1000);
+      MotorControl[motor].msg[status_m].sec = 0;*/
+    osal_set_event(Motor_TaskID, event_t);
 }
 
 void Timer3_uSec()
@@ -356,7 +450,7 @@ void Timer3_uSec()
         if(motorTimeout[i] == 0)
         {
             // reverse
-            switch(i)
+            switch(MotorControl[i].port)
             {
             case 0:
               MOTOR_STEP_1 ^= 1;
@@ -365,7 +459,7 @@ void Timer3_uSec()
               MOTOR_STEP_2 ^= 1;
               break;
             }
-            motorTimeout[i] = MotorControl[i].velocity[MotorControl[i].status];
+            motorTimeout[i] = MotorControl[i].msg[MotorControl[i].status].level;
         }
     }
 }
@@ -378,7 +472,7 @@ uint8 MotorDone(void)
     for(i; i<MOTOR_NUM_MAX; i++)
     {
         if(motorTimeout[i]!=0)    
-        {
+        { 
           // if not 0 : running
             return 0;   // not first
         }

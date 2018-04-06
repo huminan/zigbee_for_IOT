@@ -1,6 +1,6 @@
 ###############################################################################
 #                                                                             #
-# IAR C/C++ Compiler V8.10.3.10338/W32 for 8051         30/Mar/2018  16:46:37 #
+# IAR C/C++ Compiler V8.10.3.10338/W32 for 8051         05/Apr/2018  20:32:27 #
 # Copyright 2004-2011 IAR Systems AB.                                         #
 #                                                                             #
 #    Core               =  plain                                              #
@@ -45,8 +45,8 @@
 #                          -DREJOIN_POLL_RATE=440 D:\ProgramData\Hardware\zig #
 #                          bee\Components\osal\common\OSAL_Memory.c -D        #
 #                          HOLD_AUTO_START -D BUILD_ALL_DEVICES -D REFLECTOR  #
-#                          -D NV_INIT -D xNV_RESTORE -D xZTOOL_P1 -D          #
-#                          xMT_TASK -D xMT_SYS_FUNC -D xMT_SAPI_FUNC -D       #
+#                          -D NV_INIT -D xNV_RESTORE -D ZTOOL_P1 -D xMT_TASK  #
+#                          -D xMT_SYS_FUNC -D xMT_SAPI_FUNC -D                #
 #                          xMT_SAPI_CB_FUNC -lC D:\ProgramData\Hardware\zigbe #
 #                          e\Projects\zstack\Samples\SensorSys\CC2530DB\Coord #
 #                          inatorEB\List\ -lA D:\ProgramData\Hardware\zigbee\ #
@@ -303,7 +303,7 @@ D:\ProgramData\Hardware\zigbee\Components\osal\common\OSAL_Memory.c
    \                                 In  segment XDATA_N, align 1
     175          static __no_init osalMemHdr_t theHeap[MAXMEMHEAP / OSALMEM_HDRSZ];
    \                     theHeap:
-   \   000000                DS 3072
+   \   000000                DS 2072
 
    \                                 In  segment XDATA_N, align 1
     176          static __no_init osalMemHdr_t *ff1;  // First free block in the small-block bucket.
@@ -382,7 +382,7 @@ D:\ProgramData\Hardware\zigbee\Components\osal\common\OSAL_Memory.c
     235          
     236            // Setup a NULL block at the end of the heap for fast comparisons with zero.
     237            theHeap[OSALMEM_LASTBLK_IDX].val = 0;
-   \   000004   90....       MOV     DPTR,#theHeap + 3070
+   \   000004   90....       MOV     DPTR,#theHeap + 2070
    \   000007   E4           CLR     A
    \   000008   F0           MOVX    @DPTR,A
    \   000009   A3           INC     DPTR
@@ -415,10 +415,10 @@ D:\ProgramData\Hardware\zigbee\Components\osal\common\OSAL_Memory.c
     246            // Setup the wilderness.
     247            theHeap[OSALMEM_BIGBLK_IDX].val = OSALMEM_BIGBLK_SZ;  // Set 'len' & clear 'inUse' field.
    \   000027   A3           INC     DPTR
-   \   000028   74B4         MOV     A,#-0x4c
+   \   000028   74CC         MOV     A,#-0x34
    \   00002A   F0           MOVX    @DPTR,A
    \   00002B   A3           INC     DPTR
-   \   00002C   7409         MOV     A,#0x9
+   \   00002C   7405         MOV     A,#0x5
    \   00002E   F0           MOVX    @DPTR,A
     248          
     249          #if ( OSALMEM_METRICS )
@@ -1019,9 +1019,9 @@ D:\ProgramData\Hardware\zigbee\Components\osal\common\OSAL_Memory.c
    \   000014   4009         JC      ??osal_mem_free_0
    \   000016   C3           CLR     C
    \   000017   EA           MOV     A,R2
-   \   000018   94..         SUBB    A,#theHeap & 0xff
+   \   000018   94..         SUBB    A,#(theHeap + 24) & 0xff
    \   00001A   EB           MOV     A,R3
-   \   00001B   94..         SUBB    A,#((theHeap + 3072) >> 8) & 0xff
+   \   00001B   94..         SUBB    A,#((theHeap + 2072) >> 8) & 0xff
    \   00001D   4003         JC      ??osal_mem_free_1
    \                     ??osal_mem_free_0:
    \   00001F                ; Setup parameters for call to function halAssertHandler
@@ -1112,26 +1112,6 @@ D:\ProgramData\Hardware\zigbee\Components\osal\common\OSAL_Memory.c
    \   00005E   7F01         MOV     R7,#0x1
    \   000060   02....       LJMP    ?BANKED_LEAVE_XDATA
    \   000063                REQUIRE _A_IEN0
-
-   \                                 In  segment BANK_RELAYS, align 1
-   \                     ??osal_mem_init?relay:
-   \   000000   12....       LCALL   ?BDISPATCH
-   \   000003   ......       DC24    osal_mem_init
-
-   \                                 In  segment BANK_RELAYS, align 1
-   \                     ??osal_mem_kick?relay:
-   \   000000   12....       LCALL   ?BDISPATCH
-   \   000003   ......       DC24    osal_mem_kick
-
-   \                                 In  segment BANK_RELAYS, align 1
-   \                     ??osal_mem_alloc?relay:
-   \   000000   12....       LCALL   ?BDISPATCH
-   \   000003   ......       DC24    osal_mem_alloc
-
-   \                                 In  segment BANK_RELAYS, align 1
-   \                     ??osal_mem_free?relay:
-   \   000000   12....       LCALL   ?BDISPATCH
-   \   000003   ......       DC24    osal_mem_free
     555          
     556          #if OSALMEM_METRICS
     557          /*********************************************************************
@@ -1201,14 +1181,47 @@ D:\ProgramData\Hardware\zigbee\Components\osal\common\OSAL_Memory.c
     621           *
     622           * @return  Highest number of bytes ever used by the stack.
     623           */
+
+   \                                 In  segment BANKED_CODE, align 1, keep-with-next
     624          uint16 osal_heap_high_water( void )
+   \                     osal_heap_high_water:
     625          {
+   \   000000                ; Saved register size: 0
+   \   000000                ; Auto size: 0
     626          #if ( OSALMEM_METRICS )
     627            return memMax;
     628          #else
     629            return MAXMEMHEAP;
+   \   000000   7A18         MOV     R2,#0x18
+   \   000002   7B08         MOV     R3,#0x8
+   \   000004   02....       LJMP    ?BRET
     630          #endif
     631          }
+
+   \                                 In  segment BANK_RELAYS, align 1
+   \                     ??osal_mem_init?relay:
+   \   000000   12....       LCALL   ?BDISPATCH
+   \   000003   ......       DC24    osal_mem_init
+
+   \                                 In  segment BANK_RELAYS, align 1
+   \                     ??osal_mem_kick?relay:
+   \   000000   12....       LCALL   ?BDISPATCH
+   \   000003   ......       DC24    osal_mem_kick
+
+   \                                 In  segment BANK_RELAYS, align 1
+   \                     ??osal_mem_alloc?relay:
+   \   000000   12....       LCALL   ?BDISPATCH
+   \   000003   ......       DC24    osal_mem_alloc
+
+   \                                 In  segment BANK_RELAYS, align 1
+   \                     ??osal_mem_free?relay:
+   \   000000   12....       LCALL   ?BDISPATCH
+   \   000003   ......       DC24    osal_mem_free
+
+   \                                 In  segment BANK_RELAYS, align 1
+   \                     ??osal_heap_high_water?relay:
+   \   000000   12....       LCALL   ?BDISPATCH
+   \   000003   ......       DC24    osal_heap_high_water
     632          #endif
     633          
     634          /**************************************************************************************************
@@ -1218,6 +1231,7 @@ D:\ProgramData\Hardware\zigbee\Components\osal\common\OSAL_Memory.c
 
      Function              ISTACK PSTACK XSTACK
      --------              ------ ------ ------
+     osal_heap_high_water      0      0      0
      osal_mem_alloc            0      0     23
      osal_mem_free             0      0     19
        -> halAssertHandler     0      0     18
@@ -1231,31 +1245,33 @@ D:\ProgramData\Hardware\zigbee\Components\osal\common\OSAL_Memory.c
 
    Segment part sizes:
 
-     Function/Label         Bytes
-     --------------         -----
-     _A_IEN0                   1
-     theHeap                3072
-     ff1                       2
-     osalMemStat               1
-     osal_mem_init            54
-     osal_mem_kick            73
-     osal_mem_alloc          336
-     osal_mem_free            99
-     ??osal_mem_init?relay     6
-     ??osal_mem_kick?relay     6
-     ??osal_mem_alloc?relay    6
-     ??osal_mem_free?relay     6
+     Function/Label               Bytes
+     --------------               -----
+     _A_IEN0                         1
+     theHeap                      2072
+     ff1                             2
+     osalMemStat                     1
+     osal_mem_init                  54
+     osal_mem_kick                  73
+     osal_mem_alloc                336
+     osal_mem_free                  99
+     osal_heap_high_water            7
+     ??osal_mem_init?relay           6
+     ??osal_mem_kick?relay           6
+     ??osal_mem_alloc?relay          6
+     ??osal_mem_free?relay           6
+     ??osal_heap_high_water?relay    6
 
  
-   562 bytes in segment BANKED_CODE
-    24 bytes in segment BANK_RELAYS
+   569 bytes in segment BANKED_CODE
+    30 bytes in segment BANK_RELAYS
      1 byte  in segment SFR_AN
- 3 074 bytes in segment XDATA_N
+ 2 074 bytes in segment XDATA_N
      1 byte  in segment XDATA_Z
  
-   586 bytes of CODE  memory
+   599 bytes of CODE  memory
      0 bytes of DATA  memory (+ 1 byte shared)
- 3 075 bytes of XDATA memory
+ 2 075 bytes of XDATA memory
 
 Errors: none
 Warnings: none

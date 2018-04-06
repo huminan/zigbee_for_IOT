@@ -309,17 +309,10 @@ UINT16 Sys_ProcessEvent( byte task_id, UINT16 events )
 	  // return unprocessed events
 		return (events ^ SYS_EVENT_MSG);
 	}
-
-	if(events & ALLOW_BIND_TIMER)
+	if(events & CLOSE_LED3_EVT)
 	{
-		afSetMatch(type_join, FALSE);
-                HalLedSet ( HAL_LED_2, HAL_LED_MODE_ON );
-		return (events ^ ALLOW_BIND_TIMER);
-	}
-	if(events & CLOSE_BIND_EVT)
-	{
-		HalLedSet(HAL_LED_1, HAL_LED_MODE_ON);
-		return (events ^ CLOSE_BIND_EVT);
+		HalLedSet(HAL_LED_3, HAL_LED_MODE_ON);  //Close LED3
+		return (events ^ CLOSE_LED3_EVT);
 	}
 
 	if(events & CLOSE_LIGHT_EVT)
@@ -344,10 +337,10 @@ UINT16 Sys_ProcessEvent( byte task_id, UINT16 events )
  * @brief   query for device type's corresponding endpoint number
  *
  * @param   type : which device type want to bind
-*          offset : which endpoint in corresponding device ( start from 1 )
+ *
  * @return  Corresponding Endpoint number
  */
-uint8 Type2EP(uint8 type, uint8 offset)
+uint8 Type2EP(uint8 type)
 {
     switch(type)
     {
@@ -358,26 +351,18 @@ uint8 Type2EP(uint8 type, uint8 offset)
                 {
                     return 0;     // error
                 }
-                if(offset >= BUTTON_NUM_MAX)
-                {
-                    return 0;
-                }
                 buttonCnt++;
-                return (BUTTON_ENDPOINT+offset-1);
+                return (BUTTON_ENDPOINT+buttonCnt-1);
           }
-        case LED_TYPE_ID:
+        case SWITCH_TYPE_ID:
           {
                 // 60~109
-                if(ledCnt == LED_NUM_MAX)
+                if(swCnt == SWITCH_NUM_MAX)
                 {
                     return 0;     // error
                 }
-                if(offset >= LED_NUM_MAX)
-                {
-                    return 0;
-                }
-                ledCnt++;
-                return (LED_ENDPOINT+offset-1);
+                swCnt++;
+                return (SWITCH_ENDPOINT+swCnt-1);
           }
         case MOTOR_TYPE_ID:
           {
@@ -386,12 +371,8 @@ uint8 Type2EP(uint8 type, uint8 offset)
                 {
                   return 0;     // error
                 }
-                if(offset >= MOTOR_NUM_MAX)
-                {
-                    return 0;
-                }
                 motorCnt++;
-                return (MOTOR_ENDPOINT+offset-1);
+                return (MOTOR_ENDPOINT+motorCnt-1);
           }
     }
     return 0;
@@ -421,13 +402,15 @@ void Sys_MessageMSGCB( afIncomingMSGPacket_t *pkt, byte task_id )
 			{
 				if( pkt->cmd.Data[4] & MY_DEVICE )
 				{
-                                        type_join = Type2EP(pkt->cmd.Data[4], pkt->cmd.Data[5]);  // query for this type's corresponding endpoint number
+                                        type_join = Type2EP(pkt->cmd.Data[4]);  // query for this type's corresponding endpoint number
                                         if(!type_join)
                                         {
                                             // faild to add endpoint
                                         }
                                         else
                                         {
+                                            HalLedSet ( HAL_LED_3, HAL_LED_MODE_OFF );  // OPEN LED3
+                                            osal_start_timerEx(Sys_TaskID, CLOSE_LED3_EVT, 5000);    // Close LED3 after 5s
        					    keys_shift = 1;
                                         }
 				}
@@ -459,8 +442,6 @@ void Sys_MessageMSGCB( afIncomingMSGPacket_t *pkt, byte task_id )
 
 void Sys_AllowBind ( uint8 timeout )
 {
-  osal_stop_timerEx(Sys_TaskID, ALLOW_BIND_TIMER);
-
   if ( timeout == 0 )
   {
     afSetMatch(type_join, FALSE);
@@ -474,7 +455,7 @@ void Sys_AllowBind ( uint8 timeout )
       {
         timeout = 64;
       }
-      osal_start_timerEx(Sys_TaskID, ALLOW_BIND_TIMER, timeout*1000);
+      HalLedSet ( HAL_LED_3, HAL_LED_MODE_ON );    // Close LED3
     }
   }
   return;
@@ -493,8 +474,8 @@ void Sys_AllowBind ( uint8 timeout )
 void Sys_AllowBindConfirm( uint16 source )
 {
     type_join = 0;
-    osal_stop_timerEx(Sys_TaskID, ALLOW_BIND_TIMER);
-    osal_start_timerEx(Sys_TaskID, ALLOW_BIND_TIMER, 1000); 
+    HalLedSet ( HAL_LED_3, HAL_LED_MODE_OFF );
+    osal_start_timerEx(Sys_TaskID, CLOSE_LED3_EVT, 5000);    // Close LED3 after 3s
 }
 
 /*********************************************************************
@@ -587,7 +568,7 @@ const pTaskEventHandlerFn tasksArr[] = {
   Sys_ProcessEvent,
   Button_ProcessEvent,
   Motor_ProcessEvent,
-  Led_ProcessEvent,
+  Switch_ProcessEvent,
   SAPI_ProcessEvent
 };
 
@@ -623,6 +604,6 @@ void osalInitTasks( void )
   Sys_Init( taskID++ );
   Button_Init( taskID++ );
   Motor_Init( taskID++ );
-  Led_Init( taskID++ );
+  Switch_Init( taskID++ );
   SAPI_Init( taskID );
 }

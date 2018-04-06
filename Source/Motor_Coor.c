@@ -43,9 +43,10 @@ uint8 motorCnt;
 // This list should be filled with Application specific Cluster IDs.
 cId_t Motor_ClusterList[MOTOR_MAX_CLUSTERS] =
 {
-    MOTOR_FORWARD,
-    MOTOR_BACKWARD,
-    MOTOR_STOP
+    PORT_INIT_CLUSTER,
+    OPERATE_CLUSTER,
+    LOOP_OPERATE_CLUSTER,
+    DELETE_CLUSTER
 };
 
 // Motor 端点简单描述符

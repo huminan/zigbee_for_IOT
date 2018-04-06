@@ -8,19 +8,24 @@
 #define ZB_ENDPOINT            3
 #define BUTTON_ENDPOINT        10
 #define MOTOR_ENDPOINT         110
-#define LED_ENDPOINT           60
+#define SWITCH_ENDPOINT        60
 #define OBSERVE_ENDPOINT       130  
 
 // Cluster ID MAX
 #define SYS_MAX_CLUSTERS       1
 #define ZB_MAX_CLUSTERS        1
 
-#define BUTTON_MAX_CLUSTERS    3    
-#define MOTOR_MAX_CLUSTERS     3    // stop, forward, backward
-#define LED_MAX_CLUSTERS       3    // toggle light, toggle dim, flash
+#define BUTTON_MAX_CLUSTERS    4    // PORT_INIT_CLUSTER, OPERATE_CLUSTER, LOOP_OPERATE_CLUSTER, DELETE_CLUSTER
+#define MOTOR_MAX_CLUSTERS     4    // PORT_INIT_CLUSTER, OPERATE_CLUSTER, LOOP_OPERATE_CLUSTER, DELETE_CLUSTER
+#define SWITCH_MAX_CLUSTERS    4    // PORT_INIT_CLUSTER, OPERATE_CLUSTER, LOOP_OPERATE_CLUSTER, DELETE_CLUSTER
 #define OBSERVE_MAX_CLUSTERS   1
 
 // Cluster ID
+#define PORT_INIT_CLUSTER      0x1000
+#define OPERATE_CLUSTER        0x1001
+#define LOOP_OPERATE_CLUSTER   0x1002
+#define DELETE_CLUSTER         0x1003
+
 #define SYS_CLUSTERID          0x0001
 #define ZB_CLUSTERID           0x0002
 
@@ -41,8 +46,37 @@
 // Terminator Type ID   -------  seems no use now
 #define BUTTON_TYPE_ID         0x01
 #define MOTOR_TYPE_ID          0x02
-#define LED_TYPE_ID            0x04
+#define SWITCH_TYPE_ID            0x04
 #define OBSERVE_TYPE_ID        0x08
   //...   0x04 0x08 0x10 ...
+
+// PORT NUMBERS
+#define P2_SWITCH_NUM       4
+
+
+#define OPERATE_MSG_NUM     6
+typedef struct
+{
+    uint8 value;
+    uint16 level;
+    uint8 hour;
+    uint8 min;
+    uint8 sec;
+}sensor_msg_t;
+
+typedef struct {
+  sensor_msg_t *msg;
+  uint8 total;      /* how much commands */
+  uint8 status;     /* what is doing now */
+  uint8 port;       /* use which port */
+  uint16 command;   /* command : Loop or not*/
+} SensorControl_t;
+
+
+typedef struct
+{
+  osal_event_hdr_t  hdr;
+  uint8             *msg;
+} OSALSerialData_t;
 
 #endif

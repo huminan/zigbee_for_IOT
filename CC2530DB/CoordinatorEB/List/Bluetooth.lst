@@ -1,6 +1,6 @@
 ###############################################################################
 #                                                                             #
-# IAR C/C++ Compiler V8.10.3.10338/W32 for 8051         30/Mar/2018  16:46:35 #
+# IAR C/C++ Compiler V8.10.3.10338/W32 for 8051         06/Apr/2018  15:28:32 #
 # Copyright 2004-2011 IAR Systems AB.                                         #
 #                                                                             #
 #    Core               =  plain                                              #
@@ -45,7 +45,7 @@
 #                          -DREJOIN_POLL_RATE=440 D:\ProgramData\Hardware\zig #
 #                          bee\Projects\zstack\Samples\SensorSys\Source\Bluet #
 #                          ooth.c -D HOLD_AUTO_START -D BUILD_ALL_DEVICES -D  #
-#                          REFLECTOR -D NV_INIT -D xNV_RESTORE -D xZTOOL_P1   #
+#                          REFLECTOR -D NV_INIT -D xNV_RESTORE -D ZTOOL_P1    #
 #                          -D xMT_TASK -D xMT_SYS_FUNC -D xMT_SAPI_FUNC -D    #
 #                          xMT_SAPI_CB_FUNC -lC D:\ProgramData\Hardware\zigbe #
 #                          e\Projects\zstack\Samples\SensorSys\CC2530DB\Coord #
@@ -126,146 +126,392 @@ D:\ProgramData\Hardware\zigbee\Projects\zstack\Samples\SensorSys\Source\Bluetoot
       4          #include "AF.h"
       5          #include "ZDObject.h"
       6          #include "ZDProfile.h"
-      7          
-      8          #include "SensorSys_Coor.h"
-      9          #include "device.h"
-     10          #include "Bluetooth.h"
-     11          #include "DebugTrace.h"
-     12          
-     13          #if !defined( WIN32 )
-     14            #include "OnBoard.h"
-     15          #endif
-     16          
-     17          /* HAL */
-     18          #include "hal_led.h"
-     19          #include "hal_uart.h"
-     20          
-     21          #include "nwk.h"
-     22          
-     23          #include "APS.h"
-     24          #include "ZDApp.h"
-     25          #include "OSAL.h"
-     26          #include "OSAL_Tasks.h"
-     27          #include "ZComDef.h"
-     28          #include "hal_drivers.h"
-     29          /*********************************************************************
-     30           * MACROS
-     31           */
-     32          
-     33          /*********************************************************************
-     34           * CONSTANTS
-     35           */
-     36          
-     37          /*********************************************************************
-     38           * TYPEDEFS
-     39           */
-     40          
-     41          /*********************************************************************
-     42           * GLOBAL VARIABLES
-     43           */
+      7          #include "stdlib.h"
+      8          
+      9          #include "SensorSys_Coor.h"
+     10          #include "device.h"
+     11          #include "Bluetooth.h"
+     12          #include "DebugTrace.h"
+     13          
+     14          #if !defined( WIN32 )
+     15            #include "OnBoard.h"
+     16          #endif
+     17          
+     18          /* HAL */
+     19          #include "hal_led.h"
+     20          #include "hal_uart.h"
+     21          #include "MT_UART.h"
+     22          #include "MT_RPC.h"
+     23          
+     24          #include "nwk.h"
+     25          
+     26          #include "APS.h"
+     27          #include "ZDApp.h"
+     28          #include "OSAL.h"
+     29          #include "OSAL_Tasks.h"
+     30          #include "ZComDef.h"
+     31          #include "hal_drivers.h"
+     32          /*********************************************************************
+     33           * MACROS
+     34           */
+     35          
+     36          /*********************************************************************
+     37           * CONSTANTS
+     38           */
+     39          
+     40          /*********************************************************************
+     41           * TYPEDEFS
+     42           */
+     43          
+     44          /*********************************************************************
+     45           * GLOBAL VARIABLES
+     46           */
 
    \                                 In  segment XDATA_Z, align 1, keep-with-next
-     44          uint8 uartbuf[20];
+     47          uint8 uartbuf[20];
    \                     uartbuf:
    \   000000                DS 20
    \   000014                REQUIRE __INIT_XDATA_Z
-     45          
-     46          /*********************************************************************
-     47           * LOCAL VARIABLES
-     48           */
-     49          static void rxCB(uint8 port,uint8 event);
-     50          
+     48          /*********************************************************************
+     49           * LOCAL VARIABLES
+     50           */
+     51          
+     52          /*********************************************************************
+     53           * MT_UART need to configure: 
+     54           * baudrate: MT_UART_DEFAULT_BAUDRATE   9600
+     55           * flow control: MT_UART_DEFAULT_FLOW   FALSE
+     56           * which IO to use: in option complier preprocessor add: ZTOOL_P1
+     57           * INT_HEAP_LEN -> 2072
+     58          
+     59           * CallBack Function is in MT_UART.c -> void MT_UartProcessZToolData ( uint8 port, uint8 event )
+     60           */
 
    \                                 In  segment BANKED_CODE, align 1, keep-with-next
-     51          void BluetoothInit(void)
+     61          void BluetoothInit(byte task_id)
    \                     BluetoothInit:
-     52          {
-   \   000000   C082         PUSH    DPL
-   \   000002   C083         PUSH    DPH
-   \   000004                ; Saved register size: 2
-   \   000004                ; Auto size: 29
-   \   000004   74E3         MOV     A,#-0x1d
-   \   000006   12....       LCALL   ?ALLOC_XSTACK8
-     53              HalUARTInit();
-   \   000009                ; Setup parameters for call to function HalUARTInit
-   \   000009   12....       LCALL   ??HalUARTInit?relay
-     54              halUARTCfg_t uartConfig;
-     55              
-     56              uartConfig.configured=TRUE;
-   \   00000C   85..82       MOV     DPL,?XSP + 0
-   \   00000F   85..83       MOV     DPH,?XSP + 1
-   \   000012   7401         MOV     A,#0x1
-   \   000014   F0           MOVX    @DPTR,A
-     57              uartConfig.baudRate = HAL_UART_BR_9600;
-   \   000015   12....       LCALL   ?XSTACK_DISP0_8
-   \   000018   E4           CLR     A
-   \   000019   F0           MOVX    @DPTR,A
-     58              uartConfig.flowControl = FALSE;
-   \   00001A   7402         MOV     A,#0x2
-   \   00001C   12....       LCALL   ?XSTACK_DISP0_8
-   \   00001F   E4           CLR     A
-   \   000020   F0           MOVX    @DPTR,A
-     59              uartConfig.callBackFunc = rxCB;
-   \   000021   741B         MOV     A,#0x1b
-   \   000023   12....       LCALL   ?XSTACK_DISP0_8
-   \   000026   74..         MOV     A,#??rxCB?relay & 0xff
-   \   000028   F0           MOVX    @DPTR,A
-   \   000029   A3           INC     DPTR
-   \   00002A   74..         MOV     A,#(??rxCB?relay >> 8) & 0xff
-   \   00002C   F0           MOVX    @DPTR,A
-     60          
-     61              HalUARTOpen(0,&uartConfig);
-   \   00002D                ; Setup parameters for call to function HalUARTOpen
-   \   00002D   85..82       MOV     DPL,?XSP + 0
-   \   000030   85..83       MOV     DPH,?XSP + 1
-   \   000033   AA82         MOV     R2,DPL
-   \   000035   AB83         MOV     R3,DPH
-   \   000037   7900         MOV     R1,#0x0
-   \   000039   12....       LCALL   ??HalUARTOpen?relay
-     62              
-     63          //    HalUARTWrite(0,uartbuf,16);
-     64          }
-   \   00003C   741D         MOV     A,#0x1d
-   \   00003E   12....       LCALL   ?DEALLOC_XSTACK8
-   \   000041   D083         POP     DPH
-   \   000043   D082         POP     DPL
-   \   000045   02....       LJMP    ?BRET
-     65          
-
-   \                                 In  segment BANKED_CODE, align 1, keep-with-next
-     66          static void rxCB(uint8 port,uint8 event)
-   \                     rxCB:
-     67          {
+     62          {
    \   000000   74F7         MOV     A,#-0x9
    \   000002   12....       LCALL   ?BANKED_ENTER_XDATA
    \   000005                ; Saved register size: 9
    \   000005                ; Auto size: 0
-   \   000005   EA           MOV     A,R2
+   \   000005   E9           MOV     A,R1
    \   000006   FE           MOV     R6,A
+     63            
+     64            MT_UartInit();
+   \   000007                ; Setup parameters for call to function MT_UartInit
+   \   000007   12....       LCALL   ??MT_UartInit?relay
+     65            MT_UartRegisterTaskID(task_id);
+   \   00000A                ; Setup parameters for call to function MT_UartRegisterTaskID
+   \   00000A   EE           MOV     A,R6
+   \   00000B   F9           MOV     R1,A
+   \   00000C   12....       LCALL   ??MT_UartRegisterTaskID?relay
+     66          
+     67          }
+   \   00000F   7F01         MOV     R7,#0x1
+   \   000011   02....       LJMP    ?BANKED_LEAVE_XDATA
      68          
-     69              if(event & (HAL_UART_RX_FULL | HAL_UART_RX_ABOUT_FULL | HAL_UART_RX_TIMEOUT))
-   \   000007   7407         MOV     A,#0x7
-   \   000009   5E           ANL     A,R6
-   \   00000A   6012         JZ      ??rxCB_0
-     70              {
-     71                  HalUARTRead(0, uartbuf, Hal_UART_RxBufLen(0));
-   \   00000C                ; Setup parameters for call to function HalUARTRead
-   \   00000C                ; Setup parameters for call to function Hal_UART_RxBufLen
-   \   00000C   7900         MOV     R1,#0x0
-   \   00000E   12....       LCALL   ??Hal_UART_RxBufLen?relay
-   \   000011   EA           MOV     A,R2
-   \   000012   FC           MOV     R4,A
-   \   000013   EB           MOV     A,R3
-   \   000014   FD           MOV     R5,A
-   \   000015   7A..         MOV     R2,#uartbuf & 0xff
-   \   000017   7B..         MOV     R3,#(uartbuf >> 8) & 0xff
-   \   000019   7900         MOV     R1,#0x0
-   \   00001B   12....       LCALL   ??HalUARTRead?relay
-     72              }
-     73          }
-   \                     ??rxCB_0:
-   \   00001E   7F01         MOV     R7,#0x1
-   \   000020   02....       LJMP    ?BANKED_LEAVE_XDATA
+
+   \                                 In  segment BANKED_CODE, align 1, keep-with-next
+     69          void Bluetooth_Handle(byte *msg)
+   \                     Bluetooth_Handle:
+     70          {
+   \   000000   74F2         MOV     A,#-0xe
+   \   000002   12....       LCALL   ?BANKED_ENTER_XDATA
+   \   000005                ; Saved register size: 14
+   \   000005                ; Auto size: 1
+   \   000005   74FF         MOV     A,#-0x1
+   \   000007   12....       LCALL   ?ALLOC_XSTACK8
+   \   00000A   EA           MOV     A,R2
+   \   00000B   FE           MOV     R6,A
+   \   00000C   EB           MOV     A,R3
+   \   00000D   FF           MOV     R7,A
+     71              switch(msg[MT_RPC_POS_CMD0])
+   \   00000E   8E82         MOV     DPL,R6
+   \   000010   8F83         MOV     DPH,R7
+   \   000012   A3           INC     DPTR
+   \   000013   E0           MOVX    A,@DPTR
+   \   000014   600F         JZ      ??Bluetooth_Handle_0
+   \   000016   14           DEC     A
+   \   000017   601A         JZ      ??Bluetooth_Handle_1
+   \   000019   14           DEC     A
+   \   00001A   6076         JZ      ??Bluetooth_Handle_2
+   \   00001C   14           DEC     A
+   \   00001D   7003         JNZ     $+5
+   \   00001F   02....       LJMP    ??Bluetooth_Handle_3 & 0xFFFF
+   \   000022   02....       LJMP    ??Bluetooth_Handle_4 & 0xFFFF
+     72              {
+     73                  case BT_CMD_BIND:
+     74                  {
+     75                     Sys_SendPreBindMessage(msg[MT_RPC_POS_CMD1]);
+   \                     ??Bluetooth_Handle_0:
+   \   000025                ; Setup parameters for call to function Sys_SendPreBindMessage
+   \   000025   8E82         MOV     DPL,R6
+   \   000027   8F83         MOV     DPH,R7
+   \   000029   A3           INC     DPTR
+   \   00002A   A3           INC     DPTR
+   \   00002B   E0           MOVX    A,@DPTR
+   \   00002C   F9           MOV     R1,A
+   \   00002D   12....       LCALL   ??Sys_SendPreBindMessage?relay
+     76                     
+     77                     break;
+   \   000030   02....       LJMP    ??Bluetooth_Handle_4 & 0xFFFF
+     78                  }    
+     79                  case BT_CMD_PORT:
+     80                  {
+     81                     byte dev_num, dev_port;
+     82                     dev_num = msg[MT_RPC_FRAME_HDR_SZ];
+   \                     ??Bluetooth_Handle_1:
+   \   000033   8E82         MOV     DPL,R6
+   \   000035   8F83         MOV     DPH,R7
+   \   000037   A3           INC     DPTR
+   \   000038   A3           INC     DPTR
+   \   000039   A3           INC     DPTR
+   \   00003A   E0           MOVX    A,@DPTR
+   \   00003B   F5..         MOV     ?V0 + 2,A
+     83                     dev_port = msg[MT_RPC_FRAME_HDR_SZ+1];
+   \   00003D   8E82         MOV     DPL,R6
+   \   00003F   8F83         MOV     DPH,R7
+   \   000041   A3           INC     DPTR
+   \   000042   A3           INC     DPTR
+   \   000043   A3           INC     DPTR
+   \   000044   A3           INC     DPTR
+   \   000045   E0           MOVX    A,@DPTR
+   \   000046   85..82       MOV     DPL,?XSP + 0
+   \   000049   85..83       MOV     DPH,?XSP + 1
+   \   00004C   F0           MOVX    @DPTR,A
+     84                     Sys_SendDataRequest( 0xFFFE, &Motor_epDesc[dev_num], PORT_INIT_CLUSTER, (uint8)osal_strlen( &dev_port ),
+                                                                                                                        ^
+Warning[Pe167]: argument of type "unsigned char *" is incompatible with
+          parameter of type "char *"
+     85                                     &dev_port, sysSeqNumber, 0, 0 );     // send to latest motor device
+   \   00004D                ; Setup parameters for call to function osal_strlen
+   \   00004D   AA82         MOV     R2,DPL
+   \   00004F   AB83         MOV     R3,DPH
+   \   000051   12....       LCALL   ??osal_strlen?relay
+   \   000054                ; Setup parameters for call to function Sys_SendDataRequest
+   \   000054   75..00       MOV     ?V0 + 0,#0x0
+   \   000057   78..         MOV     R0,#?V0 + 0
+   \   000059   12....       LCALL   ?PUSH_XSTACK_I_ONE
+   \   00005C   78..         MOV     R0,#?V0 + 0
+   \   00005E   12....       LCALL   ?PUSH_XSTACK_I_ONE
+   \   000061   90....       MOV     DPTR,#sysSeqNumber
+   \   000064   E0           MOVX    A,@DPTR
+   \   000065   F5..         MOV     ?V0 + 0,A
+   \   000067   78..         MOV     R0,#?V0 + 0
+   \   000069   12....       LCALL   ?PUSH_XSTACK_I_ONE
+   \   00006C   7403         MOV     A,#0x3
+   \   00006E   12....       LCALL   ?XSTACK_DISP0_8
+   \   000071   8582..       MOV     ?V0 + 0,DPL
+   \   000074   8583..       MOV     ?V0 + 1,DPH
+   \   000077   78..         MOV     R0,#?V0 + 0
+   \   000079   12....       LCALL   ?PUSH_XSTACK_I_TWO
+   \   00007C   75..00       MOV     ?V0 + 0,#0x0
+   \   00007F   75..10       MOV     ?V0 + 1,#0x10
+   \   000082   78..         MOV     R0,#?V0 + 0
+   \   000084   12....       LCALL   ?PUSH_XSTACK_I_TWO
+   \   000087   EA           MOV     A,R2
+   \   000088   F9           MOV     R1,A
+   \   000089   12....       LCALL   ?Subroutine1 & 0xFFFF
+   \                     ??CrossCallReturnLabel_2:
+   \   00008C   12....       LCALL   ?DEALLOC_XSTACK8
+     86                     break;
+   \   00008F   02....       LJMP    ??Bluetooth_Handle_4 & 0xFFFF
+     87                  }
+     88                  case BT_CMD_OPERATE:
+     89                  {
+     90                    // CMDs
+     91                     byte dev_num;
+     92                     dev_num = msg[MT_RPC_FRAME_HDR_SZ];
+   \                     ??Bluetooth_Handle_2:
+   \   000092   12....       LCALL   ?Subroutine0 & 0xFFFF
+     93                     
+     94                    // DATAs
+     95                     byte *data_p = NULL;
+     96                     uint8 len_t = msg[MT_RPC_POS_LEN]-1;
+     97                     data_p = (byte *)malloc(sizeof(byte) * len_t);
+     98                     for(uint8 i = 0; i<len_t; i++)
+   \                     ??CrossCallReturnLabel_0:
+   \   000095   800C         SJMP    ??Bluetooth_Handle_5
+     99                     {
+    100                          data_p[i] = msg[MT_RPC_FRAME_HDR_SZ+i+1];
+   \                     ??Bluetooth_Handle_6:
+   \   000097   12....       LCALL   ?Subroutine2 & 0xFFFF
+    101                     }
+   \                     ??CrossCallReturnLabel_4:
+   \   00009A   C0E0         PUSH    A
+   \   00009C   12....       LCALL   ?Subroutine3 & 0xFFFF
+   \                     ??CrossCallReturnLabel_6:
+   \   00009F   D0E0         POP     A
+   \   0000A1   F0           MOVX    @DPTR,A
+   \   0000A2   0A           INC     R2
+   \                     ??Bluetooth_Handle_5:
+   \   0000A3   EA           MOV     A,R2
+   \   0000A4   C3           CLR     C
+   \   0000A5   95..         SUBB    A,?V0 + 3
+   \   0000A7   40EE         JC      ??Bluetooth_Handle_6
+    102                     //        uint8 motorAction[] = "200,5 ,120,30,";
+    103                     Sys_SendDataRequest( 0xFFFE, &Motor_epDesc[dev_num], OPERATE_CLUSTER, len_t,
+    104                                     data_p, sysSeqNumber, 0, 0 );       // send to latest motor device
+   \   0000A9                ; Setup parameters for call to function Sys_SendDataRequest
+   \   0000A9   75..00       MOV     ?V0 + 4,#0x0
+   \   0000AC   78..         MOV     R0,#?V0 + 4
+   \   0000AE   12....       LCALL   ?PUSH_XSTACK_I_ONE
+   \   0000B1   78..         MOV     R0,#?V0 + 4
+   \   0000B3   12....       LCALL   ?PUSH_XSTACK_I_ONE
+   \   0000B6   90....       MOV     DPTR,#sysSeqNumber
+   \   0000B9   E0           MOVX    A,@DPTR
+   \   0000BA   F5..         MOV     ?V0 + 4,A
+   \   0000BC   78..         MOV     R0,#?V0 + 4
+   \   0000BE   12....       LCALL   ?PUSH_XSTACK_I_ONE
+   \   0000C1   78..         MOV     R0,#?V0 + 0
+   \   0000C3   12....       LCALL   ?PUSH_XSTACK_I_TWO
+   \   0000C6   75..01       MOV     ?V0 + 4,#0x1
+   \   0000C9   8037         SJMP    ??Bluetooth_Handle_7
+    105                     free(data_p);
+    106                     break;
+    107                  }   
+    108                  case BT_CMD_LOOP:
+    109                  {
+    110                    // CMDs
+    111                     byte dev_num;
+    112                     dev_num = msg[MT_RPC_FRAME_HDR_SZ];
+   \                     ??Bluetooth_Handle_3:
+   \   0000CB   12....       LCALL   ?Subroutine0 & 0xFFFF
+    113                     
+    114                    // DATAs
+    115                     byte *data_p = NULL;
+    116                     uint8 len_t = msg[MT_RPC_POS_LEN]-1;
+    117                     data_p = (byte *)malloc(sizeof(byte) * len_t);
+    118                     for(uint8 i = 0; i<len_t; i++)
+   \                     ??CrossCallReturnLabel_1:
+   \   0000CE   800C         SJMP    ??Bluetooth_Handle_8
+    119                     {
+    120                          data_p[i] = msg[MT_RPC_FRAME_HDR_SZ+i+1];
+   \                     ??Bluetooth_Handle_9:
+   \   0000D0   12....       LCALL   ?Subroutine2 & 0xFFFF
+    121                     }
+   \                     ??CrossCallReturnLabel_5:
+   \   0000D3   C0E0         PUSH    A
+   \   0000D5   12....       LCALL   ?Subroutine3 & 0xFFFF
+   \                     ??CrossCallReturnLabel_7:
+   \   0000D8   D0E0         POP     A
+   \   0000DA   F0           MOVX    @DPTR,A
+   \   0000DB   0A           INC     R2
+   \                     ??Bluetooth_Handle_8:
+   \   0000DC   EA           MOV     A,R2
+   \   0000DD   C3           CLR     C
+   \   0000DE   95..         SUBB    A,?V0 + 3
+   \   0000E0   40EE         JC      ??Bluetooth_Handle_9
+    122                     //        uint8 motorAction[] = "200,5 ,120,30,";
+    123                     Sys_SendDataRequest( 0xFFFE, &Motor_epDesc[dev_num], LOOP_OPERATE_CLUSTER, len_t,
+    124                                     data_p, sysSeqNumber, 0, 0 );       // send to latest motor device
+   \   0000E2                ; Setup parameters for call to function Sys_SendDataRequest
+   \   0000E2   75..00       MOV     ?V0 + 4,#0x0
+   \   0000E5   78..         MOV     R0,#?V0 + 4
+   \   0000E7   12....       LCALL   ?PUSH_XSTACK_I_ONE
+   \   0000EA   78..         MOV     R0,#?V0 + 4
+   \   0000EC   12....       LCALL   ?PUSH_XSTACK_I_ONE
+   \   0000EF   90....       MOV     DPTR,#sysSeqNumber
+   \   0000F2   E0           MOVX    A,@DPTR
+   \   0000F3   F5..         MOV     ?V0 + 4,A
+   \   0000F5   78..         MOV     R0,#?V0 + 4
+   \   0000F7   12....       LCALL   ?PUSH_XSTACK_I_ONE
+   \   0000FA   78..         MOV     R0,#?V0 + 0
+   \   0000FC   12....       LCALL   ?PUSH_XSTACK_I_TWO
+   \   0000FF   75..02       MOV     ?V0 + 4,#0x2
+   \                     ??Bluetooth_Handle_7:
+   \   000102   75..10       MOV     ?V0 + 5,#0x10
+   \   000105   78..         MOV     R0,#?V0 + 4
+   \   000107   12....       LCALL   ?PUSH_XSTACK_I_TWO
+   \   00010A   A9..         MOV     R1,?V0 + 3
+   \   00010C   12....       LCALL   ?Subroutine1 & 0xFFFF
+   \                     ??CrossCallReturnLabel_3:
+   \   00010F   12....       LCALL   ?DEALLOC_XSTACK8
+    125                     free(data_p);
+   \   000112                ; Setup parameters for call to function __xdata_free
+   \   000112   AA..         MOV     R2,?V0 + 0
+   \   000114   AB..         MOV     R3,?V0 + 1
+   \   000116   12....       LCALL   ??__xdata_free?relay
+    126                     
+    127                     break;
+    128                  }
+    129              }
+    130          }
+   \                     ??Bluetooth_Handle_4:
+   \   000119   7401         MOV     A,#0x1
+   \   00011B   12....       LCALL   ?DEALLOC_XSTACK8
+   \   00011E   7F06         MOV     R7,#0x6
+   \   000120   02....       LJMP    ?BANKED_LEAVE_XDATA
+
+   \                                 In  segment BANKED_CODE, align 1, keep-with-next
+   \                     ?Subroutine3:
+   \   000000   E5..         MOV     A,?V0 + 0
+   \   000002   28           ADD     A,R0
+   \   000003   F582         MOV     DPL,A
+   \   000005   EB           MOV     A,R3
+   \   000006   3400         ADDC    A,#0x0
+   \   000008   F583         MOV     DPH,A
+   \   00000A   22           RET
+
+   \                                 In  segment BANKED_CODE, align 1, keep-with-next
+   \                     ?Subroutine2:
+   \   000000   8A82         MOV     DPL,R2
+   \   000002   A882         MOV     R0,DPL
+   \   000004   EE           MOV     A,R6
+   \   000005   28           ADD     A,R0
+   \   000006   F582         MOV     DPL,A
+   \   000008   EF           MOV     A,R7
+   \   000009   3400         ADDC    A,#0x0
+   \   00000B   F583         MOV     DPH,A
+   \   00000D   A3           INC     DPTR
+   \   00000E   A3           INC     DPTR
+   \   00000F   A3           INC     DPTR
+   \   000010   A3           INC     DPTR
+   \   000011   E0           MOVX    A,@DPTR
+   \   000012   22           RET
+
+   \                                 In  segment BANKED_CODE, align 1, keep-with-next
+   \                     ?Subroutine1:
+   \   000000   E5..         MOV     A,?V0 + 2
+   \   000002   75F006       MOV     B,#0x6
+   \   000005   A4           MUL     AB
+   \   000006   FA           MOV     R2,A
+   \   000007   ABF0         MOV     R3,B
+   \   000009   74..         MOV     A,#Motor_epDesc & 0xff
+   \   00000B   2A           ADD     A,R2
+   \   00000C   FC           MOV     R4,A
+   \   00000D   74..         MOV     A,#(Motor_epDesc >> 8) & 0xff
+   \   00000F   3B           ADDC    A,R3
+   \   000010   FD           MOV     R5,A
+   \   000011   7AFE         MOV     R2,#-0x2
+   \   000013   7BFF         MOV     R3,#-0x1
+   \   000015   12....       LCALL   ??Sys_SendDataRequest?relay
+   \   000018   7407         MOV     A,#0x7
+   \   00001A   22           RET
+
+   \                                 In  segment BANKED_CODE, align 1, keep-with-next
+   \                     ?Subroutine0:
+   \   000000   8E82         MOV     DPL,R6
+   \   000002   8F83         MOV     DPH,R7
+   \   000004   A3           INC     DPTR
+   \   000005   A3           INC     DPTR
+   \   000006   A3           INC     DPTR
+   \   000007   E0           MOVX    A,@DPTR
+   \   000008   F5..         MOV     ?V0 + 2,A
+   \   00000A   8E82         MOV     DPL,R6
+   \   00000C   8F83         MOV     DPH,R7
+   \   00000E   E0           MOVX    A,@DPTR
+   \   00000F   14           DEC     A
+   \   000010   F5..         MOV     ?V0 + 3,A
+   \   000012                ; Setup parameters for call to function __xdata_malloc
+   \   000012                ; Setup parameters for call to function __xdata_malloc
+   \   000012   FA           MOV     R2,A
+   \   000013   7B00         MOV     R3,#0x0
+   \   000015   12....       LCALL   ??__xdata_malloc?relay
+   \   000018   8A..         MOV     ?V0 + 0,R2
+   \   00001A   8B..         MOV     ?V0 + 1,R3
+   \   00001C   7A00         MOV     R2,#0x0
+   \   00001E   22           RET
 
    \                                 In  segment BANK_RELAYS, align 1
    \                     ??BluetoothInit?relay:
@@ -273,39 +519,50 @@ D:\ProgramData\Hardware\zigbee\Projects\zstack\Samples\SensorSys\Source\Bluetoot
    \   000003   ......       DC24    BluetoothInit
 
    \                                 In  segment BANK_RELAYS, align 1
-   \                     ??rxCB?relay:
+   \                     ??Bluetooth_Handle?relay:
    \   000000   12....       LCALL   ?BDISPATCH
-   \   000003   ......       DC24    rxCB
+   \   000003   ......       DC24    Bluetooth_Handle
 
    Maximum stack usage in bytes:
 
-     Function               ISTACK PSTACK XSTACK
-     --------               ------ ------ ------
-     BluetoothInit              2      0     29
-       -> HalUARTInit           4      0     58
-       -> HalUARTOpen           4      0     58
-     rxCB                       0      0      9
-       -> Hal_UART_RxBufLen     0      0     18
-       -> HalUARTRead           0      0     18
+     Function                    ISTACK PSTACK XSTACK
+     --------                    ------ ------ ------
+     BluetoothInit                   0      0      9
+       -> MT_UartInit                0      0     18
+       -> MT_UartRegisterTaskID      0      0     18
+     Bluetooth_Handle                1      0     22
+       -> Sys_SendPreBindMessage     0      0     30
+       -> osal_strlen                0      0     30
+       -> Sys_SendDataRequest        0      0     44
+       -> __xdata_malloc             0      0     30
+       -> Sys_SendDataRequest        0      0     44
+       -> __xdata_free               0      0     30
+       -> __xdata_malloc             0      0     30
+       -> Sys_SendDataRequest        0      0     44
+       -> __xdata_free               0      0     30
 
 
    Segment part sizes:
 
-     Function/Label        Bytes
-     --------------        -----
-     uartbuf                 20
-     BluetoothInit           72
-     rxCB                    35
-     ??BluetoothInit?relay    6
-     ??rxCB?relay             6
+     Function/Label           Bytes
+     --------------           -----
+     uartbuf                    20
+     BluetoothInit              20
+     Bluetooth_Handle          291
+     ?Subroutine3               11
+     ?Subroutine2               19
+     ?Subroutine1               27
+     ?Subroutine0               31
+     ??BluetoothInit?relay       6
+     ??Bluetooth_Handle?relay    6
 
  
- 107 bytes in segment BANKED_CODE
+ 399 bytes in segment BANKED_CODE
   12 bytes in segment BANK_RELAYS
   20 bytes in segment XDATA_Z
  
- 119 bytes of CODE  memory
+ 411 bytes of CODE  memory
   20 bytes of XDATA memory
 
 Errors: none
-Warnings: none
+Warnings: 1

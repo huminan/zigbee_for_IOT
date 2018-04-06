@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //                                                                            /
-// IAR C/C++ Compiler V8.10.3.10338/W32 for 8051        30/Mar/2018  16:46:37 /
+// IAR C/C++ Compiler V8.10.3.10338/W32 for 8051        05/Apr/2018  20:32:27 /
 // Copyright 2004-2011 IAR Systems AB.                                        /
 //                                                                            /
 //    Core               =  plain                                             /
@@ -45,7 +45,7 @@
 //                          -DREJOIN_POLL_RATE=440 D:\ProgramData\Hardware\zi /
 //                          gbee\Components\osal\common\OSAL_Memory.c -D      /
 //                          HOLD_AUTO_START -D BUILD_ALL_DEVICES -D           /
-//                          REFLECTOR -D NV_INIT -D xNV_RESTORE -D xZTOOL_P1  /
+//                          REFLECTOR -D NV_INIT -D xNV_RESTORE -D ZTOOL_P1   /
 //                          -D xMT_TASK -D xMT_SYS_FUNC -D xMT_SAPI_FUNC -D   /
 //                          xMT_SAPI_CB_FUNC -lC D:\ProgramData\Hardware\zigb /
 //                          ee\Projects\zstack\Samples\SensorSys\CC2530DB\Coo /
@@ -144,6 +144,8 @@
         EXTERN ?V0
         EXTERN __INIT_XDATA_Z
 
+        PUBLIC ??osal_heap_high_water?relay
+        FUNCTION ??osal_heap_high_water?relay,0203H
         PUBLIC ??osal_mem_alloc?relay
         FUNCTION ??osal_mem_alloc?relay,0203H
         PUBLIC ??osal_mem_free?relay
@@ -153,6 +155,9 @@
         PUBLIC ??osal_mem_kick?relay
         FUNCTION ??osal_mem_kick?relay,0203H
         PUBWEAK _A_IEN0
+        PUBLIC osal_heap_high_water
+        FUNCTION osal_heap_high_water,0203H
+        ARGFRAME XSTACK, 0, STACK
         PUBLIC osal_mem_alloc
         FUNCTION osal_mem_alloc,0203H
         ARGFRAME XSTACK, 10, STACK
@@ -264,6 +269,8 @@
         
 halAssertHandler    SYMBOL "halAssertHandler"
 ??halAssertHandler?relay SYMBOL "?relay", halAssertHandler
+osal_heap_high_water SYMBOL "osal_heap_high_water"
+??osal_heap_high_water?relay SYMBOL "?relay", osal_heap_high_water
 osal_mem_alloc      SYMBOL "osal_mem_alloc"
 ??osal_mem_alloc?relay SYMBOL "?relay", osal_mem_alloc
 osal_mem_free       SYMBOL "osal_mem_free"
@@ -469,7 +476,7 @@ _A_IEN0:
         DATA8
 //  175 static __no_init osalMemHdr_t theHeap[MAXMEMHEAP / OSALMEM_HDRSZ];
 theHeap:
-        DS 3072
+        DS 2072
 
         RSEG XDATA_N:XDATA:REORDER:NOROOT(0)
         DATA16
@@ -557,7 +564,7 @@ osal_mem_init:
 //  235 
 //  236   // Setup a NULL block at the end of the heap for fast comparisons with zero.
 //  237   theHeap[OSALMEM_LASTBLK_IDX].val = 0;
-        MOV     DPTR,#theHeap + 3070
+        MOV     DPTR,#theHeap + 2070
         CLR     A
         MOVX    @DPTR,A
         INC     DPTR
@@ -590,10 +597,10 @@ osal_mem_init:
 //  246   // Setup the wilderness.
 //  247   theHeap[OSALMEM_BIGBLK_IDX].val = OSALMEM_BIGBLK_SZ;  // Set 'len' & clear 'inUse' field.
         INC     DPTR
-        MOV     A,#-0x4c
+        MOV     A,#-0x34
         MOVX    @DPTR,A
         INC     DPTR
-        MOV     A,#0x9
+        MOV     A,#0x5
         MOVX    @DPTR,A
 //  248 
 //  249 #if ( OSALMEM_METRICS )
@@ -1303,9 +1310,9 @@ osal_mem_free:
         JC      ??osal_mem_free_0
         CLR     C
         MOV     A,R2
-        SUBB    A,#theHeap & 0xff
+        SUBB    A,#(theHeap + 24) & 0xff
         MOV     A,R3
-        SUBB    A,#((theHeap + 3072) >> 8) & 0xff
+        SUBB    A,#((theHeap + 2072) >> 8) & 0xff
         JC      ??osal_mem_free_1
 ??osal_mem_free_0:
         ; Setup parameters for call to function halAssertHandler
@@ -1397,32 +1404,6 @@ osal_mem_free:
         LJMP    ?BANKED_LEAVE_XDATA
         CFI EndBlock cfiBlock3
         REQUIRE _A_IEN0
-
-        RSEG BANK_RELAYS:CODE:REORDER:NOROOT(0)
-??osal_mem_init?relay:
-        LCALL   ?BDISPATCH
-        DATA
-        DC24    osal_mem_init
-
-        RSEG BANK_RELAYS:CODE:REORDER:NOROOT(0)
-??osal_mem_kick?relay:
-        LCALL   ?BDISPATCH
-        DATA
-        DC24    osal_mem_kick
-
-        RSEG BANK_RELAYS:CODE:REORDER:NOROOT(0)
-??osal_mem_alloc?relay:
-        LCALL   ?BDISPATCH
-        DATA
-        DC24    osal_mem_alloc
-
-        RSEG BANK_RELAYS:CODE:REORDER:NOROOT(0)
-??osal_mem_free?relay:
-        LCALL   ?BDISPATCH
-        DATA
-        DC24    osal_mem_free
-
-        END
 //  555 
 //  556 #if OSALMEM_METRICS
 //  557 /*********************************************************************
@@ -1492,28 +1473,72 @@ osal_mem_free:
 //  621  *
 //  622  * @return  Highest number of bytes ever used by the stack.
 //  623  */
+
+        RSEG BANKED_CODE:CODE:NOROOT(0)
 //  624 uint16 osal_heap_high_water( void )
+osal_heap_high_water:
+        CFI Block cfiBlock4 Using cfiCommon0
+        CFI Function osal_heap_high_water
+        CODE
 //  625 {
+        ; Saved register size: 0
+        ; Auto size: 0
 //  626 #if ( OSALMEM_METRICS )
 //  627   return memMax;
 //  628 #else
 //  629   return MAXMEMHEAP;
+        MOV     R2,#0x18
+        MOV     R3,#0x8
+        LJMP    ?BRET
+        CFI EndBlock cfiBlock4
 //  630 #endif
 //  631 }
+
+        RSEG BANK_RELAYS:CODE:REORDER:NOROOT(0)
+??osal_mem_init?relay:
+        LCALL   ?BDISPATCH
+        DATA
+        DC24    osal_mem_init
+
+        RSEG BANK_RELAYS:CODE:REORDER:NOROOT(0)
+??osal_mem_kick?relay:
+        LCALL   ?BDISPATCH
+        DATA
+        DC24    osal_mem_kick
+
+        RSEG BANK_RELAYS:CODE:REORDER:NOROOT(0)
+??osal_mem_alloc?relay:
+        LCALL   ?BDISPATCH
+        DATA
+        DC24    osal_mem_alloc
+
+        RSEG BANK_RELAYS:CODE:REORDER:NOROOT(0)
+??osal_mem_free?relay:
+        LCALL   ?BDISPATCH
+        DATA
+        DC24    osal_mem_free
+
+        RSEG BANK_RELAYS:CODE:REORDER:NOROOT(0)
+??osal_heap_high_water?relay:
+        LCALL   ?BDISPATCH
+        DATA
+        DC24    osal_heap_high_water
+
+        END
 //  632 #endif
 //  633 
 //  634 /**************************************************************************************************
 //  635 */
 // 
-//   562 bytes in segment BANKED_CODE
-//    24 bytes in segment BANK_RELAYS
+//   569 bytes in segment BANKED_CODE
+//    30 bytes in segment BANK_RELAYS
 //     1 byte  in segment SFR_AN
-// 3 074 bytes in segment XDATA_N
+// 2 074 bytes in segment XDATA_N
 //     1 byte  in segment XDATA_Z
 // 
-//   586 bytes of CODE  memory
+//   599 bytes of CODE  memory
 //     0 bytes of DATA  memory (+ 1 byte shared)
-// 3 075 bytes of XDATA memory
+// 2 075 bytes of XDATA memory
 //
 //Errors: none
 //Warnings: none

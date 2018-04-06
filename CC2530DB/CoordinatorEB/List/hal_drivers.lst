@@ -1,6 +1,6 @@
 ###############################################################################
 #                                                                             #
-# IAR C/C++ Compiler V8.10.3.10338/W32 for 8051         30/Mar/2018  16:46:43 #
+# IAR C/C++ Compiler V8.10.3.10338/W32 for 8051         05/Apr/2018  20:32:32 #
 # Copyright 2004-2011 IAR Systems AB.                                         #
 #                                                                             #
 #    Core               =  plain                                              #
@@ -45,8 +45,8 @@
 #                          -DREJOIN_POLL_RATE=440 D:\ProgramData\Hardware\zig #
 #                          bee\Components\hal\common\hal_drivers.c -D         #
 #                          HOLD_AUTO_START -D BUILD_ALL_DEVICES -D REFLECTOR  #
-#                          -D NV_INIT -D xNV_RESTORE -D xZTOOL_P1 -D          #
-#                          xMT_TASK -D xMT_SYS_FUNC -D xMT_SAPI_FUNC -D       #
+#                          -D NV_INIT -D xNV_RESTORE -D ZTOOL_P1 -D xMT_TASK  #
+#                          -D xMT_SYS_FUNC -D xMT_SAPI_FUNC -D                #
 #                          xMT_SAPI_CB_FUNC -lC D:\ProgramData\Hardware\zigbe #
 #                          e\Projects\zstack\Samples\SensorSys\CC2530DB\Coord #
 #                          inatorEB\List\ -lA D:\ProgramData\Hardware\zigbee\ #
@@ -322,13 +322,15 @@ D:\ProgramData\Hardware\zigbee\Components\hal\common\hal_drivers.c
     160            /* UART */
     161          #if (defined HAL_UART) && (HAL_UART == TRUE)
     162            HalUARTInit();
+   \   000013                ; Setup parameters for call to function HalUARTInit
+   \   000013   12....       LCALL   ??HalUARTInit?relay
     163          #endif
     164          
     165            /* KEY */
     166          #if (defined HAL_KEY) && (HAL_KEY == TRUE)
     167            HalKeyInit();
-   \   000013                ; Setup parameters for call to function HalKeyInit
-   \   000013   12....       LCALL   ??HalKeyInit?relay
+   \   000016                ; Setup parameters for call to function HalKeyInit
+   \   000016   12....       LCALL   ??HalKeyInit?relay
     168          #endif
     169          
     170            /* SPI */
@@ -341,7 +343,7 @@ D:\ProgramData\Hardware\zigbee\Components\hal\common\hal_drivers.c
     177            usbHidInit();
     178          #endif
     179          }
-   \   000016   80..         SJMP    ?Subroutine0
+   \   000019   80..         SJMP    ?Subroutine0
     180          
     181          
     182          /**************************************************************************************************
@@ -510,8 +512,10 @@ D:\ProgramData\Hardware\zigbee\Components\hal\common\hal_drivers.c
     269          void Hal_ProcessPoll ()
    \                     Hal_ProcessPoll:
     270          {
-   \   000000                ; Saved register size: 0
-   \   000000                ; Auto size: 0
+   \   000000   C082         PUSH    DPL
+   \   000002   C083         PUSH    DPH
+   \   000004                ; Saved register size: 2
+   \   000004                ; Auto size: 0
     271          
     272            /* Timer Poll */
     273          #if (defined HAL_TIMER) && (HAL_TIMER == TRUE)
@@ -521,6 +525,8 @@ D:\ProgramData\Hardware\zigbee\Components\hal\common\hal_drivers.c
     277            /* UART Poll */
     278          #if (defined HAL_UART) && (HAL_UART == TRUE)
     279            HalUARTPoll();
+   \   000004                ; Setup parameters for call to function HalUARTPoll
+   \   000004   12....       LCALL   ??HalUARTPoll?relay
     280          #endif  
     281          
     282            /* SPI Poll */
@@ -539,7 +545,7 @@ D:\ProgramData\Hardware\zigbee\Components\hal\common\hal_drivers.c
     295          #endif
     296          
     297          }
-   \   000000   02....       LJMP    ?BRET
+   \   000007   02....       LJMP    ?Subroutine0 & 0xFFFF
 
    \                                 In  segment BANK_RELAYS, align 1
    \                     ??Hal_Init?relay:
@@ -576,6 +582,7 @@ D:\ProgramData\Hardware\zigbee\Components\hal\common\hal_drivers.c
        -> HalAesInit              4      0      0
        -> HalLcdInit              4      0      0
        -> HalLedInit              4      0      0
+       -> HalUARTInit             4      0      0
        -> HalKeyInit              4      0      0
      Hal_Init                     2      0      0
      Hal_ProcessEvent             0      0     10
@@ -585,7 +592,8 @@ D:\ProgramData\Hardware\zigbee\Components\hal\common\hal_drivers.c
        -> HalLedUpdate            0      0     20
        -> HalKeyPoll              0      0     20
        -> osal_start_timerEx      0      0     20
-     Hal_ProcessPoll              0      0      0
+     Hal_ProcessPoll              2      0      0
+       -> HalUARTPoll             4      0      0
 
 
    Segment part sizes:
@@ -595,20 +603,20 @@ D:\ProgramData\Hardware\zigbee\Components\hal\common\hal_drivers.c
      Hal_TaskID                  1
      Hal_Init                    9
      ?Subroutine0                7
-     HalDriverInit              24
+     HalDriverInit              27
      Hal_ProcessEvent           97
-     Hal_ProcessPoll             3
+     Hal_ProcessPoll            10
      ??Hal_Init?relay            6
      ??HalDriverInit?relay       6
      ??Hal_ProcessEvent?relay    6
      ??Hal_ProcessPoll?relay     6
 
  
- 140 bytes in segment BANKED_CODE
+ 150 bytes in segment BANKED_CODE
   24 bytes in segment BANK_RELAYS
    1 byte  in segment XDATA_Z
  
- 164 bytes of CODE  memory
+ 174 bytes of CODE  memory
    1 byte  of XDATA memory
 
 Errors: none

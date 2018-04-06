@@ -55,7 +55,7 @@ extern "C"
 /*********************************************************************
  * CONSTANTS
  */
-#define MY_DEVICE   BUTTON_TYPE_ID|MOTOR_TYPE_ID|LED_TYPE_ID
+#define MY_DEVICE   BUTTON_TYPE_ID|MOTOR_TYPE_ID|SWITCH_TYPE_ID
 
 
 #define APP_INIT                           0
@@ -72,7 +72,7 @@ extern "C"
 // Application Events (OSAL) - These are bit weighted definitions.
 #define SYS_SEND_MSG_EVT       0x0001
 #define MATCH_BIND_EVT         0x0002
-#define CLOSE_BIND_EVT         0x0004
+#define CLOSE_LED3_EVT         0x0004
 #define CLOSE_LIGHT_EVT        0x0008
 #define CONFIG_OPTION_EVT      0x0010
 
@@ -81,7 +81,7 @@ extern "C"
 // EndPoint MAX
 #define BUTTON_NUM_MAX         3
 #define MOTOR_NUM_MAX          2
-#define LED_NUM_MAX            3
+#define SWITCH_NUM_MAX         5
 #define OBSERVE_NUM_MAX        1
 /*********************************************************************
  * MACROS
@@ -89,18 +89,18 @@ extern "C"
 extern byte Sys_TaskID;
 extern byte Button_TaskID;
 extern byte Motor_TaskID;
-extern byte Led_TaskID;
+extern byte Switch_TaskID;
 
 extern uint8 ZDAppTaskID;
 
 extern endPointDesc_t Sys_epDesc;
 extern endPointDesc_t Button_epDesc[BUTTON_NUM_MAX];
 extern endPointDesc_t Motor_epDesc[MOTOR_NUM_MAX];
-extern endPointDesc_t Led_epDesc[LED_NUM_MAX];
+extern endPointDesc_t Switch_epDesc[SWITCH_NUM_MAX];
 
 extern uint8 buttonCnt;
 extern uint8 motorCnt;
-extern uint8 ledCnt;
+extern uint8 swCnt;
 /*********************************************************************
  * FUNCTIONS
  */
@@ -113,7 +113,7 @@ extern void Sys_AllowBindConfirm( uint16 source );
 extern void Sys_Init( byte task_id );
 extern void Button_Init( byte task_id );
 extern void Motor_Init( byte task_id );
-extern void Led_Init( byte task_id );
+extern void Switch_Init( byte task_id );
 
 /*
  * Task Event Processor for the Generic Application
@@ -121,11 +121,11 @@ extern void Led_Init( byte task_id );
 extern UINT16 Sys_ProcessEvent( byte task_id, UINT16 events );
 extern UINT16 Button_ProcessEvent( byte task_id, UINT16 events );
 extern UINT16 Motor_ProcessEvent( byte task_id, UINT16 events );
-extern UINT16 Led_ProcessEvent( byte task_id, UINT16 events );
+extern UINT16 Switch_ProcessEvent( byte task_id, UINT16 events );
 
 extern void osalAddTasks( void );
 
-uint8 Type2EP(uint8 type, uint8 offset);
+uint8 Type2EP(uint8 type);
 /*********************************************************************
 *********************************************************************/
 

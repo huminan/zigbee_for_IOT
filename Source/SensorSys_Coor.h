@@ -42,13 +42,13 @@ extern "C"
 
 #define BUTTON_BIND_TIMER      0x0021
 #define MOTOR_BIND_TIMER       0x0021
-#define LED_BIND_TIMER         0x0021
+#define SWITCH_BIND_TIMER         0x0021
 #define OBSERVE_BIND_TIMER     0x0021
   
 // EndPoint MAX
 #define BUTTON_NUM_MAX         50
 #define MOTOR_NUM_MAX          10   // can be expand to 20
-#define LED_NUM_MAX            20   // should be 50
+#define SWITCH_NUM_MAX            20   // should be 50
 #define OBSERVE_NUM_MAX        40
   
   
@@ -72,19 +72,19 @@ typedef struct
 extern byte Sys_TaskID;
 extern byte Button_TaskID;
 extern byte Motor_TaskID;
-extern byte Led_TaskID;
+extern byte Switch_TaskID;
 
 extern uint8 ZDAppTaskID;
 extern endPointDesc_t Sys_epDesc;
 extern endPointDesc_t Button_epDesc[BUTTON_NUM_MAX];
 extern endPointDesc_t Motor_epDesc[MOTOR_NUM_MAX];
-extern endPointDesc_t Led_epDesc[LED_NUM_MAX];
+extern endPointDesc_t Switch_epDesc[SWITCH_NUM_MAX];
 
 extern uint8 sysSeqNumber;
 
 extern uint8 buttonCnt;
 extern uint8 motorCnt;
-extern uint8 ledCnt;
+extern uint8 swCnt;
 /*********************************************************************
  * FUNCTIONS
  */
@@ -97,17 +97,17 @@ extern void Sensor_AllowBind ( uint8 timeout );
 extern void Sys_Init( byte task_id );
 extern void Button_Init( byte task_id );
 extern void Motor_Init( byte task_id );
-extern void Led_Init( byte task_id );
+extern void Switch_Init( byte task_id );
 /*
  * Task Event Processor for the Generic Application
  */
 extern UINT16 Sys_ProcessEvent( byte task_id, UINT16 events );
 extern UINT16 Button_ProcessEvent( byte task_id, UINT16 events );
 extern UINT16 Motor_ProcessEvent( byte task_id, UINT16 events );
-extern UINT16 Led_ProcessEvent( byte task_id, UINT16 events );
+extern UINT16 Switch_ProcessEvent( byte task_id, UINT16 events );
 
 
-extern void Sys_SendPreBindMessage( byte type_id, byte ep_id );
+extern void Sys_SendPreBindMessage( byte type_id);
 extern void Sys_SendDataRequest ( uint16 destination, endPointDesc_t *epDesc, uint16 commandId, uint8 len,
                           uint8 *pData, uint8 handle, uint8 ack, uint8 radius );
 // extern void Button_BindDevice ( uint8 create, uint16 commandId, uint8 *pDestination );
