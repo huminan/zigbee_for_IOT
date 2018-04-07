@@ -1,6 +1,6 @@
 ###############################################################################
 #                                                                             #
-# IAR C/C++ Compiler V8.10.3.10338/W32 for 8051         30/Mar/2018  14:24:12 #
+# IAR C/C++ Compiler V8.10.3.10338/W32 for 8051         07/Apr/2018  16:38:54 #
 # Copyright 2004-2011 IAR Systems AB.                                         #
 #                                                                             #
 #    Core               =  plain                                              #
@@ -123,12 +123,30 @@ D:\ProgramData\Hardware\zigbee\Projects\zstack\Samples\SensorSys\Source\SensorSy
       2          #include <string.h>
       3          #include "SensorSys_Tools.h"
       4          #include "ZComDef.h"
-      5          
+      5          #include "ioCC2530.h"
+
+   \                                 In  segment SFR_AN, at 0x8c
+   \   unsigned char volatile __sfr PICTL
+   \                     PICTL:
+   \   000000                DS 1
+
+   \                                 In  segment SFR_AN, at 0x90
+   \   union <unnamed> volatile __sfr _A_P1
+   \                     _A_P1:
+   \   000000                DS 1
+
+   \                                 In  segment SFR_AN, at 0xa0
+   \   union <unnamed> volatile __sfr _A_P2
+   \                     _A_P2:
+   \   000000                DS 1
+      6          #ifndef COOR
+      7              #include "SensorSys_End.h"
+      8          #endif
 
    \                                 In  segment BANKED_CODE, align 1, keep-with-next
-      6          uint8 * mid(uint8 *dst,uint8 *src, int n,int m)
+      9          uint8 * mid(uint8 *dst,uint8 *src, int n,int m)
    \                     mid:
-      7          {
+     10          {
    \   000000   74EE         MOV     A,#-0x12
    \   000002   12....       LCALL   ?BANKED_ENTER_XDATA
    \   000005                ; Saved register size: 18
@@ -153,11 +171,11 @@ D:\ProgramData\Hardware\zigbee\Projects\zstack\Samples\SensorSys\Source\SensorSy
    \   000021   A3           INC     DPTR
    \   000022   E0           MOVX    A,@DPTR
    \   000023   F5..         MOV     ?V0 + 7,A
-      8              uint8 *p = src;
-      9              uint8 *q = dst;
+     11              uint8 *p = src;
+     12              uint8 *q = dst;
    \   000025   8A..         MOV     ?V0 + 4,R2
    \   000027   8B..         MOV     ?V0 + 5,R3
-     10              int len = strlen(src);
+     13              int len = strlen(src);
                                       ^
 Warning[Pe167]: argument of type "unsigned char *" is incompatible with
           parameter of type "char const *"
@@ -171,7 +189,7 @@ Warning[Pe167]: argument of type "unsigned char *" is incompatible with
    \   000032   8B..         MOV     ?V0 + 9,R3
    \   000034   A8..         MOV     R0,?V0 + 8
    \   000036   A9..         MOV     R1,?V0 + 9
-     11              if(n>len) n = len-m;
+     14              if(n>len) n = len-m;
    \   000038   C3           CLR     C
    \   000039   E8           MOV     A,R0
    \   00003A   95..         SUBB    A,?V0 + 2
@@ -188,7 +206,7 @@ Warning[Pe167]: argument of type "unsigned char *" is incompatible with
    \   00004C   E9           MOV     A,R1
    \   00004D   95..         SUBB    A,?V0 + 7
    \   00004F   F5..         MOV     ?V0 + 3,A
-     12              if(m<0) m=0;
+     15              if(m<0) m=0;
    \                     ??mid_0:
    \   000051   C3           CLR     C
    \   000052   E5..         MOV     A,?V0 + 7
@@ -199,7 +217,7 @@ Warning[Pe167]: argument of type "unsigned char *" is incompatible with
    \   00005B   5006         JNC     ??mid_1
    \   00005D   75..00       MOV     ?V0 + 6,#0x0
    \   000060   75..00       MOV     ?V0 + 7,#0x0
-     13              if(m>len) return NULL;
+     16              if(m>len) return NULL;
    \                     ??mid_1:
    \   000063   C3           CLR     C
    \   000064   E8           MOV     A,R0
@@ -213,7 +231,7 @@ Warning[Pe167]: argument of type "unsigned char *" is incompatible with
    \   000071   7A00         MOV     R2,#0x0
    \   000073   7B00         MOV     R3,#0x0
    \   000075   804A         SJMP    ??mid_3
-     14              p += m;
+     17              p += m;
    \                     ??mid_2:
    \   000077   EE           MOV     A,R6
    \   000078   25..         ADD     A,?V0 + 6
@@ -222,7 +240,7 @@ Warning[Pe167]: argument of type "unsigned char *" is incompatible with
    \   00007C   35..         ADDC    A,?V0 + 7
    \   00007E   F9           MOV     R1,A
    \   00007F   8022         SJMP    ??mid_4
-     15              while(n--) *(q++) = *(p++);
+     18              while(n--) *(q++) = *(p++);
    \                     ??mid_5:
    \   000081   8882         MOV     DPL,R0
    \   000083   8983         MOV     DPH,R1
@@ -252,44 +270,44 @@ Warning[Pe167]: argument of type "unsigned char *" is incompatible with
    \   0000B1   EA           MOV     A,R2
    \   0000B2   4B           ORL     A,R3
    \   0000B3   70CC         JNZ     ??mid_5
-     16              *(q++)='\0';
+     19              *(q++)='\0';
    \   0000B5   85..82       MOV     DPL,?V0 + 4
    \   0000B8   85..83       MOV     DPH,?V0 + 5
    \   0000BB   E4           CLR     A
    \   0000BC   F0           MOVX    @DPTR,A
-     17              return dst;
+     20              return dst;
    \   0000BD   AA..         MOV     R2,?V0 + 0
    \   0000BF   AB..         MOV     R3,?V0 + 1
    \                     ??mid_3:
    \   0000C1   7F0A         MOV     R7,#0xa
    \   0000C3   02....       LJMP    ?BANKED_LEAVE_XDATA
-     18          }
-     19          						  
+     21          }
+     22          						  
 
    \                                 In  segment BANKED_CODE, align 1, keep-with-next
-     20          uint8 Locate_Pos(uint8 *buf,uint8 cx)
+     23          uint8 Locate_Pos(uint8 *buf,uint8 cx)
    \                     Locate_Pos:
-     21          {	 		    
+     24          {	 		    
    \   000000   C082         PUSH    DPL
    \   000002   C083         PUSH    DPH
    \   000004                ; Saved register size: 2
    \   000004                ; Auto size: 0
    \   000004   E9           MOV     A,R1
    \   000005   FC           MOV     R4,A
-     22          	uint8 *p=buf;
+     25          	uint8 *p=buf;
    \   000006   EA           MOV     A,R2
    \   000007   F8           MOV     R0,A
    \   000008   800B         SJMP    ??Locate_Pos_0
-     23          	while(cx)
-     24          	{		 
-     25          		if(*buf=='*'||*buf<' '||*buf>'z')return 0XFF;
-     26          		if(*buf==',')cx--;
+     26          	while(cx)
+     27          	{		 
+     28          		if(*buf=='*'||*buf<' '||*buf>'z')return 0XFF;
+     29          		if(*buf==',')cx--;
    \                     ??Locate_Pos_1:
    \   00000A   E0           MOVX    A,@DPTR
    \   00000B   642C         XRL     A,#0x2c
    \   00000D   7001         JNZ     ??Locate_Pos_2
    \   00000F   1C           DEC     R4
-     27          		buf++;
+     30          		buf++;
    \                     ??Locate_Pos_2:
    \   000010   A3           INC     DPTR
    \   000011   AA82         MOV     R2,DPL
@@ -310,40 +328,45 @@ Warning[Pe167]: argument of type "unsigned char *" is incompatible with
    \                     ??Locate_Pos_4:
    \   000029   79FF         MOV     R1,#-0x1
    \   00002B   8004         SJMP    ??Locate_Pos_5
-     28          	}
-     29          	return buf-p;	 
+     31          	}
+     32          	return buf-p;	 
    \                     ??Locate_Pos_3:
    \   00002D   EA           MOV     A,R2
    \   00002E   C3           CLR     C
    \   00002F   98           SUBB    A,R0
    \   000030   F9           MOV     R1,A
    \                     ??Locate_Pos_5:
-   \   000031   D083         POP     DPH
-   \   000033   D082         POP     DPL
-   \   000035   02....       LJMP    ?BRET
-     30          }
-     31          
+   \   000031                REQUIRE ?Subroutine0
+   \   000031                ; // Fall through to label ?Subroutine0
+     33          }
 
    \                                 In  segment BANKED_CODE, align 1, keep-with-next
-     32          uint8 Num_Pos(uint16 len, uint8 *buf)
+   \                     ?Subroutine0:
+   \   000000   D083         POP     DPH
+   \   000002   D082         POP     DPL
+   \   000004   02....       LJMP    ?BRET
+     34          
+
+   \                                 In  segment BANKED_CODE, align 1, keep-with-next
+     35          uint8 Num_Pos(uint16 len, uint8 *buf)
    \                     Num_Pos:
-     33          {
+     36          {
    \   000000   74F7         MOV     A,#-0x9
    \   000002   12....       LCALL   ?BANKED_ENTER_XDATA
    \   000005                ; Saved register size: 9
    \   000005                ; Auto size: 0
-     34              uint8 num = 0;
+     37              uint8 num = 0;
    \   000005   7900         MOV     R1,#0x0
-     35              uint16 length = len;
+     38              uint16 length = len;
    \   000007   EA           MOV     A,R2
    \   000008   FE           MOV     R6,A
    \   000009   EB           MOV     A,R3
    \   00000A   FF           MOV     R7,A
    \   00000B   800F         SJMP    ??Num_Pos_0
-     36          //    uint8 *p=buf;
-     37              while(length--)
-     38              {		 
-     39                  if(*buf==',')num++;
+     39          //    uint8 *p=buf;
+     40              while(length--)
+     41              {		 
+     42                  if(*buf==',')num++;
    \                     ??Num_Pos_1:
    \   00000D   8C82         MOV     DPL,R4
    \   00000F   8D83         MOV     DPH,R5
@@ -351,12 +374,12 @@ Warning[Pe167]: argument of type "unsigned char *" is incompatible with
    \   000012   642C         XRL     A,#0x2c
    \   000014   7001         JNZ     ??Num_Pos_2
    \   000016   09           INC     R1
-     40                  buf++;
+     43                  buf++;
    \                     ??Num_Pos_2:
    \   000017   A3           INC     DPTR
    \   000018   AC82         MOV     R4,DPL
    \   00001A   AD83         MOV     R5,DPH
-     41              }
+     44              }
    \                     ??Num_Pos_0:
    \   00001C   EE           MOV     A,R6
    \   00001D   FA           MOV     R2,A
@@ -371,10 +394,329 @@ Warning[Pe167]: argument of type "unsigned char *" is incompatible with
    \   000028   EA           MOV     A,R2
    \   000029   4B           ORL     A,R3
    \   00002A   70E1         JNZ     ??Num_Pos_1
-     42              return num;	
+     45              return num;	
    \   00002C   7F01         MOV     R7,#0x1
    \   00002E   02....       LJMP    ?BANKED_LEAVE_XDATA
-     43          }
+     46          }
+     47          
+
+   \                                 In  segment BANKED_CODE, align 1, keep-with-next
+     48          void ss_AddObserveList( SensorObserve_t *ob, uint8 port)
+   \                     ss_AddObserveList:
+     49          {
+   \   000000   74F2         MOV     A,#-0xe
+   \   000002   12....       LCALL   ?BANKED_ENTER_XDATA
+   \   000005                ; Saved register size: 14
+   \   000005                ; Auto size: 0
+   \   000005   EA           MOV     A,R2
+   \   000006   FE           MOV     R6,A
+   \   000007   EB           MOV     A,R3
+   \   000008   FF           MOV     R7,A
+   \   000009   89..         MOV     ?V0 + 2,R1
+     50                  SensorObserve_t *new_p, *p;
+     51                  new_p = (SensorObserve_t *)osal_mem_alloc(sizeof(SensorObserve_t));
+   \   00000B                ; Setup parameters for call to function osal_mem_alloc
+   \   00000B   7A03         MOV     R2,#0x3
+   \   00000D   7B00         MOV     R3,#0x0
+   \   00000F   12....       LCALL   ??osal_mem_alloc?relay
+   \   000012   8A..         MOV     ?V0 + 0,R2
+   \   000014   8B..         MOV     ?V0 + 1,R3
+     52                  new_p->port = port;
+   \   000016   8A82         MOV     DPL,R2
+   \   000018   8B83         MOV     DPH,R3
+   \   00001A   A3           INC     DPTR
+   \   00001B   A3           INC     DPTR
+   \   00001C   E5..         MOV     A,?V0 + 2
+   \   00001E   F0           MOVX    @DPTR,A
+     53                  new_p->next = NULL;
+   \   00001F   8A82         MOV     DPL,R2
+   \   000021   8B83         MOV     DPH,R3
+   \   000023   E4           CLR     A
+   \   000024   F0           MOVX    @DPTR,A
+   \   000025   A3           INC     DPTR
+   \   000026   F0           MOVX    @DPTR,A
+     54                  p = ss_EndObserveList(ob);
+     55                  p->next = new_p;
+   \   000027                ; Setup parameters for call to function ss_EndObserveList
+   \   000027   EE           MOV     A,R6
+   \   000028   FA           MOV     R2,A
+   \   000029   EF           MOV     A,R7
+   \   00002A   FB           MOV     R3,A
+   \   00002B   12....       LCALL   ??ss_EndObserveList?relay
+   \   00002E   8A82         MOV     DPL,R2
+   \   000030   8B83         MOV     DPH,R3
+   \   000032   E5..         MOV     A,?V0 + 0
+   \   000034   F0           MOVX    @DPTR,A
+   \   000035   A3           INC     DPTR
+   \   000036   E5..         MOV     A,?V0 + 1
+   \   000038   F0           MOVX    @DPTR,A
+     56          }
+   \   000039   7F06         MOV     R7,#0x6
+   \   00003B   02....       LJMP    ?BANKED_LEAVE_XDATA
+     57          
+     58          
+
+   \                                 In  segment BANKED_CODE, align 1, keep-with-next
+     59          SensorObserve_t *ss_EndObserveList( SensorObserve_t *ob)
+   \                     ss_EndObserveList:
+     60          {
+   \   000000   C082         PUSH    DPL
+   \   000002   C083         PUSH    DPH
+   \   000004                ; Saved register size: 2
+   \   000004                ; Auto size: 0
+     61              SensorObserve_t *p;
+     62              p = ob;
+   \   000004   8009         SJMP    ??ss_EndObserveList_0
+     63              while(p->next != NULL)
+     64              {
+     65                  p = p->next;
+   \                     ??ss_EndObserveList_1:
+   \   000006   8A82         MOV     DPL,R2
+   \   000008   8B83         MOV     DPH,R3
+   \   00000A   E0           MOVX    A,@DPTR
+   \   00000B   FA           MOV     R2,A
+   \   00000C   A3           INC     DPTR
+   \   00000D   E0           MOVX    A,@DPTR
+   \   00000E   FB           MOV     R3,A
+     66              }
+   \                     ??ss_EndObserveList_0:
+   \   00000F   8A82         MOV     DPL,R2
+   \   000011   8B83         MOV     DPH,R3
+   \   000013   E0           MOVX    A,@DPTR
+   \   000014   F8           MOV     R0,A
+   \   000015   A3           INC     DPTR
+   \   000016   E0           MOVX    A,@DPTR
+   \   000017   F9           MOV     R1,A
+   \   000018   E8           MOV     A,R0
+   \   000019   49           ORL     A,R1
+   \   00001A   70EA         JNZ     ??ss_EndObserveList_1
+     67              return p;
+   \   00001C   02....       LJMP    ?Subroutine0 & 0xFFFF
+     68          }
+     69          
+     70          
+
+   \                                 In  segment BANKED_CODE, align 1, keep-with-next
+     71          SensorObserve_t *ss_FindObserveList( SensorObserve_t *ob, uint8 num)
+   \                     ss_FindObserveList:
+     72          {
+   \   000000   C082         PUSH    DPL
+   \   000002   C083         PUSH    DPH
+   \   000004                ; Saved register size: 2
+   \   000004                ; Auto size: 0
+     73              SensorObserve_t *p;
+     74              p = ob;
+   \   000004   8A82         MOV     DPL,R2
+   \   000006   8B83         MOV     DPH,R3
+     75              uint8 i;
+     76              for(i=0; i<num; i++)
+   \   000008   7800         MOV     R0,#0x0
+   \   00000A   800E         SJMP    ??ss_FindObserveList_0
+     77              {
+     78                  p = ob->next;
+   \                     ??ss_FindObserveList_1:
+   \   00000C   8A82         MOV     DPL,R2
+   \   00000E   8B83         MOV     DPH,R3
+   \   000010   E0           MOVX    A,@DPTR
+   \   000011   FC           MOV     R4,A
+   \   000012   A3           INC     DPTR
+   \   000013   E0           MOVX    A,@DPTR
+   \   000014   FD           MOV     R5,A
+   \   000015   8C82         MOV     DPL,R4
+   \   000017   8D83         MOV     DPH,R5
+     79              }
+   \   000019   08           INC     R0
+   \                     ??ss_FindObserveList_0:
+   \   00001A   E8           MOV     A,R0
+   \   00001B   C3           CLR     C
+   \   00001C   99           SUBB    A,R1
+   \   00001D   40ED         JC      ??ss_FindObserveList_1
+     80              return p;
+   \   00001F   AA82         MOV     R2,DPL
+   \   000021   AB83         MOV     R3,DPH
+   \   000023   02....       LJMP    ?Subroutine0 & 0xFFFF
+     81          }
+     82          
+     83          #ifndef COOR
+
+   \                                 In  segment BANKED_CODE, align 1, keep-with-next
+     84          void ss_KeyDetermine(SensorObserve_t *ob)
+   \                     ss_KeyDetermine:
+     85          {
+   \   000000   74F6         MOV     A,#-0xa
+   \   000002   12....       LCALL   ?BANKED_ENTER_XDATA
+   \   000005                ; Saved register size: 10
+   \   000005                ; Auto size: 0
+     86              if(ob ==NULL)
+   \   000005   EA           MOV     A,R2
+   \   000006   4B           ORL     A,R3
+   \   000007   7003         JNZ     $+5
+   \   000009   02....       LJMP    ??ss_KeyDetermine_0 & 0xFFFF
+     87              {
+     88                  return;
+     89              }
+     90          // estimate *ob first
+     91              SensorObserve_t *p;
+     92              p = ob;
+     93              uint8 count = 0;
+   \   00000C   7900         MOV     R1,#0x0
+     94              do{
+     95                  if(p->port < P2_KEY_MAX)
+   \                     ??ss_KeyDetermine_1:
+   \   00000E   8A82         MOV     DPL,R2
+   \   000010   8B83         MOV     DPH,R3
+   \   000012   A3           INC     DPTR
+   \   000013   A3           INC     DPTR
+   \   000014   E0           MOVX    A,@DPTR
+   \   000015   C3           CLR     C
+   \   000016   9404         SUBB    A,#0x4
+   \   000018   5025         JNC     ??ss_KeyDetermine_2
+     96                  {
+     97                      if(PICTL & 0x08)    // P2 in falling edge.
+   \   00001A   E58C         MOV     A,0x8c
+   \   00001C   A2E3         MOV     C,0xE0 /* A   */.3
+   \   00001E   501B         JNC     ??ss_KeyDetermine_3
+     98                      {
+     99                          if(P2 & (0x01 << (p->port + 1)))
+   \   000020   75..01       MOV     ?V0 + 0,#0x1
+   \   000023   75..00       MOV     ?V0 + 1,#0x0
+   \   000026   8A82         MOV     DPL,R2
+   \   000028   8B83         MOV     DPH,R3
+   \   00002A   A3           INC     DPTR
+   \   00002B   A3           INC     DPTR
+   \   00002C   E0           MOVX    A,@DPTR
+   \   00002D   04           INC     A
+   \   00002E   78..         MOV     R0,#?V0 + 0
+   \   000030   12....       LCALL   ?S_SHL
+   \   000033   E5..         MOV     A,?V0 + 0
+   \   000035   55A0         ANL     A,0xa0
+   \                     ??ss_KeyDetermine_4:
+   \   000037   7065         JNZ     ??ss_KeyDetermine_5
+   \   000039   8052         SJMP    ??ss_KeyDetermine_6
+    100                          {
+    101                              break;
+    102                          }
+    103                      }
+    104                      else        // P2 in rising edge.
+    105                      {
+    106                          if(~(P2 | (0xFF &(0x01 << (p->port + 1)))))
+   \                     ??ss_KeyDetermine_3:
+   \   00003B   E5A0         MOV     A,0xa0
+   \   00003D   805F         SJMP    ??ss_KeyDetermine_5
+    107                          {
+    108                              break;
+    109                          }
+    110                      }
+    111                  }
+    112                  else if(p->port < P2_KEY_MAX + P1_KEY_MAXL)
+   \                     ??ss_KeyDetermine_2:
+   \   00003F   8A82         MOV     DPL,R2
+   \   000041   8B83         MOV     DPH,R3
+   \   000043   A3           INC     DPTR
+   \   000044   A3           INC     DPTR
+   \   000045   E0           MOVX    A,@DPTR
+   \   000046   C3           CLR     C
+   \   000047   9406         SUBB    A,#0x6
+   \   000049   E58C         MOV     A,0x8c
+   \   00004B   5022         JNC     ??ss_KeyDetermine_7
+    113                  {
+    114                      if(PICTL & 0x02)    // P1 L falling edge.
+   \   00004D   A2E1         MOV     C,0xE0 /* A   */.1
+   \   00004F   501A         JNC     ??ss_KeyDetermine_8
+    115                      {
+    116                          if(P1 & (0x01 << (p->port - 2)))
+   \   000051   75..01       MOV     ?V0 + 0,#0x1
+   \   000054   75..00       MOV     ?V0 + 1,#0x0
+   \   000057   8A82         MOV     DPL,R2
+   \   000059   8B83         MOV     DPH,R3
+   \   00005B   A3           INC     DPTR
+   \   00005C   A3           INC     DPTR
+   \   00005D   E0           MOVX    A,@DPTR
+   \   00005E   24FE         ADD     A,#-0x2
+   \   000060   78..         MOV     R0,#?V0 + 0
+   \   000062   12....       LCALL   ?S_SHL
+   \   000065   E5..         MOV     A,?V0 + 0
+   \   000067   5590         ANL     A,0x90
+   \   000069   80CC         SJMP    ??ss_KeyDetermine_4
+    117                          {
+    118                              break;
+    119                          }
+    120                      }
+    121                      else        // P1 L rising edge.
+    122                      {
+    123                          if(~(P1 | (0xFF &(0x01 << (p->port - 2)))))
+   \                     ??ss_KeyDetermine_8:
+   \   00006B   E590         MOV     A,0x90
+   \   00006D   802F         SJMP    ??ss_KeyDetermine_5
+    124                          {
+    125                              break;
+    126                          }
+    127                      }
+    128                  }
+    129                  else
+    130                  {
+    131                      if(PICTL & 0x04)    // P1 H falling edge.
+   \                     ??ss_KeyDetermine_7:
+   \   00006F   A2E2         MOV     C,0xE0 /* A   */.2
+   \   000071   50F8         JNC     ??ss_KeyDetermine_8
+    132                      {
+    133                          if(P1 & (0x01 << (p->port - 2)))
+   \   000073   75..01       MOV     ?V0 + 0,#0x1
+   \   000076   75..00       MOV     ?V0 + 1,#0x0
+   \   000079   8A82         MOV     DPL,R2
+   \   00007B   8B83         MOV     DPH,R3
+   \   00007D   A3           INC     DPTR
+   \   00007E   A3           INC     DPTR
+   \   00007F   E0           MOVX    A,@DPTR
+   \   000080   24FE         ADD     A,#-0x2
+   \   000082   78..         MOV     R0,#?V0 + 0
+   \   000084   12....       LCALL   ?S_SHL
+   \   000087   E5..         MOV     A,?V0 + 0
+   \   000089   5590         ANL     A,0x90
+   \   00008B   7011         JNZ     ??ss_KeyDetermine_5
+    134                          {
+    135                              break;
+    136                          }
+    137                      }
+    138                      else        // P1 H rising edge.
+    139                      {
+    140                          if(~(P1 | (0xFF &(0x01 << (p->port - 2)))))
+    141                          {
+    142                              break;
+    143                          }
+    144                      }
+    145                  }
+    146                  p = p->next;
+   \                     ??ss_KeyDetermine_6:
+   \   00008D   8A82         MOV     DPL,R2
+   \   00008F   8B83         MOV     DPH,R3
+   \   000091   E0           MOVX    A,@DPTR
+   \   000092   FA           MOV     R2,A
+   \   000093   A3           INC     DPTR
+   \   000094   E0           MOVX    A,@DPTR
+   \   000095   FB           MOV     R3,A
+    147                  count++;
+   \   000096   09           INC     R1
+    148              }while(p == NULL);
+   \   000097   EA           MOV     A,R2
+   \   000098   4B           ORL     A,R3
+   \   000099   7003         JNZ     $+5
+   \   00009B   02....       LJMP    ??ss_KeyDetermine_1 & 0xFFFF
+    149              KeySend2Coor(count, OPERATE_CLUSTER, NULL);
+   \                     ??ss_KeyDetermine_5:
+   \   00009E                ; Setup parameters for call to function KeySend2Coor
+   \   00009E   7C00         MOV     R4,#0x0
+   \   0000A0   7D00         MOV     R5,#0x0
+   \   0000A2   7A02         MOV     R2,#0x2
+   \   0000A4   7B00         MOV     R3,#0x0
+   \   0000A6   12....       LCALL   ??KeySend2Coor?relay
+    150          }
+   \                     ??ss_KeyDetermine_0:
+   \   0000A9   7F02         MOV     R7,#0x2
+   \   0000AB   02....       LJMP    ?BANKED_LEAVE_XDATA
+   \   0000AE                REQUIRE PICTL
+   \   0000AE                REQUIRE _A_P2
+   \   0000AE                REQUIRE _A_P1
 
    \                                 In  segment BANK_RELAYS, align 1
    \                     ??mid?relay:
@@ -391,32 +733,74 @@ Warning[Pe167]: argument of type "unsigned char *" is incompatible with
    \   000000   12....       LCALL   ?BDISPATCH
    \   000003   ......       DC24    Num_Pos
 
+   \                                 In  segment BANK_RELAYS, align 1
+   \                     ??ss_AddObserveList?relay:
+   \   000000   12....       LCALL   ?BDISPATCH
+   \   000003   ......       DC24    ss_AddObserveList
+
+   \                                 In  segment BANK_RELAYS, align 1
+   \                     ??ss_EndObserveList?relay:
+   \   000000   12....       LCALL   ?BDISPATCH
+   \   000003   ......       DC24    ss_EndObserveList
+
+   \                                 In  segment BANK_RELAYS, align 1
+   \                     ??ss_FindObserveList?relay:
+   \   000000   12....       LCALL   ?BDISPATCH
+   \   000003   ......       DC24    ss_FindObserveList
+
+   \                                 In  segment BANK_RELAYS, align 1
+   \                     ??ss_KeyDetermine?relay:
+   \   000000   12....       LCALL   ?BDISPATCH
+   \   000003   ......       DC24    ss_KeyDetermine
+    151          #endif
+
    Maximum stack usage in bytes:
 
-     Function    ISTACK PSTACK XSTACK
-     --------    ------ ------ ------
-     Locate_Pos      2      0      0
-     Num_Pos         0      0      9
-     mid             1      0     22
-       -> strlen     0      0     36
+     Function               ISTACK PSTACK XSTACK
+     --------               ------ ------ ------
+     Locate_Pos                 2      0      0
+     Num_Pos                    0      0      9
+     mid                        1      0     22
+       -> strlen                0      0     36
+     ss_AddObserveList          1      0     14
+       -> osal_mem_alloc        0      0     28
+       -> ss_EndObserveList     0      0     28
+     ss_EndObserveList          2      0     14
+     ss_FindObserveList         2      0      0
+     ss_KeyDetermine            0      0     10
+       -> KeySend2Coor          0      0     20
 
 
    Segment part sizes:
 
-     Function/Label     Bytes
-     --------------     -----
-     mid                 198
-     Locate_Pos           56
-     Num_Pos              49
-     ??mid?relay           6
-     ??Locate_Pos?relay    6
-     ??Num_Pos?relay       6
+     Function/Label             Bytes
+     --------------             -----
+     PICTL                         1
+     _A_P1                         1
+     _A_P2                         1
+     mid                         198
+     Locate_Pos                   49
+     ?Subroutine0                  7
+     Num_Pos                      49
+     ss_AddObserveList            62
+     ss_EndObserveList            31
+     ss_FindObserveList           38
+     ss_KeyDetermine             174
+     ??mid?relay                   6
+     ??Locate_Pos?relay            6
+     ??Num_Pos?relay               6
+     ??ss_AddObserveList?relay     6
+     ??ss_EndObserveList?relay     6
+     ??ss_FindObserveList?relay    6
+     ??ss_KeyDetermine?relay       6
 
  
- 303 bytes in segment BANKED_CODE
-  18 bytes in segment BANK_RELAYS
+ 608 bytes in segment BANKED_CODE
+  42 bytes in segment BANK_RELAYS
+   3 bytes in segment SFR_AN
  
- 321 bytes of CODE memory
+ 650 bytes of CODE memory
+   0 bytes of DATA memory (+ 3 bytes shared)
 
 Errors: none
 Warnings: 1

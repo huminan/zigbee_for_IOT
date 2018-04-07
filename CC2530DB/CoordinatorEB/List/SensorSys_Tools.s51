@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //                                                                            /
-// IAR C/C++ Compiler V8.10.3.10338/W32 for 8051        05/Apr/2018  20:32:21 /
+// IAR C/C++ Compiler V8.10.3.10338/W32 for 8051        07/Apr/2018  15:44:49 /
 // Copyright 2004-2011 IAR Systems AB.                                        /
 //                                                                            /
 //    Core               =  plain                                             /
@@ -46,7 +46,7 @@
 //                          gbee\Projects\zstack\Samples\SensorSys\Source\Sen /
 //                          sorSys_Tools.c -D HOLD_AUTO_START -D              /
 //                          BUILD_ALL_DEVICES -D REFLECTOR -D NV_INIT -D      /
-//                          xNV_RESTORE -D ZTOOL_P1 -D xMT_TASK -D            /
+//                          COOR -D xNV_RESTORE -D ZTOOL_P1 -D xMT_TASK -D    /
 //                          xMT_SYS_FUNC -D xMT_SAPI_FUNC -D                  /
 //                          xMT_SAPI_CB_FUNC -lC D:\ProgramData\Hardware\zigb /
 //                          ee\Projects\zstack\Samples\SensorSys\CC2530DB\Coo /
@@ -151,6 +151,12 @@
         FUNCTION ??Num_Pos?relay,0203H
         PUBLIC ??mid?relay
         FUNCTION ??mid?relay,0203H
+        PUBLIC ??ss_AddObserveList?relay
+        FUNCTION ??ss_AddObserveList?relay,0203H
+        PUBLIC ??ss_EndObserveList?relay
+        FUNCTION ??ss_EndObserveList?relay,0203H
+        PUBLIC ??ss_FindObserveList?relay
+        FUNCTION ??ss_FindObserveList?relay,0203H
         PUBLIC Locate_Pos
         FUNCTION Locate_Pos,0203H
         ARGFRAME XSTACK, 0, STACK
@@ -164,6 +170,21 @@
         ARGFRAME XSTACK, 4, STACK
         LOCFRAME ISTACK, 1, STACK
         LOCFRAME XSTACK, 18, STACK
+        PUBLIC ss_AddObserveList
+        FUNCTION ss_AddObserveList,021203H
+        ARGFRAME XSTACK, 0, STACK
+        LOCFRAME ISTACK, 1, STACK
+        LOCFRAME XSTACK, 14, STACK
+        PUBLIC ss_EndObserveList
+        FUNCTION ss_EndObserveList,0203H
+        ARGFRAME XSTACK, 14, STACK
+        ARGFRAME IOVERLAY, 0, STATIC
+        ARGFRAME DOVERLAY, 0, STATIC
+        LOCFRAME ISTACK, 2, STACK
+        PUBLIC ss_FindObserveList
+        FUNCTION ss_FindObserveList,0203H
+        ARGFRAME XSTACK, 0, STACK
+        LOCFRAME ISTACK, 2, STACK
         
         CFI Names cfiNames0
         CFI StackFrame CFA_SP SP IDATA
@@ -254,6 +275,8 @@
         CFI EndCommon cfiCommon0
         
 strlen              SYMBOL "strlen"
+__xdata_malloc      SYMBOL "__xdata_malloc"
+??__xdata_malloc?relay SYMBOL "?relay", __xdata_malloc
 ??strlen?relay      SYMBOL "?relay", strlen
 Locate_Pos          SYMBOL "Locate_Pos"
 ??Locate_Pos?relay  SYMBOL "?relay", Locate_Pos
@@ -261,6 +284,12 @@ Num_Pos             SYMBOL "Num_Pos"
 ??Num_Pos?relay     SYMBOL "?relay", Num_Pos
 mid                 SYMBOL "mid"
 ??mid?relay         SYMBOL "?relay", mid
+ss_AddObserveList   SYMBOL "ss_AddObserveList"
+??ss_AddObserveList?relay SYMBOL "?relay", ss_AddObserveList
+ss_EndObserveList   SYMBOL "ss_EndObserveList"
+??ss_EndObserveList?relay SYMBOL "?relay", ss_EndObserveList
+ss_FindObserveList  SYMBOL "ss_FindObserveList"
+??ss_FindObserveList?relay SYMBOL "?relay", ss_FindObserveList
 
         EXTERN strlen
         FUNCTION strlen,010202H
@@ -269,6 +298,15 @@ mid                 SYMBOL "mid"
         ARGFRAME XSTACK, 18, STACK
         ARGFRAME IOVERLAY, 0, STATIC
         ARGFRAME DOVERLAY, 0, STATIC
+        EXTERN __xdata_malloc
+        FUNCTION __xdata_malloc,0202H
+        ARGFRAME ISTACK, 0, STACK
+        ARGFRAME PSTACK, 0, STACK
+        ARGFRAME XSTACK, 14, STACK
+        ARGFRAME IOVERLAY, 0, STATIC
+        ARGFRAME DOVERLAY, 0, STATIC
+        EXTERN ??__xdata_malloc?relay
+        FUNCTION ??__xdata_malloc?relay,00H
         EXTERN ??strlen?relay
         FUNCTION ??strlen?relay,00H
 
@@ -277,15 +315,18 @@ mid                 SYMBOL "mid"
 //    2 #include <string.h>
 //    3 #include "SensorSys_Tools.h"
 //    4 #include "ZComDef.h"
-//    5 
+//    5 #include "ioCC2530.h"
+//    6 #ifndef COOR
+//    7     #include "SensorSys_End.h"
+//    8 #endif
 
         RSEG BANKED_CODE:CODE:NOROOT(0)
-//    6 uint8 * mid(uint8 *dst,uint8 *src, int n,int m)
+//    9 uint8 * mid(uint8 *dst,uint8 *src, int n,int m)
 mid:
         CFI Block cfiBlock0 Using cfiCommon0
         CFI Function mid
         CODE
-//    7 {
+//   10 {
         FUNCALL mid, strlen
         LOCFRAME ISTACK, 0, STACK
         LOCFRAME PSTACK, 0, STACK
@@ -341,11 +382,11 @@ mid:
         INC     DPTR
         MOVX    A,@DPTR
         MOV     ?V0 + 7,A
-//    8     uint8 *p = src;
-//    9     uint8 *q = dst;
+//   11     uint8 *p = src;
+//   12     uint8 *q = dst;
         MOV     ?V0 + 4,R2
         MOV     ?V0 + 5,R3
-//   10     int len = strlen(src);
+//   13     int len = strlen(src);
         ; Setup parameters for call to function strlen
         MOV     A,R6
         MOV     R2,A
@@ -356,7 +397,7 @@ mid:
         MOV     ?V0 + 9,R3
         MOV     R0,?V0 + 8
         MOV     R1,?V0 + 9
-//   11     if(n>len) n = len-m;
+//   14     if(n>len) n = len-m;
         CLR     C
         MOV     A,R0
         SUBB    A,?V0 + 2
@@ -373,7 +414,7 @@ mid:
         MOV     A,R1
         SUBB    A,?V0 + 7
         MOV     ?V0 + 3,A
-//   12     if(m<0) m=0;
+//   15     if(m<0) m=0;
 ??mid_0:
         CLR     C
         MOV     A,?V0 + 7
@@ -384,7 +425,7 @@ mid:
         JNC     ??mid_1
         MOV     ?V0 + 6,#0x0
         MOV     ?V0 + 7,#0x0
-//   13     if(m>len) return NULL;
+//   16     if(m>len) return NULL;
 ??mid_1:
         CLR     C
         MOV     A,R0
@@ -398,7 +439,7 @@ mid:
         MOV     R2,#0x0
         MOV     R3,#0x0
         SJMP    ??mid_3
-//   14     p += m;
+//   17     p += m;
 ??mid_2:
         MOV     A,R6
         ADD     A,?V0 + 6
@@ -407,7 +448,7 @@ mid:
         ADDC    A,?V0 + 7
         MOV     R1,A
         SJMP    ??mid_4
-//   15     while(n--) *(q++) = *(p++);
+//   18     while(n--) *(q++) = *(p++);
 ??mid_5:
         MOV     DPL,R0
         MOV     DPH,R1
@@ -437,28 +478,28 @@ mid:
         MOV     A,R2
         ORL     A,R3
         JNZ     ??mid_5
-//   16     *(q++)='\0';
+//   19     *(q++)='\0';
         MOV     DPL,?V0 + 4
         MOV     DPH,?V0 + 5
         CLR     A
         MOVX    @DPTR,A
-//   17     return dst;
+//   20     return dst;
         MOV     R2,?V0 + 0
         MOV     R3,?V0 + 1
 ??mid_3:
         MOV     R7,#0xa
         LJMP    ?BANKED_LEAVE_XDATA
         CFI EndBlock cfiBlock0
-//   18 }
-//   19 						  
+//   21 }
+//   22 						  
 
         RSEG BANKED_CODE:CODE:NOROOT(0)
-//   20 uint8 Locate_Pos(uint8 *buf,uint8 cx)
+//   23 uint8 Locate_Pos(uint8 *buf,uint8 cx)
 Locate_Pos:
         CFI Block cfiBlock1 Using cfiCommon0
         CFI Function Locate_Pos
         CODE
-//   21 {	 		    
+//   24 {	 		    
         PUSH    DPL
         CFI DPL0 Frame(CFA_SP, 4)
         CFI CFA_SP SP+-4
@@ -469,20 +510,20 @@ Locate_Pos:
         ; Auto size: 0
         MOV     A,R1
         MOV     R4,A
-//   22 	uint8 *p=buf;
+//   25 	uint8 *p=buf;
         MOV     A,R2
         MOV     R0,A
         SJMP    ??Locate_Pos_0
-//   23 	while(cx)
-//   24 	{		 
-//   25 		if(*buf=='*'||*buf<' '||*buf>'z')return 0XFF;
-//   26 		if(*buf==',')cx--;
+//   26 	while(cx)
+//   27 	{		 
+//   28 		if(*buf=='*'||*buf<' '||*buf>'z')return 0XFF;
+//   29 		if(*buf==',')cx--;
 ??Locate_Pos_1:
         MOVX    A,@DPTR
         XRL     A,#0x2c
         JNZ     ??Locate_Pos_2
         DEC     R4
-//   27 		buf++;
+//   30 		buf++;
 ??Locate_Pos_2:
         INC     DPTR
         MOV     R2,DPL
@@ -503,32 +544,43 @@ Locate_Pos:
 ??Locate_Pos_4:
         MOV     R1,#-0x1
         SJMP    ??Locate_Pos_5
-//   28 	}
-//   29 	return buf-p;	 
+//   31 	}
+//   32 	return buf-p;	 
 ??Locate_Pos_3:
         MOV     A,R2
         CLR     C
         SUBB    A,R0
         MOV     R1,A
-??Locate_Pos_5:
-        POP     DPH
-        CFI DPH0 SameValue
-        CFI CFA_SP SP+-4
-        POP     DPL
-        CFI DPL0 SameValue
-        CFI CFA_SP SP+-3
-        LJMP    ?BRET
         CFI EndBlock cfiBlock1
-//   30 }
-//   31 
+??Locate_Pos_5:
+        REQUIRE ?Subroutine0
+        ; // Fall through to label ?Subroutine0
+//   33 }
 
         RSEG BANKED_CODE:CODE:NOROOT(0)
-//   32 uint8 Num_Pos(uint16 len, uint8 *buf)
-Num_Pos:
+?Subroutine0:
         CFI Block cfiBlock2 Using cfiCommon0
+        CFI NoFunction
+        CFI CFA_SP SP+-5
+        CFI DPL0 Frame(CFA_SP, 4)
+        CFI DPH0 Frame(CFA_SP, 5)
+        POP     DPH
+        CFI CFA_SP SP+-4
+        CFI DPH0 SameValue
+        POP     DPL
+        CFI CFA_SP SP+-3
+        CFI DPL0 SameValue
+        LJMP    ?BRET
+        CFI EndBlock cfiBlock2
+//   34 
+
+        RSEG BANKED_CODE:CODE:NOROOT(0)
+//   35 uint8 Num_Pos(uint16 len, uint8 *buf)
+Num_Pos:
+        CFI Block cfiBlock3 Using cfiCommon0
         CFI Function Num_Pos
         CODE
-//   33 {
+//   36 {
         MOV     A,#-0x9
         LCALL   ?BANKED_ENTER_XDATA
         CFI DPH0 load(1, XDATA, add(CFA_XSP16, literal(-1)))
@@ -544,18 +596,18 @@ Num_Pos:
         CFI CFA_XSP16 add(XSP16, 9)
         ; Saved register size: 9
         ; Auto size: 0
-//   34     uint8 num = 0;
+//   37     uint8 num = 0;
         MOV     R1,#0x0
-//   35     uint16 length = len;
+//   38     uint16 length = len;
         MOV     A,R2
         MOV     R6,A
         MOV     A,R3
         MOV     R7,A
         SJMP    ??Num_Pos_0
-//   36 //    uint8 *p=buf;
-//   37     while(length--)
-//   38     {		 
-//   39         if(*buf==',')num++;
+//   39 //    uint8 *p=buf;
+//   40     while(length--)
+//   41     {		 
+//   42         if(*buf==',')num++;
 ??Num_Pos_1:
         MOV     DPL,R4
         MOV     DPH,R5
@@ -563,12 +615,12 @@ Num_Pos:
         XRL     A,#0x2c
         JNZ     ??Num_Pos_2
         INC     R1
-//   40         buf++;
+//   43         buf++;
 ??Num_Pos_2:
         INC     DPTR
         MOV     R4,DPL
         MOV     R5,DPH
-//   41     }
+//   44     }
 ??Num_Pos_0:
         MOV     A,R6
         MOV     R2,A
@@ -583,11 +635,252 @@ Num_Pos:
         MOV     A,R2
         ORL     A,R3
         JNZ     ??Num_Pos_1
-//   42     return num;	
+//   45     return num;	
         MOV     R7,#0x1
         LJMP    ?BANKED_LEAVE_XDATA
-        CFI EndBlock cfiBlock2
-//   43 }
+        CFI EndBlock cfiBlock3
+//   46 }
+//   47 
+
+        RSEG BANKED_CODE:CODE:NOROOT(0)
+//   48 void ss_AddObserveList( SensorObserve_t *ob, uint8 port)
+ss_AddObserveList:
+        CFI Block cfiBlock4 Using cfiCommon0
+        CFI Function ss_AddObserveList
+        CODE
+//   49 {
+        FUNCALL ss_AddObserveList, __xdata_malloc
+        LOCFRAME ISTACK, 0, STACK
+        LOCFRAME PSTACK, 0, STACK
+        LOCFRAME XSTACK, 14, STACK
+        LOCFRAME IOVERLAY, 0, STATIC
+        LOCFRAME DOVERLAY, 0, STATIC
+        ARGFRAME ISTACK, 0, STACK
+        ARGFRAME PSTACK, 0, STACK
+        ARGFRAME XSTACK, 14, STACK
+        ARGFRAME IOVERLAY, 0, STATIC
+        ARGFRAME DOVERLAY, 0, STATIC
+        FUNCALL ss_AddObserveList, __xdata_malloc
+        LOCFRAME ISTACK, 0, STACK
+        LOCFRAME PSTACK, 0, STACK
+        LOCFRAME XSTACK, 14, STACK
+        LOCFRAME IOVERLAY, 0, STATIC
+        LOCFRAME DOVERLAY, 0, STATIC
+        ARGFRAME ISTACK, 0, STACK
+        ARGFRAME PSTACK, 0, STACK
+        ARGFRAME XSTACK, 14, STACK
+        ARGFRAME IOVERLAY, 0, STATIC
+        ARGFRAME DOVERLAY, 0, STATIC
+        FUNCALL ss_AddObserveList, ss_EndObserveList
+        LOCFRAME ISTACK, 0, STACK
+        LOCFRAME PSTACK, 0, STACK
+        LOCFRAME XSTACK, 14, STACK
+        LOCFRAME IOVERLAY, 0, STATIC
+        LOCFRAME DOVERLAY, 0, STATIC
+        ARGFRAME ISTACK, 0, STACK
+        ARGFRAME PSTACK, 0, STACK
+        ARGFRAME XSTACK, 14, STACK
+        ARGFRAME IOVERLAY, 0, STATIC
+        ARGFRAME DOVERLAY, 0, STATIC
+        MOV     A,#-0xe
+        LCALL   ?BANKED_ENTER_XDATA
+        CFI DPH0 load(1, XDATA, add(CFA_XSP16, literal(-1)))
+        CFI DPL0 load(1, XDATA, add(CFA_XSP16, literal(-2)))
+        CFI ?BRET_EXT load(1, XDATA, add(CFA_XSP16, literal(-3)))
+        CFI ?RET_HIGH load(1, XDATA, add(CFA_XSP16, literal(-4)))
+        CFI ?RET_LOW load(1, XDATA, add(CFA_XSP16, literal(-5)))
+        CFI R7 load(1, XDATA, add(CFA_XSP16, literal(-6)))
+        CFI V5 load(1, XDATA, add(CFA_XSP16, literal(-7)))
+        CFI V4 load(1, XDATA, add(CFA_XSP16, literal(-8)))
+        CFI V3 load(1, XDATA, add(CFA_XSP16, literal(-9)))
+        CFI V2 load(1, XDATA, add(CFA_XSP16, literal(-10)))
+        CFI V1 load(1, XDATA, add(CFA_XSP16, literal(-11)))
+        CFI V0 load(1, XDATA, add(CFA_XSP16, literal(-12)))
+        CFI VB load(1, XDATA, add(CFA_XSP16, literal(-13)))
+        CFI R6 load(1, XDATA, add(CFA_XSP16, literal(-14)))
+        CFI CFA_SP SP+0
+        CFI CFA_XSP16 add(XSP16, 14)
+        ; Saved register size: 14
+        ; Auto size: 0
+        MOV     A,R2
+        MOV     R6,A
+        MOV     A,R3
+        MOV     R7,A
+        MOV     ?V0 + 2,R1
+//   50     if(ob == NULL)
+        MOV     A,R6
+        ORL     A,R7
+        MOV     R2,#0x3
+        MOV     R3,#0x0
+        JNZ     ??ss_AddObserveList_0
+//   51     {
+//   52         SensorObserve_t *new_p;
+//   53         new_p = (SensorObserve_t *)malloc(sizeof(SensorObserve_t));
+        ; Setup parameters for call to function __xdata_malloc
+        LCALL   ??__xdata_malloc?relay
+        MOV     ?V0 + 0,R2
+        MOV     ?V0 + 1,R3
+        MOV     R0,?V0 + 0
+        MOV     R1,?V0 + 1
+//   54         new_p->port = port;
+        MOV     DPL,R0
+        MOV     DPH,R1
+        INC     DPTR
+        INC     DPTR
+        MOV     A,?V0 + 2
+        MOVX    @DPTR,A
+//   55         new_p->next = NULL;
+        MOV     DPL,R0
+        MOV     DPH,R1
+        CLR     A
+        MOVX    @DPTR,A
+        INC     DPTR
+        SJMP    ??ss_AddObserveList_1
+//   56         ob = new_p;
+//   57     }
+//   58     else
+//   59     {
+//   60         SensorObserve_t *new_p, *p;
+//   61         new_p = (SensorObserve_t *)malloc(sizeof(SensorObserve_t));
+??ss_AddObserveList_0:
+        ; Setup parameters for call to function __xdata_malloc
+        LCALL   ??__xdata_malloc?relay
+        MOV     ?V0 + 0,R2
+        MOV     ?V0 + 1,R3
+//   62         new_p->port = port;
+        MOV     DPL,R2
+        MOV     DPH,R3
+        INC     DPTR
+        INC     DPTR
+        MOV     A,?V0 + 2
+        MOVX    @DPTR,A
+//   63         new_p->next = NULL;
+        MOV     DPL,R2
+        MOV     DPH,R3
+        CLR     A
+        MOVX    @DPTR,A
+        INC     DPTR
+        MOVX    @DPTR,A
+//   64         p = ss_EndObserveList(ob);
+//   65         p->next = new_p;
+        ; Setup parameters for call to function ss_EndObserveList
+        MOV     A,R6
+        MOV     R2,A
+        MOV     A,R7
+        MOV     R3,A
+        LCALL   ??ss_EndObserveList?relay
+        MOV     DPL,R2
+        MOV     DPH,R3
+        MOV     A,?V0 + 0
+        MOVX    @DPTR,A
+        INC     DPTR
+        MOV     A,?V0 + 1
+??ss_AddObserveList_1:
+        MOVX    @DPTR,A
+//   66     }
+//   67 }
+        MOV     R7,#0x6
+        LJMP    ?BANKED_LEAVE_XDATA
+        CFI EndBlock cfiBlock4
+//   68 
+//   69 
+
+        RSEG BANKED_CODE:CODE:NOROOT(0)
+//   70 SensorObserve_t *ss_EndObserveList( SensorObserve_t *ob)
+ss_EndObserveList:
+        CFI Block cfiBlock5 Using cfiCommon0
+        CFI Function ss_EndObserveList
+        CODE
+//   71 {
+        PUSH    DPL
+        CFI DPL0 Frame(CFA_SP, 4)
+        CFI CFA_SP SP+-4
+        PUSH    DPH
+        CFI DPH0 Frame(CFA_SP, 5)
+        CFI CFA_SP SP+-5
+        ; Saved register size: 2
+        ; Auto size: 0
+//   72     SensorObserve_t *p;
+//   73     p = ob;
+        SJMP    ??ss_EndObserveList_0
+//   74     while(p->next != NULL)
+//   75     {
+//   76         p = p->next;
+??ss_EndObserveList_1:
+        MOV     DPL,R2
+        MOV     DPH,R3
+        MOVX    A,@DPTR
+        MOV     R2,A
+        INC     DPTR
+        MOVX    A,@DPTR
+        MOV     R3,A
+//   77     }
+??ss_EndObserveList_0:
+        MOV     DPL,R2
+        MOV     DPH,R3
+        MOVX    A,@DPTR
+        MOV     R0,A
+        INC     DPTR
+        MOVX    A,@DPTR
+        MOV     R1,A
+        MOV     A,R0
+        ORL     A,R1
+        JNZ     ??ss_EndObserveList_1
+//   78     return p;
+        LJMP    ?Subroutine0 & 0xFFFF
+        CFI EndBlock cfiBlock5
+//   79 }
+//   80 
+//   81 
+
+        RSEG BANKED_CODE:CODE:NOROOT(0)
+//   82 SensorObserve_t *ss_FindObserveList( SensorObserve_t *ob, uint8 num)
+ss_FindObserveList:
+        CFI Block cfiBlock6 Using cfiCommon0
+        CFI Function ss_FindObserveList
+        CODE
+//   83 {
+        PUSH    DPL
+        CFI DPL0 Frame(CFA_SP, 4)
+        CFI CFA_SP SP+-4
+        PUSH    DPH
+        CFI DPH0 Frame(CFA_SP, 5)
+        CFI CFA_SP SP+-5
+        ; Saved register size: 2
+        ; Auto size: 0
+//   84     SensorObserve_t *p;
+//   85     p = ob;
+        MOV     DPL,R2
+        MOV     DPH,R3
+//   86     uint8 i;
+//   87     for(i=0; i<num; i++)
+        MOV     R0,#0x0
+        SJMP    ??ss_FindObserveList_0
+//   88     {
+//   89         p = ob->next;
+??ss_FindObserveList_1:
+        MOV     DPL,R2
+        MOV     DPH,R3
+        MOVX    A,@DPTR
+        MOV     R4,A
+        INC     DPTR
+        MOVX    A,@DPTR
+        MOV     R5,A
+        MOV     DPL,R4
+        MOV     DPH,R5
+//   90     }
+        INC     R0
+??ss_FindObserveList_0:
+        MOV     A,R0
+        CLR     C
+        SUBB    A,R1
+        JC      ??ss_FindObserveList_1
+//   91     return p;
+        MOV     R2,DPL
+        MOV     R3,DPH
+        LJMP    ?Subroutine0 & 0xFFFF
+        CFI EndBlock cfiBlock6
+//   92 }
 
         RSEG BANK_RELAYS:CODE:REORDER:NOROOT(0)
 ??mid?relay:
@@ -607,12 +900,100 @@ Num_Pos:
         DATA
         DC24    Num_Pos
 
+        RSEG BANK_RELAYS:CODE:REORDER:NOROOT(0)
+??ss_AddObserveList?relay:
+        LCALL   ?BDISPATCH
+        DATA
+        DC24    ss_AddObserveList
+
+        RSEG BANK_RELAYS:CODE:REORDER:NOROOT(0)
+??ss_EndObserveList?relay:
+        LCALL   ?BDISPATCH
+        DATA
+        DC24    ss_EndObserveList
+
+        RSEG BANK_RELAYS:CODE:REORDER:NOROOT(0)
+??ss_FindObserveList?relay:
+        LCALL   ?BDISPATCH
+        DATA
+        DC24    ss_FindObserveList
+
         END
+//   93 
+//   94 #ifndef COOR
+//   95 void ss_KeyDetermine(SensorObserve_t *ob)
+//   96 {
+//   97     if(ob ==NULL)
+//   98     {
+//   99         return;
+//  100     }
+//  101 // estimate *ob first
+//  102     SensorObserve_t *p;
+//  103     p = ob;
+//  104     uint8 count = 0;
+//  105     do{
+//  106         if(p->port < P2_KEY_MAX)
+//  107         {
+//  108             if(PICTL & 0x08)    // P2 in falling edge.
+//  109             {
+//  110                 if(P2 & (0x01 << (p->port + 1)))
+//  111                 {
+//  112                     break;
+//  113                 }
+//  114             }
+//  115             else        // P2 in rising edge.
+//  116             {
+//  117                 if(~(P2 | (0xFF &(0x01 << (p->port + 1)))))
+//  118                 {
+//  119                     break;
+//  120                 }
+//  121             }
+//  122         }
+//  123         else if(p->port < P2_KEY_MAX + P1_KEY_MAXL)
+//  124         {
+//  125             if(PICTL & 0x02)    // P1 L falling edge.
+//  126             {
+//  127                 if(P1 & (0x01 << (p->port - 2)))
+//  128                 {
+//  129                     break;
+//  130                 }
+//  131             }
+//  132             else        // P1 L rising edge.
+//  133             {
+//  134                 if(~(P1 | (0xFF &(0x01 << (p->port - 2)))))
+//  135                 {
+//  136                     break;
+//  137                 }
+//  138             }
+//  139         }
+//  140         else
+//  141         {
+//  142             if(PICTL & 0x04)    // P1 H falling edge.
+//  143             {
+//  144                 if(P1 & (0x01 << (p->port - 2)))
+//  145                 {
+//  146                     break;
+//  147                 }
+//  148             }
+//  149             else        // P1 H rising edge.
+//  150             {
+//  151                 if(~(P1 | (0xFF &(0x01 << (p->port - 2)))))
+//  152                 {
+//  153                     break;
+//  154                 }
+//  155             }
+//  156         }
+//  157         p = p->next;
+//  158         count++;
+//  159     }while(p == NULL);
+//  160     KeySend2Coor(count, OPERATE_CLUSTER, NULL);
+//  161 }
+//  162 #endif
 // 
-// 303 bytes in segment BANKED_CODE
-//  18 bytes in segment BANK_RELAYS
+// 467 bytes in segment BANKED_CODE
+//  36 bytes in segment BANK_RELAYS
 // 
-// 321 bytes of CODE memory
+// 503 bytes of CODE memory
 //
 //Errors: none
 //Warnings: 1

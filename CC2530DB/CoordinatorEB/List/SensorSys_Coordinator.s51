@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //                                                                            /
-// IAR C/C++ Compiler V8.10.3.10338/W32 for 8051        06/Apr/2018  15:28:32 /
+// IAR C/C++ Compiler V8.10.3.10338/W32 for 8051        07/Apr/2018  15:44:50 /
 // Copyright 2004-2011 IAR Systems AB.                                        /
 //                                                                            /
 //    Core               =  plain                                             /
@@ -46,7 +46,7 @@
 //                          gbee\Projects\zstack\Samples\SensorSys\Source\Sen /
 //                          sorSys_Coordinator.c -D HOLD_AUTO_START -D        /
 //                          BUILD_ALL_DEVICES -D REFLECTOR -D NV_INIT -D      /
-//                          xNV_RESTORE -D ZTOOL_P1 -D xMT_TASK -D            /
+//                          COOR -D xNV_RESTORE -D ZTOOL_P1 -D xMT_TASK -D    /
 //                          xMT_SYS_FUNC -D xMT_SAPI_FUNC -D                  /
 //                          xMT_SAPI_CB_FUNC -lC D:\ProgramData\Hardware\zigb /
 //                          ee\Projects\zstack\Samples\SensorSys\CC2530DB\Coo /
@@ -430,7 +430,7 @@ nwk_init            SYMBOL "nwk_init"
 Hal_Init            SYMBOL "Hal_Init"
 APS_Init            SYMBOL "APS_Init"
 ZDApp_Init          SYMBOL "ZDApp_Init"
-Button_Init         SYMBOL "Button_Init"
+Key_Init            SYMBOL "Key_Init"
 Motor_Init          SYMBOL "Motor_Init"
 Switch_Init         SYMBOL "Switch_Init"
 SAPI_Init           SYMBOL "SAPI_Init"
@@ -440,13 +440,13 @@ SAPI_Init           SYMBOL "SAPI_Init"
 ??APS_event_loop?relay SYMBOL "?relay", `?<Name APS_event_loop 29>`
 ??BluetoothInit?relay SYMBOL "?relay", BluetoothInit
 ??Bluetooth_Handle?relay SYMBOL "?relay", Bluetooth_Handle
-??Button_Init?relay SYMBOL "?relay", Button_Init
-`?<Name Button_ProcessEvent 34>` SYMBOL "Button_ProcessEvent"
-??Button_ProcessEvent?relay SYMBOL "?relay", `?<Name Button_ProcessEvent 34>`
 ??HalLedSet?relay   SYMBOL "?relay", HalLedSet
 ??Hal_Init?relay    SYMBOL "?relay", Hal_Init
-`?<Name Hal_ProcessEvent 38>` SYMBOL "Hal_ProcessEvent"
-??Hal_ProcessEvent?relay SYMBOL "?relay", `?<Name Hal_ProcessEvent 38>`
+`?<Name Hal_ProcessEvent 35>` SYMBOL "Hal_ProcessEvent"
+??Hal_ProcessEvent?relay SYMBOL "?relay", `?<Name Hal_ProcessEvent 35>`
+??Key_Init?relay    SYMBOL "?relay", Key_Init
+`?<Name Key_ProcessEvent 38>` SYMBOL "Key_ProcessEvent"
+??Key_ProcessEvent?relay SYMBOL "?relay", `?<Name Key_ProcessEvent 38>`
 ??Motor_Init?relay  SYMBOL "?relay", Motor_Init
 `?<Name Motor_ProcessEvent 41>` SYMBOL "Motor_ProcessEvent"
 ??Motor_ProcessEvent?relay SYMBOL "?relay", `?<Name Motor_ProcessEvent 41>`
@@ -667,8 +667,8 @@ zb_StartConfirm     SYMBOL "zb_StartConfirm"
         ARGFRAME XSTACK, 0, STACK
         ARGFRAME IOVERLAY, 0, STATIC
         ARGFRAME DOVERLAY, 0, STATIC
-        EXTERN Button_Init
-        FUNCTION Button_Init,0202H
+        EXTERN Key_Init
+        FUNCTION Key_Init,0202H
         ARGFRAME ISTACK, 2, STACK
         ARGFRAME PSTACK, 0, STACK
         ARGFRAME XSTACK, 0, STACK
@@ -705,16 +705,16 @@ zb_StartConfirm     SYMBOL "zb_StartConfirm"
         FUNCTION ??BluetoothInit?relay,00H
         EXTERN ??Bluetooth_Handle?relay
         FUNCTION ??Bluetooth_Handle?relay,00H
-        EXTERN ??Button_Init?relay
-        FUNCTION ??Button_Init?relay,00H
-        EXTERN ??Button_ProcessEvent?relay
-        FUNCTION ??Button_ProcessEvent?relay,00H
         EXTERN ??HalLedSet?relay
         FUNCTION ??HalLedSet?relay,00H
         EXTERN ??Hal_Init?relay
         FUNCTION ??Hal_Init?relay,00H
         EXTERN ??Hal_ProcessEvent?relay
         FUNCTION ??Hal_ProcessEvent?relay,00H
+        EXTERN ??Key_Init?relay
+        FUNCTION ??Key_Init?relay,00H
+        EXTERN ??Key_ProcessEvent?relay
+        FUNCTION ??Key_ProcessEvent?relay,00H
         EXTERN ??Motor_Init?relay
         FUNCTION ??Motor_Init?relay,00H
         EXTERN ??Motor_ProcessEvent?relay
@@ -767,7 +767,7 @@ zb_StartConfirm     SYMBOL "zb_StartConfirm"
         FUNCTION ??zb_SystemReset?relay,00H
         EXTERN ??zb_WriteConfiguration?relay
         FUNCTION ??zb_WriteConfiguration?relay,00H
-        EXTERN Button_TaskID
+        EXTERN Key_TaskID
         EXTERN Motor_TaskID
         EXTERN Switch_TaskID
         EXTERN zgDeviceLogicalType
@@ -980,7 +980,7 @@ zb_SimpleDesc:
 //  154 };
 //  155 
 //  156 // This is the Endpoint/Interface description.  It is defined here, but
-//  157 // filled-in in Button_Init().  Another way to go would be to fill
+//  157 // filled-in in Key_Init().  Another way to go would be to fill
 //  158 // in the structure here and make it a "const" (in code space).  The
 //  159 // way it's defined in this sample app it is define in RAM.
 
@@ -2123,15 +2123,15 @@ Sys_SendPreBindMessage:
         JZ      ??Sys_SendPreBindMessage_3
         SJMP    ??Sys_SendPreBindMessage_4
 //  461     {
-//  462         case BUTTON_TYPE_ID:
-//  463           osal_start_timerEx(Button_TaskID, MATCH_BIND_EVT, 5000);
+//  462         case KEY_TYPE_ID:
+//  463           osal_start_timerEx(Key_TaskID, MATCH_BIND_EVT, 5000);
 ??Sys_SendPreBindMessage_1:
         ; Setup parameters for call to function osal_start_timerEx
         MOV     R4,#-0x78
         MOV     R5,#0x13
         MOV     R2,#0x2
         MOV     R3,#0x0
-        MOV     DPTR,#Button_TaskID
+        MOV     DPTR,#Key_TaskID
 ??Sys_SendPreBindMessage_5:
         LCALL   ?Subroutine4 & 0xFFFF
 //  464           break;
@@ -2245,9 +2245,9 @@ Sys_SendPreBindMessage:
         CFI EndBlock cfiPicker13
 //  481 
 //  482 /******************************************************************************
-//  483  * @fn          zb_SendDataRequest
+//  483  * @fn          Sys_SendDataRequest
 //  484  *
-//  485  * @brief       The zb_SendDataRequest function initiates transmission of data
+//  485  * @brief       The Sys_SendDataRequest function initiates transmission of data
 //  486  *              to a peer device
 //  487  *
 //  488  * @param       destination - The destination of the data.  The destination can
@@ -2737,19 +2737,20 @@ Sys_SendCback:
 //  636  * @brief       The Sys_BindConfirm callback is called by the ZigBee stack
 //  637  *              after a bind operation completes.
 //  638  *
-//  639  * @param       commandId - The command ID of the binding being confirmed.
-//  640  *              status - The status of the bind operation.
-//  641  *
-//  642  * @return      none
-//  643  */
+//  639  * @param       endpoint - The endpoint of the binding being confirmed.
+//  640  *              src - The 16-bit srcAddr of the binding being confirmed.
+//  641  *              status - The status of the bind operation.
+//  642  *
+//  643  * @return      none
+//  644  */
 
         RSEG BANKED_CODE:CODE:NOROOT(0)
-//  644 void Sys_BindConfirm( uint16 commandId, uint8 status )
+//  645 void Sys_BindConfirm( uint16 commandId, uint8 status )
 Sys_BindConfirm:
         CFI Block cfiBlock19 Using cfiCommon0
         CFI Function Sys_BindConfirm
         CODE
-//  645 {
+//  646 {
         FUNCALL Sys_BindConfirm, HalLedSet
         LOCFRAME ISTACK, 0, STACK
         LOCFRAME PSTACK, 0, STACK
@@ -2821,21 +2822,33 @@ Sys_BindConfirm:
         ; Saved register size: 9
         ; Auto size: 0
         MOV     A,R1
-//  646   if( status == ZB_SUCCESS)
+//  647   if( status == ZB_SUCCESS)
         MOV     R2,#0x1
         JNZ     ??Sys_BindConfirm_0
-//  647   {
-//  648     // Light D2
-//  649     HalLedSet(HAL_LED_3, HAL_LED_MODE_ON);
+//  648   {
+//  649     // Light D2
+//  650     HalLedSet(HAL_LED_3, HAL_LED_MODE_ON);
         ; Setup parameters for call to function HalLedSet
         MOV     R1,#0x4
         LCALL   ??HalLedSet?relay
-//  650     HalLedSet(HAL_LED_2, HAL_LED_MODE_OFF);
+//  651     HalLedSet(HAL_LED_2, HAL_LED_MODE_OFF);
         ; Setup parameters for call to function HalLedSet
         MOV     R2,#0x0
         MOV     R1,#0x2
         LCALL   ??HalLedSet?relay
-//  651     osal_start_timerEx(Sys_TaskID, CLOSE_LIGHT_EVT, 5000);
+//  652     /*  // Search Enddevice's ieee64
+//  653     ZLongAddr_t ext64;
+//  654     if(APSME_LookupNwkAddr( ext64, src ) == TRUE)
+//  655     {
+//  656         SearchExtChain(ext64);
+//  657     }
+//  658     else
+//  659     {
+//  660      // Faild
+//  661       return;
+//  662     }
+//  663    */
+//  664     osal_start_timerEx(Sys_TaskID, CLOSE_LIGHT_EVT, 5000);
         ; Setup parameters for call to function osal_start_timerEx
         MOV     R4,#-0x78
         MOV     R5,#0x13
@@ -2843,24 +2856,24 @@ Sys_BindConfirm:
         MOV     R3,#0x0
         MOV     DPTR,#Sys_TaskID
         LCALL   ?Subroutine4 & 0xFFFF
-//  652   }
+//  665   }
 ??CrossCallReturnLabel_7:
         SJMP    ??Sys_BindConfirm_1
-//  653   else
-//  654   {
-//  655     // Light D3
-//  656     HalLedSet(HAL_LED_2, HAL_LED_MODE_ON);
+//  666   else
+//  667   {
+//  668     // Light D3
+//  669     HalLedSet(HAL_LED_2, HAL_LED_MODE_ON);
 ??Sys_BindConfirm_0:
         ; Setup parameters for call to function HalLedSet
         MOV     R1,#0x2
         LCALL   ??HalLedSet?relay
-//  657     HalLedSet(HAL_LED_3, HAL_LED_MODE_OFF);
+//  670     HalLedSet(HAL_LED_3, HAL_LED_MODE_OFF);
         ; Setup parameters for call to function HalLedSet
         MOV     R2,#0x0
         MOV     R1,#0x4
         LCALL   ??HalLedSet?relay
-//  658   }
-//  659 }
+//  671   }
+//  672 }
 ??Sys_BindConfirm_1:
         LJMP    ?Subroutine0 & 0xFFFF
         CFI EndBlock cfiBlock19
@@ -2922,43 +2935,43 @@ Sys_BindConfirm:
         CFI EndBlock cfiCond21
         CFI EndBlock cfiCond22
         CFI EndBlock cfiPicker23
-//  660 
-//  661 /******************************************************************************
-//  662  * @fn          Sys_SendDataConfirm
-//  663  *
-//  664  * @brief       The zb_SendDataConfirm callback function is called by the
-//  665  *              ZigBee after a send data operation completes
-//  666  *
-//  667  * @param       handle - The handle identifying the data transmission.
-//  668  *              status - The status of the operation.
-//  669  *
-//  670  * @return      none
-//  671  */
+//  673 
+//  674 /******************************************************************************
+//  675  * @fn          Sys_SendDataConfirm
+//  676  *
+//  677  * @brief       The zb_SendDataConfirm callback function is called by the
+//  678  *              ZigBee after a send data operation completes
+//  679  *
+//  680  * @param       handle - The handle identifying the data transmission.
+//  681  *              status - The status of the operation.
+//  682  *
+//  683  * @return      none
+//  684  */
 
         RSEG BANKED_CODE:CODE:NOROOT(0)
-//  672 void Sys_SendDataConfirm( uint8 handle, uint8 status )
+//  685 void Sys_SendDataConfirm( uint8 handle, uint8 status )
 Sys_SendDataConfirm:
         CFI Block cfiBlock24 Using cfiCommon0
         CFI Function Sys_SendDataConfirm
         CODE
-//  673 {
+//  686 {
         ; Saved register size: 0
         ; Auto size: 0
-//  674 }
+//  687 }
         LJMP    ?BRET
         CFI EndBlock cfiBlock24
-//  675 
-//  676 /*******************************************************************************
-//  677  *******************************************************************************
-//  678  * CONFIGURATIONS
-//  679  ******************************************************************************/
-//  680 
-//  681 // The order in this table must be identical to the task initialization calls below in osalInitTask.
-//  682 
+//  688 
+//  689 /*******************************************************************************
+//  690  *******************************************************************************
+//  691  * CONFIGURATIONS
+//  692  ******************************************************************************/
+//  693 
+//  694 // The order in this table must be identical to the task initialization calls below in osalInitTask.
+//  695 
 
         RSEG XDATA_ROM_C:CONST:REORDER:NOROOT(0)
         DATA8
-//  683 const pTaskEventHandlerFn tasksArr[] = {
+//  696 const pTaskEventHandlerFn tasksArr[] = {
 tasksArr:
         DATA16
         DW ??macEventLoop?relay
@@ -2967,59 +2980,59 @@ tasksArr:
         DW ??APS_event_loop?relay
         DW ??ZDApp_event_loop?relay
         DW ??Sys_ProcessEvent?relay
-        DW ??Button_ProcessEvent?relay
+        DW ??Key_ProcessEvent?relay
         DW ??Motor_ProcessEvent?relay
         DW ??Switch_ProcessEvent?relay
         DW ??SAPI_ProcessEvent?relay
-//  684   macEventLoop,
-//  685   nwk_event_loop,
-//  686   Hal_ProcessEvent,
-//  687 #if defined( MT_TASK )
-//  688   MT_ProcessEvent,
-//  689 #endif
-//  690   APS_event_loop,
-//  691   ZDApp_event_loop,
-//  692 
-//  693   Sys_ProcessEvent,
-//  694   Button_ProcessEvent,
-//  695   Motor_ProcessEvent,
-//  696   Switch_ProcessEvent,
-//  697   SAPI_ProcessEvent
-//  698 };
-//  699 
+//  697   macEventLoop,
+//  698   nwk_event_loop,
+//  699   Hal_ProcessEvent,
+//  700 #if defined( MT_TASK )
+//  701   MT_ProcessEvent,
+//  702 #endif
+//  703   APS_event_loop,
+//  704   ZDApp_event_loop,
+//  705 
+//  706   Sys_ProcessEvent,
+//  707   Key_ProcessEvent,
+//  708   Motor_ProcessEvent,
+//  709   Switch_ProcessEvent,
+//  710   SAPI_ProcessEvent
+//  711 };
+//  712 
 
         RSEG XDATA_ROM_C:CONST:REORDER:NOROOT(0)
         DATA8
-//  700 const uint8 tasksCnt = sizeof( tasksArr ) / sizeof( tasksArr[0] );
+//  713 const uint8 tasksCnt = sizeof( tasksArr ) / sizeof( tasksArr[0] );
 tasksCnt:
         DB 10
 
         RSEG XDATA_Z:XDATA:NOROOT(0)
         DATA16
-//  701 uint16 *tasksEvents;
+//  714 uint16 *tasksEvents;
 tasksEvents:
         DS 2
         REQUIRE __INIT_XDATA_Z
-//  702 
-//  703 
-//  704 
-//  705 /*********************************************************************
-//  706  * @fn      osalInitTasks
-//  707  *
-//  708  * @brief   This function invokes the initialization function for each task.
-//  709  *
-//  710  * @param   void
-//  711  *
-//  712  * @return  none
-//  713  */
+//  715 
+//  716 
+//  717 
+//  718 /*********************************************************************
+//  719  * @fn      osalInitTasks
+//  720  *
+//  721  * @brief   This function invokes the initialization function for each task.
+//  722  *
+//  723  * @param   void
+//  724  *
+//  725  * @return  none
+//  726  */
 
         RSEG BANKED_CODE:CODE:NOROOT(0)
-//  714 void osalInitTasks( void )
+//  727 void osalInitTasks( void )
 osalInitTasks:
         CFI Block cfiBlock25 Using cfiCommon0
         CFI Function osalInitTasks
         CODE
-//  715 {
+//  728 {
         FUNCALL osalInitTasks, osal_mem_alloc
         LOCFRAME ISTACK, 2, STACK
         LOCFRAME PSTACK, 0, STACK
@@ -3108,7 +3121,7 @@ osalInitTasks:
         ARGFRAME XSTACK, 0, STACK
         ARGFRAME IOVERLAY, 0, STATIC
         ARGFRAME DOVERLAY, 0, STATIC
-        FUNCALL osalInitTasks, Button_Init
+        FUNCALL osalInitTasks, Key_Init
         LOCFRAME ISTACK, 2, STACK
         LOCFRAME PSTACK, 0, STACK
         LOCFRAME XSTACK, 0, STACK
@@ -3160,9 +3173,9 @@ osalInitTasks:
         CFI CFA_SP SP+-5
         ; Saved register size: 2
         ; Auto size: 0
-//  716   uint8 taskID = 0;
-//  717 
-//  718   tasksEvents = (uint16 *)osal_mem_alloc( sizeof( uint16 ) * tasksCnt);
+//  729   uint8 taskID = 0;
+//  730 
+//  731   tasksEvents = (uint16 *)osal_mem_alloc( sizeof( uint16 ) * tasksCnt);
         ; Setup parameters for call to function osal_mem_alloc
         MOV     R2,#0x14
         MOV     R3,#0x0
@@ -3173,57 +3186,57 @@ osalInitTasks:
         INC     DPTR
         MOV     A,R3
         MOVX    @DPTR,A
-//  719   osal_memset( tasksEvents, 0, (sizeof( uint16 ) * tasksCnt));
+//  732   osal_memset( tasksEvents, 0, (sizeof( uint16 ) * tasksCnt));
         ; Setup parameters for call to function osal_memset
         MOV     R4,#0x14
         MOV     R5,#0x0
         MOV     R1,#0x0
         LCALL   ??osal_memset?relay
-//  720 
-//  721   macTaskInit( taskID++ );
+//  733 
+//  734   macTaskInit( taskID++ );
         ; Setup parameters for call to function macTaskInit
         MOV     R1,#0x0
         LCALL   ??macTaskInit?relay
-//  722   nwk_init( taskID++ );
+//  735   nwk_init( taskID++ );
         ; Setup parameters for call to function nwk_init
         MOV     R1,#0x1
         LCALL   ??nwk_init?relay
-//  723   Hal_Init( taskID++ );
+//  736   Hal_Init( taskID++ );
         ; Setup parameters for call to function Hal_Init
         MOV     R1,#0x2
         LCALL   ??Hal_Init?relay
-//  724 #if defined( MT_TASK )
-//  725   MT_TaskInit( taskID++ );
-//  726 #endif
-//  727   APS_Init( taskID++ );
+//  737 #if defined( MT_TASK )
+//  738   MT_TaskInit( taskID++ );
+//  739 #endif
+//  740   APS_Init( taskID++ );
         ; Setup parameters for call to function APS_Init
         MOV     R1,#0x3
         LCALL   ??APS_Init?relay
-//  728   ZDApp_Init( taskID++ );
+//  741   ZDApp_Init( taskID++ );
         ; Setup parameters for call to function ZDApp_Init
         MOV     R1,#0x4
         LCALL   ??ZDApp_Init?relay
-//  729   Sys_Init( taskID++ );
+//  742   Sys_Init( taskID++ );
         ; Setup parameters for call to function Sys_Init
         MOV     R1,#0x5
         LCALL   ??Sys_Init?relay
-//  730   Button_Init( taskID++ );
-        ; Setup parameters for call to function Button_Init
+//  743   Key_Init( taskID++ );
+        ; Setup parameters for call to function Key_Init
         MOV     R1,#0x6
-        LCALL   ??Button_Init?relay
-//  731   Motor_Init( taskID++ );
+        LCALL   ??Key_Init?relay
+//  744   Motor_Init( taskID++ );
         ; Setup parameters for call to function Motor_Init
         MOV     R1,#0x7
         LCALL   ??Motor_Init?relay
-//  732   Switch_Init( taskID++ );
+//  745   Switch_Init( taskID++ );
         ; Setup parameters for call to function Switch_Init
         MOV     R1,#0x8
         LCALL   ??Switch_Init?relay
-//  733   SAPI_Init( taskID );
+//  746   SAPI_Init( taskID );
         ; Setup parameters for call to function SAPI_Init
         MOV     R1,#0x9
         LCALL   ??SAPI_Init?relay
-//  734 }
+//  747 }
         LJMP    ?Subroutine1 & 0xFFFF
         CFI EndBlock cfiBlock25
 

@@ -1,6 +1,6 @@
 ###############################################################################
 #                                                                             #
-# IAR C/C++ Compiler V8.10.3.10338/W32 for 8051         06/Apr/2018  15:28:32 #
+# IAR C/C++ Compiler V8.10.3.10338/W32 for 8051         07/Apr/2018  15:44:50 #
 # Copyright 2004-2011 IAR Systems AB.                                         #
 #                                                                             #
 #    Core               =  plain                                              #
@@ -45,8 +45,8 @@
 #                          -DREJOIN_POLL_RATE=440 D:\ProgramData\Hardware\zig #
 #                          bee\Projects\zstack\Samples\SensorSys\Source\Senso #
 #                          rSys_Coordinator.c -D HOLD_AUTO_START -D           #
-#                          BUILD_ALL_DEVICES -D REFLECTOR -D NV_INIT -D       #
-#                          xNV_RESTORE -D ZTOOL_P1 -D xMT_TASK -D             #
+#                          BUILD_ALL_DEVICES -D REFLECTOR -D NV_INIT -D COOR  #
+#                          -D xNV_RESTORE -D ZTOOL_P1 -D xMT_TASK -D          #
 #                          xMT_SYS_FUNC -D xMT_SAPI_FUNC -D xMT_SAPI_CB_FUNC  #
 #                          -lC D:\ProgramData\Hardware\zigbee\Projects\zstack #
 #                          \Samples\SensorSys\CC2530DB\CoordinatorEB\List\    #
@@ -313,7 +313,7 @@ D:\ProgramData\Hardware\zigbee\Projects\zstack\Samples\SensorSys\Source\SensorSy
     154          };
     155          
     156          // This is the Endpoint/Interface description.  It is defined here, but
-    157          // filled-in in Button_Init().  Another way to go would be to fill
+    157          // filled-in in Key_Init().  Another way to go would be to fill
     158          // in the structure here and make it a "const" (in code space).  The
     159          // way it's defined in this sample app it is define in RAM.
 
@@ -1027,15 +1027,15 @@ D:\ProgramData\Hardware\zigbee\Projects\zstack\Samples\SensorSys\Source\SensorSy
    \   0000B6   601F         JZ      ??Sys_SendPreBindMessage_3
    \   0000B8   8034         SJMP    ??Sys_SendPreBindMessage_4
     461              {
-    462                  case BUTTON_TYPE_ID:
-    463                    osal_start_timerEx(Button_TaskID, MATCH_BIND_EVT, 5000);
+    462                  case KEY_TYPE_ID:
+    463                    osal_start_timerEx(Key_TaskID, MATCH_BIND_EVT, 5000);
    \                     ??Sys_SendPreBindMessage_1:
    \   0000BA                ; Setup parameters for call to function osal_start_timerEx
    \   0000BA   7C88         MOV     R4,#-0x78
    \   0000BC   7D13         MOV     R5,#0x13
    \   0000BE   7A02         MOV     R2,#0x2
    \   0000C0   7B00         MOV     R3,#0x0
-   \   0000C2   90....       MOV     DPTR,#Button_TaskID
+   \   0000C2   90....       MOV     DPTR,#Key_TaskID
    \                     ??Sys_SendPreBindMessage_5:
    \   0000C5   12....       LCALL   ?Subroutine4 & 0xFFFF
     464                    break;
@@ -1094,9 +1094,9 @@ D:\ProgramData\Hardware\zigbee\Projects\zstack\Samples\SensorSys\Source\SensorSy
    \   000005   22           RET
     481          
     482          /******************************************************************************
-    483           * @fn          zb_SendDataRequest
+    483           * @fn          Sys_SendDataRequest
     484           *
-    485           * @brief       The zb_SendDataRequest function initiates transmission of data
+    485           * @brief       The Sys_SendDataRequest function initiates transmission of data
     486           *              to a peer device
     487           *
     488           * @param       destination - The destination of the data.  The destination can
@@ -1454,36 +1454,49 @@ D:\ProgramData\Hardware\zigbee\Projects\zstack\Samples\SensorSys\Source\SensorSy
     636           * @brief       The Sys_BindConfirm callback is called by the ZigBee stack
     637           *              after a bind operation completes.
     638           *
-    639           * @param       commandId - The command ID of the binding being confirmed.
-    640           *              status - The status of the bind operation.
-    641           *
-    642           * @return      none
-    643           */
+    639           * @param       endpoint - The endpoint of the binding being confirmed.
+    640           *              src - The 16-bit srcAddr of the binding being confirmed.
+    641           *              status - The status of the bind operation.
+    642           *
+    643           * @return      none
+    644           */
 
    \                                 In  segment BANKED_CODE, align 1, keep-with-next
-    644          void Sys_BindConfirm( uint16 commandId, uint8 status )
+    645          void Sys_BindConfirm( uint16 commandId, uint8 status )
    \                     Sys_BindConfirm:
-    645          {
+    646          {
    \   000000   74F7         MOV     A,#-0x9
    \   000002   12....       LCALL   ?BANKED_ENTER_XDATA
    \   000005                ; Saved register size: 9
    \   000005                ; Auto size: 0
    \   000005   E9           MOV     A,R1
-    646            if( status == ZB_SUCCESS)
+    647            if( status == ZB_SUCCESS)
    \   000006   7A01         MOV     R2,#0x1
    \   000008   701C         JNZ     ??Sys_BindConfirm_0
-    647            {
-    648              // Light D2
-    649              HalLedSet(HAL_LED_3, HAL_LED_MODE_ON);
+    648            {
+    649              // Light D2
+    650              HalLedSet(HAL_LED_3, HAL_LED_MODE_ON);
    \   00000A                ; Setup parameters for call to function HalLedSet
    \   00000A   7904         MOV     R1,#0x4
    \   00000C   12....       LCALL   ??HalLedSet?relay
-    650              HalLedSet(HAL_LED_2, HAL_LED_MODE_OFF);
+    651              HalLedSet(HAL_LED_2, HAL_LED_MODE_OFF);
    \   00000F                ; Setup parameters for call to function HalLedSet
    \   00000F   7A00         MOV     R2,#0x0
    \   000011   7902         MOV     R1,#0x2
    \   000013   12....       LCALL   ??HalLedSet?relay
-    651              osal_start_timerEx(Sys_TaskID, CLOSE_LIGHT_EVT, 5000);
+    652              /*  // Search Enddevice's ieee64
+    653              ZLongAddr_t ext64;
+    654              if(APSME_LookupNwkAddr( ext64, src ) == TRUE)
+    655              {
+    656                  SearchExtChain(ext64);
+    657              }
+    658              else
+    659              {
+    660               // Faild
+    661                return;
+    662              }
+    663             */
+    664              osal_start_timerEx(Sys_TaskID, CLOSE_LIGHT_EVT, 5000);
    \   000016                ; Setup parameters for call to function osal_start_timerEx
    \   000016   7C88         MOV     R4,#-0x78
    \   000018   7D13         MOV     R5,#0x13
@@ -1491,58 +1504,58 @@ D:\ProgramData\Hardware\zigbee\Projects\zstack\Samples\SensorSys\Source\SensorSy
    \   00001C   7B00         MOV     R3,#0x0
    \   00001E   90....       MOV     DPTR,#Sys_TaskID
    \   000021   12....       LCALL   ?Subroutine4 & 0xFFFF
-    652            }
+    665            }
    \                     ??CrossCallReturnLabel_7:
    \   000024   800C         SJMP    ??Sys_BindConfirm_1
-    653            else
-    654            {
-    655              // Light D3
-    656              HalLedSet(HAL_LED_2, HAL_LED_MODE_ON);
+    666            else
+    667            {
+    668              // Light D3
+    669              HalLedSet(HAL_LED_2, HAL_LED_MODE_ON);
    \                     ??Sys_BindConfirm_0:
    \   000026                ; Setup parameters for call to function HalLedSet
    \   000026   7902         MOV     R1,#0x2
    \   000028   12....       LCALL   ??HalLedSet?relay
-    657              HalLedSet(HAL_LED_3, HAL_LED_MODE_OFF);
+    670              HalLedSet(HAL_LED_3, HAL_LED_MODE_OFF);
    \   00002B                ; Setup parameters for call to function HalLedSet
    \   00002B   7A00         MOV     R2,#0x0
    \   00002D   7904         MOV     R1,#0x4
    \   00002F   12....       LCALL   ??HalLedSet?relay
-    658            }
-    659          }
+    671            }
+    672          }
    \                     ??Sys_BindConfirm_1:
    \   000032   02....       LJMP    ?Subroutine0 & 0xFFFF
-    660          
-    661          /******************************************************************************
-    662           * @fn          Sys_SendDataConfirm
-    663           *
-    664           * @brief       The zb_SendDataConfirm callback function is called by the
-    665           *              ZigBee after a send data operation completes
-    666           *
-    667           * @param       handle - The handle identifying the data transmission.
-    668           *              status - The status of the operation.
-    669           *
-    670           * @return      none
-    671           */
+    673          
+    674          /******************************************************************************
+    675           * @fn          Sys_SendDataConfirm
+    676           *
+    677           * @brief       The zb_SendDataConfirm callback function is called by the
+    678           *              ZigBee after a send data operation completes
+    679           *
+    680           * @param       handle - The handle identifying the data transmission.
+    681           *              status - The status of the operation.
+    682           *
+    683           * @return      none
+    684           */
 
    \                                 In  segment BANKED_CODE, align 1, keep-with-next
-    672          void Sys_SendDataConfirm( uint8 handle, uint8 status )
+    685          void Sys_SendDataConfirm( uint8 handle, uint8 status )
    \                     Sys_SendDataConfirm:
-    673          {
+    686          {
    \   000000                ; Saved register size: 0
    \   000000                ; Auto size: 0
-    674          }
+    687          }
    \   000000   02....       LJMP    ?BRET
-    675          
-    676          /*******************************************************************************
-    677           *******************************************************************************
-    678           * CONFIGURATIONS
-    679           ******************************************************************************/
-    680          
-    681          // The order in this table must be identical to the task initialization calls below in osalInitTask.
-    682          
+    688          
+    689          /*******************************************************************************
+    690           *******************************************************************************
+    691           * CONFIGURATIONS
+    692           ******************************************************************************/
+    693          
+    694          // The order in this table must be identical to the task initialization calls below in osalInitTask.
+    695          
 
    \                                 In  segment XDATA_ROM_C, align 1
-    683          const pTaskEventHandlerFn tasksArr[] = {
+    696          const pTaskEventHandlerFn tasksArr[] = {
    \                     tasksArr:
    \   000000   ....         DW ??macEventLoop?relay
    \   000002   ....         DW ??nwk_event_loop?relay
@@ -1550,61 +1563,61 @@ D:\ProgramData\Hardware\zigbee\Projects\zstack\Samples\SensorSys\Source\SensorSy
    \   000006   ....         DW ??APS_event_loop?relay
    \   000008   ....         DW ??ZDApp_event_loop?relay
    \   00000A   ....         DW ??Sys_ProcessEvent?relay
-   \   00000C   ....         DW ??Button_ProcessEvent?relay
+   \   00000C   ....         DW ??Key_ProcessEvent?relay
    \   00000E   ....         DW ??Motor_ProcessEvent?relay
    \   000010   ....         DW ??Switch_ProcessEvent?relay
    \   000012   ....         DW ??SAPI_ProcessEvent?relay
-    684            macEventLoop,
-    685            nwk_event_loop,
-    686            Hal_ProcessEvent,
-    687          #if defined( MT_TASK )
-    688            MT_ProcessEvent,
-    689          #endif
-    690            APS_event_loop,
-    691            ZDApp_event_loop,
-    692          
-    693            Sys_ProcessEvent,
-    694            Button_ProcessEvent,
-    695            Motor_ProcessEvent,
-    696            Switch_ProcessEvent,
-    697            SAPI_ProcessEvent
-    698          };
-    699          
+    697            macEventLoop,
+    698            nwk_event_loop,
+    699            Hal_ProcessEvent,
+    700          #if defined( MT_TASK )
+    701            MT_ProcessEvent,
+    702          #endif
+    703            APS_event_loop,
+    704            ZDApp_event_loop,
+    705          
+    706            Sys_ProcessEvent,
+    707            Key_ProcessEvent,
+    708            Motor_ProcessEvent,
+    709            Switch_ProcessEvent,
+    710            SAPI_ProcessEvent
+    711          };
+    712          
 
    \                                 In  segment XDATA_ROM_C, align 1
-    700          const uint8 tasksCnt = sizeof( tasksArr ) / sizeof( tasksArr[0] );
+    713          const uint8 tasksCnt = sizeof( tasksArr ) / sizeof( tasksArr[0] );
    \                     tasksCnt:
    \   000000   0A           DB 10
 
    \                                 In  segment XDATA_Z, align 1, keep-with-next
-    701          uint16 *tasksEvents;
+    714          uint16 *tasksEvents;
    \                     tasksEvents:
    \   000000                DS 2
    \   000002                REQUIRE __INIT_XDATA_Z
-    702          
-    703          
-    704          
-    705          /*********************************************************************
-    706           * @fn      osalInitTasks
-    707           *
-    708           * @brief   This function invokes the initialization function for each task.
-    709           *
-    710           * @param   void
-    711           *
-    712           * @return  none
-    713           */
+    715          
+    716          
+    717          
+    718          /*********************************************************************
+    719           * @fn      osalInitTasks
+    720           *
+    721           * @brief   This function invokes the initialization function for each task.
+    722           *
+    723           * @param   void
+    724           *
+    725           * @return  none
+    726           */
 
    \                                 In  segment BANKED_CODE, align 1, keep-with-next
-    714          void osalInitTasks( void )
+    727          void osalInitTasks( void )
    \                     osalInitTasks:
-    715          {
+    728          {
    \   000000   C082         PUSH    DPL
    \   000002   C083         PUSH    DPH
    \   000004                ; Saved register size: 2
    \   000004                ; Auto size: 0
-    716            uint8 taskID = 0;
-    717          
-    718            tasksEvents = (uint16 *)osal_mem_alloc( sizeof( uint16 ) * tasksCnt);
+    729            uint8 taskID = 0;
+    730          
+    731            tasksEvents = (uint16 *)osal_mem_alloc( sizeof( uint16 ) * tasksCnt);
    \   000004                ; Setup parameters for call to function osal_mem_alloc
    \   000004   7A14         MOV     R2,#0x14
    \   000006   7B00         MOV     R3,#0x0
@@ -1615,57 +1628,57 @@ D:\ProgramData\Hardware\zigbee\Projects\zstack\Samples\SensorSys\Source\SensorSy
    \   000010   A3           INC     DPTR
    \   000011   EB           MOV     A,R3
    \   000012   F0           MOVX    @DPTR,A
-    719            osal_memset( tasksEvents, 0, (sizeof( uint16 ) * tasksCnt));
+    732            osal_memset( tasksEvents, 0, (sizeof( uint16 ) * tasksCnt));
    \   000013                ; Setup parameters for call to function osal_memset
    \   000013   7C14         MOV     R4,#0x14
    \   000015   7D00         MOV     R5,#0x0
    \   000017   7900         MOV     R1,#0x0
    \   000019   12....       LCALL   ??osal_memset?relay
-    720          
-    721            macTaskInit( taskID++ );
+    733          
+    734            macTaskInit( taskID++ );
    \   00001C                ; Setup parameters for call to function macTaskInit
    \   00001C   7900         MOV     R1,#0x0
    \   00001E   12....       LCALL   ??macTaskInit?relay
-    722            nwk_init( taskID++ );
+    735            nwk_init( taskID++ );
    \   000021                ; Setup parameters for call to function nwk_init
    \   000021   7901         MOV     R1,#0x1
    \   000023   12....       LCALL   ??nwk_init?relay
-    723            Hal_Init( taskID++ );
+    736            Hal_Init( taskID++ );
    \   000026                ; Setup parameters for call to function Hal_Init
    \   000026   7902         MOV     R1,#0x2
    \   000028   12....       LCALL   ??Hal_Init?relay
-    724          #if defined( MT_TASK )
-    725            MT_TaskInit( taskID++ );
-    726          #endif
-    727            APS_Init( taskID++ );
+    737          #if defined( MT_TASK )
+    738            MT_TaskInit( taskID++ );
+    739          #endif
+    740            APS_Init( taskID++ );
    \   00002B                ; Setup parameters for call to function APS_Init
    \   00002B   7903         MOV     R1,#0x3
    \   00002D   12....       LCALL   ??APS_Init?relay
-    728            ZDApp_Init( taskID++ );
+    741            ZDApp_Init( taskID++ );
    \   000030                ; Setup parameters for call to function ZDApp_Init
    \   000030   7904         MOV     R1,#0x4
    \   000032   12....       LCALL   ??ZDApp_Init?relay
-    729            Sys_Init( taskID++ );
+    742            Sys_Init( taskID++ );
    \   000035                ; Setup parameters for call to function Sys_Init
    \   000035   7905         MOV     R1,#0x5
    \   000037   12....       LCALL   ??Sys_Init?relay
-    730            Button_Init( taskID++ );
-   \   00003A                ; Setup parameters for call to function Button_Init
+    743            Key_Init( taskID++ );
+   \   00003A                ; Setup parameters for call to function Key_Init
    \   00003A   7906         MOV     R1,#0x6
-   \   00003C   12....       LCALL   ??Button_Init?relay
-    731            Motor_Init( taskID++ );
+   \   00003C   12....       LCALL   ??Key_Init?relay
+    744            Motor_Init( taskID++ );
    \   00003F                ; Setup parameters for call to function Motor_Init
    \   00003F   7907         MOV     R1,#0x7
    \   000041   12....       LCALL   ??Motor_Init?relay
-    732            Switch_Init( taskID++ );
+    745            Switch_Init( taskID++ );
    \   000044                ; Setup parameters for call to function Switch_Init
    \   000044   7908         MOV     R1,#0x8
    \   000046   12....       LCALL   ??Switch_Init?relay
-    733            SAPI_Init( taskID );
+    746            SAPI_Init( taskID );
    \   000049                ; Setup parameters for call to function SAPI_Init
    \   000049   7909         MOV     R1,#0x9
    \   00004B   12....       LCALL   ??SAPI_Init?relay
-    734          }
+    747          }
    \   00004E   02....       LJMP    ?Subroutine1 & 0xFFFF
 
    \                                 In  segment XDATA_ID, align 1, keep-with-next
@@ -1804,7 +1817,7 @@ D:\ProgramData\Hardware\zigbee\Projects\zstack\Samples\SensorSys\Source\SensorSy
        -> APS_Init                    4      0      0
        -> ZDApp_Init                  4      0      0
        -> Sys_Init                    4      0      0
-       -> Button_Init                 4      0      0
+       -> Key_Init                    4      0      0
        -> Motor_Init                  4      0      0
        -> Switch_Init                 4      0      0
        -> SAPI_Init                   4      0      0

@@ -23,6 +23,8 @@
  */
 #define SW_UPDATE_EVT   0x5000
 
+// PORT NUMBERS
+#define P2_SWITCH_NUM       4
 /*********************************************************************
  * CONSTANTS
  */
@@ -94,6 +96,7 @@ static void Switch_ReceiveDataIndication( uint16 source, uint8 endPoint,
 static void Switch_AllowBindConfirm( uint16 source );
 static void SwitchAction( uint8 sw, uint16 command, uint16 len, uint8 *pData );
 static void SwitchUpdate(uint8 sw, uint8 first_boot);
+static void Send2Coor(uint8 dev_num, uint16 commandId, uint8 *pData);
 /*********************************************************************
  * @fn      Switch_Init
  *
@@ -265,10 +268,12 @@ void SwitchAction( uint8 sw, uint16 command, uint16 len, uint8 *pData )
     {
         if(port < P2_SWITCH_NUM)
         {
+            P2SEL &= ~(0x01 << (port + 1));
             P2DIR |= 0x01 << (port+1);
         }
         else
         {
+            P1SEL &= ~(0x01 << (port - 2));
             P1DIR |= 0x01 << (port - 2);
         }
         SwitchControl[sw].port = port;
@@ -288,7 +293,7 @@ void SwitchAction( uint8 sw, uint16 command, uint16 len, uint8 *pData )
   uint16 len_t;
   sensor_msg_t *msg_t = NULL;
   len_t = len/OPERATE_MSG_NUM;
-  msg_t = (sensor_msg_t *)malloc(sizeof(sensor_msg_t) * len_t);
+  msg_t = (sensor_msg_t *)osal_mem_alloc(sizeof(sensor_msg_t) * len_t);
   uint8 i;
   for(i=0; i<len_t; i++)
   {    
@@ -305,7 +310,7 @@ void SwitchAction( uint8 sw, uint16 command, uint16 len, uint8 *pData )
   SwitchControl[sw].total = len_t;
   SwitchControl[sw].status = 0;
   SwitchControl[sw].command = command;
-  
+  osal_mem_free(msg_t);
     uint16 event_t;
     event_t = SW_UPDATE_EVT | sw;       // 0x5000 | 0x00??
   
@@ -326,7 +331,7 @@ void SwitchUpdate(uint8 sw, uint8 first_boot)
         }
         else
         {
-            free(SwitchControl[sw].msg);
+            osal_mem_free(SwitchControl[sw].msg);
             return;
         }
     }
@@ -390,4 +395,10 @@ void SwitchUpdate(uint8 sw, uint8 first_boot)
 void Switch_AllowBindConfirm( uint16 source )
 {
      Sys_AllowBindConfirm(source);
+}
+
+void Send2Coor(uint8 dev_num, uint16 commandId, uint8 *pData)
+{
+    Sys_SendDataRequest( 0xFFFE, &Switch_epDesc[dev_num], commandId, (uint8)osal_strlen( pData ),
+                           pData, sysSeqNumber, 0, 0 );
 }

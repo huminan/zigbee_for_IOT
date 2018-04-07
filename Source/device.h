@@ -3,10 +3,13 @@
 // These constants are only for example and should be changed to the
 // device's needs
 
+#include "OSAL.h"
+
+
 // EndPoint
 #define SYS_ENDPOINT           2
 #define ZB_ENDPOINT            3
-#define BUTTON_ENDPOINT        10
+#define KEY_ENDPOINT           10
 #define MOTOR_ENDPOINT         110
 #define SWITCH_ENDPOINT        60
 #define OBSERVE_ENDPOINT       130  
@@ -15,23 +18,30 @@
 #define SYS_MAX_CLUSTERS       1
 #define ZB_MAX_CLUSTERS        1
 
-#define BUTTON_MAX_CLUSTERS    4    // PORT_INIT_CLUSTER, OPERATE_CLUSTER, LOOP_OPERATE_CLUSTER, DELETE_CLUSTER
+#define KEY_MAX_CLUSTERS       4    // PORT_INIT_CLUSTER, OPERATE_CLUSTER, LOOP_OPERATE_CLUSTER, DELETE_CLUSTER
 #define MOTOR_MAX_CLUSTERS     4    // PORT_INIT_CLUSTER, OPERATE_CLUSTER, LOOP_OPERATE_CLUSTER, DELETE_CLUSTER
 #define SWITCH_MAX_CLUSTERS    4    // PORT_INIT_CLUSTER, OPERATE_CLUSTER, LOOP_OPERATE_CLUSTER, DELETE_CLUSTER
 #define OBSERVE_MAX_CLUSTERS   1
 
 // Cluster ID
-#define PORT_INIT_CLUSTER      0x1000
-#define OPERATE_CLUSTER        0x1001
-#define LOOP_OPERATE_CLUSTER   0x1002
-#define DELETE_CLUSTER         0x1003
+#define PORT_INIT_CLUSTER      0x0001
+#define OPERATE_CLUSTER        0x0002
+#define LOOP_OPERATE_CLUSTER   0x0003
+#define DELETE_CLUSTER         0x0004
 
 #define SYS_CLUSTERID          0x0001
 #define ZB_CLUSTERID           0x0002
 
-#define BUTTON_OPEN            0x0001
-#define BUTTON_CLOSE           0x0002
-#define BUTTON_TRIGGER         0x0003
+// For KEYS
+#define TOGGLE_INIT_CLUSTER    0x0005
+
+#define P2_KEY_MAX      4
+#define P1_KEY_MAXL     2
+#define P1_KEY_MAXH     4
+#define KEY_RISE_EDGE   0
+/*efine KEY_OPEN               0x0001
+#define KEY_CLOSE              0x0002
+#define KEY_TRIGGER            0x0003
 
 #define MOTOR_FORWARD          0x0001
 #define MOTOR_BACKWARD         0x0002
@@ -42,17 +52,13 @@
 #define LED_FLASH              0x0003
 
 #define OBSERVE_DATA           0x0001
-
+*/
 // Terminator Type ID   -------  seems no use now
-#define BUTTON_TYPE_ID         0x01
+#define KEY_TYPE_ID            0x01
 #define MOTOR_TYPE_ID          0x02
-#define SWITCH_TYPE_ID            0x04
+#define SWITCH_TYPE_ID         0x04
 #define OBSERVE_TYPE_ID        0x08
   //...   0x04 0x08 0x10 ...
-
-// PORT NUMBERS
-#define P2_SWITCH_NUM       4
-
 
 #define OPERATE_MSG_NUM     6
 typedef struct
@@ -72,6 +78,10 @@ typedef struct {
   uint16 command;   /* command : Loop or not*/
 } SensorControl_t;
 
+typedef struct SensorObserve_t{
+  struct SensorObserve_t *next;
+  uint8 port; 
+} SensorObserve_t;
 
 typedef struct
 {

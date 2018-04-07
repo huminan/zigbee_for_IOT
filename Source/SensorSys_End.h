@@ -51,11 +51,12 @@ extern "C"
 #include <string.h>
 #include "SensorSys_Tools.h"
 #include "ZComDef.h"
+#include "AF.h"
 
 /*********************************************************************
  * CONSTANTS
  */
-#define MY_DEVICE   BUTTON_TYPE_ID|MOTOR_TYPE_ID|SWITCH_TYPE_ID
+#define MY_DEVICE   KEY_TYPE_ID|MOTOR_TYPE_ID|SWITCH_TYPE_ID
 
 
 #define APP_INIT                           0
@@ -79,39 +80,58 @@ extern "C"
 #define ALLOW_BIND_TIMER       0x0040
 
 // EndPoint MAX
-#define BUTTON_NUM_MAX         3
+#define KEY_NUM_MAX            10
 #define MOTOR_NUM_MAX          2
 #define SWITCH_NUM_MAX         5
 #define OBSERVE_NUM_MAX        1
+  
+// SAPI SendDataRequest destinations
+#define SYS_BINDING_ADDR                   INVALID_NODE_ADDR
+#define SYS_BROADCAST_ADDR                 0xffff
+  
+/*********************************************************************
+ * STRUCTS
+ */
+  
+typedef struct
+{
+  osal_event_hdr_t hdr;
+  uint16 data;
+} sys_CbackEvent_t;  
+
 /*********************************************************************
  * MACROS
  */
 extern byte Sys_TaskID;
-extern byte Button_TaskID;
+extern byte Key_TaskID;
 extern byte Motor_TaskID;
 extern byte Switch_TaskID;
 
 extern uint8 ZDAppTaskID;
+extern uint8 sysSeqNumber;
 
 extern endPointDesc_t Sys_epDesc;
-extern endPointDesc_t Button_epDesc[BUTTON_NUM_MAX];
+extern endPointDesc_t Key_epDesc[KEY_NUM_MAX];
 extern endPointDesc_t Motor_epDesc[MOTOR_NUM_MAX];
 extern endPointDesc_t Switch_epDesc[SWITCH_NUM_MAX];
 
-extern uint8 buttonCnt;
+extern uint8 keyCnt;
 extern uint8 motorCnt;
 extern uint8 swCnt;
+
+extern SensorObserve_t *KeyObserve;
 /*********************************************************************
  * FUNCTIONS
  */
-
+extern void Sys_SendDataRequest ( uint16 destination, endPointDesc_t *epDesc, uint16 commandId, uint8 len,
+                          uint8 *pData, uint8 handle, uint8 txOptions, uint8 radius );
 extern void Sys_AllowBind ( uint8 timeout );
 extern void Sys_AllowBindConfirm( uint16 source );
 /*
  * Task Initialization for the Generic Application
  */
 extern void Sys_Init( byte task_id );
-extern void Button_Init( byte task_id );
+extern void Key_Init( byte task_id );
 extern void Motor_Init( byte task_id );
 extern void Switch_Init( byte task_id );
 
@@ -119,13 +139,15 @@ extern void Switch_Init( byte task_id );
  * Task Event Processor for the Generic Application
  */
 extern UINT16 Sys_ProcessEvent( byte task_id, UINT16 events );
-extern UINT16 Button_ProcessEvent( byte task_id, UINT16 events );
+extern UINT16 Key_ProcessEvent( byte task_id, UINT16 events );
 extern UINT16 Motor_ProcessEvent( byte task_id, UINT16 events );
 extern UINT16 Switch_ProcessEvent( byte task_id, UINT16 events );
 
 extern void osalAddTasks( void );
 
 uint8 Type2EP(uint8 type);
+
+extern void KeySend2Coor(uint8 dev_num, uint16 commandId, uint8 *pData);
 /*********************************************************************
 *********************************************************************/
 

@@ -68,63 +68,41 @@ void BluetoothInit(byte task_id)
 
 void Bluetooth_Handle(byte *msg)
 {
-    switch(msg[MT_RPC_POS_CMD0])
+    if(msg[MT_RPC_POS_CMD0] == BT_CMD_BIND)
     {
-        case BT_CMD_BIND:
-        {
-           Sys_SendPreBindMessage(msg[MT_RPC_POS_CMD1]);
-           
-           break;
-        }    
-        case BT_CMD_PORT:
-        {
-           byte dev_num, dev_port;
-           dev_num = msg[MT_RPC_FRAME_HDR_SZ];
-           dev_port = msg[MT_RPC_FRAME_HDR_SZ+1];
-           Sys_SendDataRequest( 0xFFFE, &Motor_epDesc[dev_num], PORT_INIT_CLUSTER, (uint8)osal_strlen( &dev_port ),
-                           &dev_port, sysSeqNumber, 0, 0 );     // send to latest motor device
-           break;
-        }
-        case BT_CMD_OPERATE:
-        {
-          // CMDs
-           byte dev_num;
-           dev_num = msg[MT_RPC_FRAME_HDR_SZ];
-           
-          // DATAs
-           byte *data_p = NULL;
-           uint8 len_t = msg[MT_RPC_POS_LEN]-1;
-           data_p = (byte *)malloc(sizeof(byte) * len_t);
-           for(uint8 i = 0; i<len_t; i++)
-           {
-                data_p[i] = msg[MT_RPC_FRAME_HDR_SZ+i+1];
-           }
-           //        uint8 motorAction[] = "200,5 ,120,30,";
-           Sys_SendDataRequest( 0xFFFE, &Motor_epDesc[dev_num], OPERATE_CLUSTER, len_t,
-                           data_p, sysSeqNumber, 0, 0 );       // send to latest motor device
-           free(data_p);
-           break;
-        }   
-        case BT_CMD_LOOP:
-        {
-          // CMDs
-           byte dev_num;
-           dev_num = msg[MT_RPC_FRAME_HDR_SZ];
-           
-          // DATAs
-           byte *data_p = NULL;
-           uint8 len_t = msg[MT_RPC_POS_LEN]-1;
-           data_p = (byte *)malloc(sizeof(byte) * len_t);
-           for(uint8 i = 0; i<len_t; i++)
-           {
-                data_p[i] = msg[MT_RPC_FRAME_HDR_SZ+i+1];
-           }
-           //        uint8 motorAction[] = "200,5 ,120,30,";
-           Sys_SendDataRequest( 0xFFFE, &Motor_epDesc[dev_num], LOOP_OPERATE_CLUSTER, len_t,
-                           data_p, sysSeqNumber, 0, 0 );       // send to latest motor device
-           free(data_p);
-           
-           break;
-        }
+       Sys_SendPreBindMessage(msg[MT_RPC_POS_CMD1]);
+    }
+    else
+    {
+       // CMDs
+       byte dev_num;           
+       dev_num = msg[MT_RPC_FRAME_HDR_SZ];
+       
+       // DATAs
+       byte *data_p = NULL;
+       uint8 len_t = msg[MT_RPC_POS_LEN]-1;
+       data_p = (byte *)osal_mem_alloc(sizeof(byte) * len_t);
+       for(uint8 i = 0; i<len_t; i++)
+       {
+            data_p[i] = msg[MT_RPC_FRAME_HDR_SZ+i+1];
+       }
+       switch(msg[MT_RPC_POS_CMD1])
+       {
+           case KEY_TYPE_ID:
+             Sys_SendDataRequest( 0xFFFE, &Key_epDesc[dev_num], msg[MT_RPC_POS_CMD0], len_t,
+                           data_p, sysSeqNumber, 0, 0 );
+             break;
+             
+           case MOTOR_TYPE_ID:
+             Sys_SendDataRequest( 0xFFFE, &Motor_epDesc[dev_num], msg[MT_RPC_POS_CMD0], len_t,
+                           data_p, sysSeqNumber, 0, 0 );
+             break;
+             
+           case SWITCH_TYPE_ID:
+             Sys_SendDataRequest( 0xFFFE, &Switch_epDesc[dev_num], msg[MT_RPC_POS_CMD0], len_t,
+                           data_p, sysSeqNumber, 0, 0 );
+             break;
+       }
+       osal_mem_free(data_p);
     }
 }

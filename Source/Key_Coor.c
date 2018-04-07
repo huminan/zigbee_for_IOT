@@ -36,34 +36,33 @@
 /*********************************************************************
  * GLOBAL VARIABLES
  */
-byte Button_TaskID;
-uint8 buttonCnt;
+byte Key_TaskID;
+uint8 keyCnt;
 
-// Button 端点的簇ID
+// Key 端点的簇ID
 // This list should be filled with Application specific Cluster IDs.
-cId_t Button_ClusterList[BUTTON_MAX_CLUSTERS] =
+cId_t Key_ClusterList[KEY_MAX_CLUSTERS] =
 {
   PORT_INIT_CLUSTER,
-  BUTTON_OPEN,
-  BUTTON_CLOSE,
-  BUTTON_TRIGGER
+    OPERATE_CLUSTER,
+    DELETE_CLUSTER
 };
 
-// Button 端点简单描述符
-SimpleDescriptionFormat_t Button_SimpleDesc[BUTTON_NUM_MAX] =
+// Key 端点简单描述符
+SimpleDescriptionFormat_t Key_SimpleDesc[KEY_NUM_MAX] =
 {
-	BUTTON_ENDPOINT,           //  int Endpoint;
+	KEY_ENDPOINT,           //  int Endpoint;
 	SYS_PROFID,                //  uint16 AppProfId[2];
 	SYS_DEVICEID,              //  uint16 AppDeviceId[2];
 	SYS_DEVICE_VERSION,        //  int   AppDevVer:4;
 	SYS_FLAGS,                 //  int   AppFlags:4;
-	BUTTON_MAX_CLUSTERS,          //  byte  AppNumInClusters;
-	(cId_t *)Button_ClusterList,  //  byte *pAppInClusterList;
-	BUTTON_MAX_CLUSTERS,          //  byte  AppNumInClusters;
-	(cId_t *)Button_ClusterList   //  byte *pAppInClusterList;
+	KEY_MAX_CLUSTERS,          //  byte  AppNumInClusters;
+	(cId_t *)Key_ClusterList,  //  byte *pAppInClusterList;
+	KEY_MAX_CLUSTERS,          //  byte  AppNumInClusters;
+	(cId_t *)Key_ClusterList   //  byte *pAppInClusterList;
 };
 
-endPointDesc_t Button_epDesc[BUTTON_NUM_MAX];
+endPointDesc_t Key_epDesc[KEY_NUM_MAX];
 
 /*********************************************************************
  * EXTERNAL VARIABLES
@@ -77,22 +76,22 @@ extern uint8 myAppState;
  * LOCAL VARIABLES
  */
 
-afAddrType_t Button_DstAddr;
-uint16 button_bindInProgress;
+afAddrType_t Key_DstAddr;
+uint16 key_bindInProgress;
 
 
 /*********************************************************************
  * LOCAL FUNCTIONS
  */
-void Button_Init( byte task_id );
-void Button_ProcessZDOMsgs( zdoIncomingMsg_t *inMsg );
-void Button_HandleKeys( byte shift, byte keys );
+void Key_Init( byte task_id );
+void Key_ProcessZDOMsgs( zdoIncomingMsg_t *inMsg );
+void Key_HandleKeys( byte shift, byte keys );
 
-void Button_BindDevice ( uint8 create, uint8 endpoint, uint16 *commandId, uint8 *pDestination );
+void Key_BindDevice ( uint8 create, uint8 endpoint, uint16 *commandId, uint8 *pDestination );
 
 static void SAPI_BindConfirm( uint16 commandId, uint8 status );
 /*********************************************************************
- * @fn      Button_Init
+ * @fn      Key_Init
  *
  * @brief   Initialization function for the Generic App Task.
  *          This is called during initialization and should contain
@@ -105,46 +104,46 @@ static void SAPI_BindConfirm( uint16 commandId, uint8 status );
  *
  * @return  none
  */
-void Button_Init( byte task_id )
+void Key_Init( byte task_id )
 {
   char i;
-  Button_TaskID = task_id;
-  buttonCnt = 0;
+  Key_TaskID = task_id;
+  keyCnt = 0;
   
   // Device hardware initialization can be added here or in main() (Zmain.c).
   // If the hardware is application specific - add it here.
   // If the hardware is other parts of the device add it in main().
 
-  Button_DstAddr.addrMode = (afAddrMode_t)AddrNotPresent;
-  Button_DstAddr.endPoint = 0;
-  Button_DstAddr.addr.shortAddr = 0;
+  Key_DstAddr.addrMode = (afAddrMode_t)AddrNotPresent;
+  Key_DstAddr.endPoint = 0;
+  Key_DstAddr.addr.shortAddr = 0;
 
-    for( i=0; i<BUTTON_NUM_MAX; i++)
+    for( i=0; i<KEY_NUM_MAX; i++)
     {
         // Fill out the endpoint description.
-        Button_epDesc[i].endPoint = BUTTON_ENDPOINT+i;
-        Button_epDesc[i].task_id = &Button_TaskID;
-        Button_SimpleDesc[i] = Button_SimpleDesc[0];
-        Button_epDesc[i].simpleDesc
-                                            = (SimpleDescriptionFormat_t *)&(Button_SimpleDesc[i]);
-        Button_SimpleDesc[i].EndPoint += i;
-        Button_epDesc[i].latencyReq = noLatencyReqs;
+        Key_epDesc[i].endPoint = KEY_ENDPOINT+i;
+        Key_epDesc[i].task_id = &Key_TaskID;
+        Key_SimpleDesc[i] = Key_SimpleDesc[0];
+        Key_epDesc[i].simpleDesc
+                                            = (SimpleDescriptionFormat_t *)&(Key_SimpleDesc[i]);
+        Key_SimpleDesc[i].EndPoint += i;
+        Key_epDesc[i].latencyReq = noLatencyReqs;
         
         // Register the endpoint description with the AF
-        afRegister( &(Button_epDesc[i]) );
+        afRegister( &(Key_epDesc[i]) );
     }
 
-  button_bindInProgress = 0xffff;
+  key_bindInProgress = 0xffff;
 
   // Register for all key events - This app will handle all key events
-  RegisterForKeys( Button_TaskID );
+  RegisterForKeys( Key_TaskID );
 
   // To Update the display...
-  ZDO_RegisterForZDOMsg( Button_TaskID, Match_Desc_rsp );
+  ZDO_RegisterForZDOMsg( Key_TaskID, Match_Desc_rsp );
 }
 
 /*********************************************************************
- * @fn      Button_ProcessEvent
+ * @fn      Key_ProcessEvent
  *
  * @brief   Generic Application Task event processor.  This function
  *          is called to process all events for the task.  Events
@@ -156,7 +155,7 @@ void Button_Init( byte task_id )
  *
  * @return  none
  */
-UINT16 Button_ProcessEvent( byte task_id, UINT16 events )
+UINT16 Key_ProcessEvent( byte task_id, UINT16 events )
 {
   afIncomingMSGPacket_t *MSGpkt = NULL;
 
@@ -170,49 +169,49 @@ UINT16 Button_ProcessEvent( byte task_id, UINT16 events )
       switch ( MSGpkt->hdr.event )
       {
         case ZDO_CB_MSG:  // 收到被绑定节点的rsp
-          Button_ProcessZDOMsgs( (zdoIncomingMsg_t *)MSGpkt);
+          Key_ProcessZDOMsgs( (zdoIncomingMsg_t *)MSGpkt);
           break;
 
         case KEY_CHANGE:
-          Button_HandleKeys( ((keyChange_t *)MSGpkt)->state, ((keyChange_t *)MSGpkt)->keys );
+          Key_HandleKeys( ((keyChange_t *)MSGpkt)->state, ((keyChange_t *)MSGpkt)->keys );
         break;
       }
       // Release the memory
       osal_msg_deallocate( (uint8 *)MSGpkt );
 
       // Next
-      MSGpkt = (afIncomingMSGPacket_t *)osal_msg_receive( Button_TaskID );
+      MSGpkt = (afIncomingMSGPacket_t *)osal_msg_receive( Key_TaskID );
     }
    return (events ^ SYS_EVENT_MSG);
   }
 
   if( events & MATCH_BIND_EVT ) // 广播 match 绑定
   {
-    if(buttonCnt == BUTTON_NUM_MAX)
+    if(keyCnt == KEY_NUM_MAX)
     {
         // do something
     }
     else
     {
-        Button_BindDevice(TRUE, BUTTON_ENDPOINT+buttonCnt, Button_ClusterList, NULL); 
+        Key_BindDevice(TRUE, KEY_ENDPOINT+keyCnt, Key_ClusterList, NULL); 
     }
     return (events ^ MATCH_BIND_EVT);
   }
   
-  if ( events & BUTTON_BIND_TIMER )
+  if ( events & KEY_BIND_TIMER )
   {
     // Send bind confirm callback to application
-    SAPI_BindConfirm( button_bindInProgress, ZB_TIMEOUT );
-    button_bindInProgress = 0xffff;
+    SAPI_BindConfirm( key_bindInProgress, ZB_TIMEOUT );
+    key_bindInProgress = 0xffff;
 
-    return (events ^ BUTTON_BIND_TIMER);
+    return (events ^ KEY_BIND_TIMER);
   }
   
   return 0;
 }
 
 /*********************************************************************
- * @fn      Button_ProcessZDOMsgs()
+ * @fn      Key_ProcessZDOMsgs()
  *
  * @brief   Process response messages
  *
@@ -220,7 +219,7 @@ UINT16 Button_ProcessEvent( byte task_id, UINT16 events )
  *
  * @return  none
  */
-void Button_ProcessZDOMsgs( zdoIncomingMsg_t *inMsg )
+void Key_ProcessZDOMsgs( zdoIncomingMsg_t *inMsg )
 {
   switch ( inMsg->clusterID )
   {
@@ -229,17 +228,17 @@ void Button_ProcessZDOMsgs( zdoIncomingMsg_t *inMsg )
         zAddrType_t dstAddr;
         ZDO_ActiveEndpointRsp_t *pRsp = ZDO_ParseEPListRsp( inMsg );
 
-        if ( button_bindInProgress != 0xffff )
+        if ( key_bindInProgress != 0xffff )
         {
           uint8 ret = 0;
           // Create a binding table entry
           dstAddr.addrMode = Addr16Bit;
           dstAddr.addr.shortAddr = pRsp->nwkAddr;
           
-           for(char i=0; i<BUTTON_MAX_CLUSTERS; i++)
+           for(char i=0; i<KEY_MAX_CLUSTERS; i++)
           {
-                if ( APSME_BindRequest( Button_epDesc[buttonCnt].simpleDesc->EndPoint,
-                     button_bindInProgress+i, &dstAddr, pRsp->epList[0] ) != ZSuccess )
+                if ( APSME_BindRequest( Key_epDesc[keyCnt].simpleDesc->EndPoint,
+                     key_bindInProgress+i, &dstAddr, pRsp->epList[0] ) != ZSuccess )
                 {
                     ret = 1;
                     break;
@@ -247,14 +246,14 @@ void Button_ProcessZDOMsgs( zdoIncomingMsg_t *inMsg )
           }
           if(ret == ZSuccess)
           {
-            osal_stop_timerEx(Button_TaskID,  BUTTON_BIND_TIMER);
+            osal_stop_timerEx(Key_TaskID,  KEY_BIND_TIMER);
             osal_start_timerEx( ZDAppTaskID, ZDO_NWK_UPDATE_NV, 250 );
             // Find IEEE addr
             ZDP_IEEEAddrReq( pRsp->nwkAddr, ZDP_ADDR_REQTYPE_SINGLE, 0, 0 );
             // Send bind confirm callback to application
-            Sys_BindConfirm( button_bindInProgress, ZB_SUCCESS );
-            button_bindInProgress = 0xffff;
-            buttonCnt++;
+            Sys_BindConfirm( key_bindInProgress, ZB_SUCCESS );
+            key_bindInProgress = 0xffff;
+            keyCnt++;
           }
           else
           {
@@ -267,7 +266,7 @@ void Button_ProcessZDOMsgs( zdoIncomingMsg_t *inMsg )
 }
 
 /******************************************************************************
- * @fn          Button_BindDevice
+ * @fn          Key_BindDevice
  *
  * @brief       The zb_BindDevice function establishes or removes a ��binding? *              between two devices.  Once bound, an application can send
  *              messages to a device by referencing the commandId for the
@@ -280,14 +279,14 @@ void Button_ProcessZDOMsgs( zdoIncomingMsg_t *inMsg )
  * @return      The status of the bind operation is returned in the
  *              Sys_BindConfirm callback.
  */
-void Button_BindDevice ( uint8 create, uint8 endpoint, uint16 *commandId, uint8 *pDestination )
+void Key_BindDevice ( uint8 create, uint8 endpoint, uint16 *commandId, uint8 *pDestination )
 {
   zAddrType_t destination;
   uint8 ret = ZB_ALREADY_IN_PROGRESS;
 
   if ( create )
   {
-    if (button_bindInProgress == 0xffff)
+    if (key_bindInProgress == 0xffff)
     {
       if ( pDestination )
       {
@@ -309,30 +308,30 @@ void Button_BindDevice ( uint8 create, uint8 endpoint, uint16 *commandId, uint8 
         ret = ZB_INVALID_PARAMETER;
         destination.addrMode = Addr16Bit;
         destination.addr.shortAddr = NWK_BROADCAST_SHORTADDR;
-        if ( ZDO_AnyClusterMatches( BUTTON_MAX_CLUSTERS, commandId, Button_epDesc[buttonCnt].simpleDesc->AppNumOutClusters,
-                                                Button_epDesc[buttonCnt].simpleDesc->pAppOutClusterList ) )
+        if ( ZDO_AnyClusterMatches( KEY_MAX_CLUSTERS, commandId, Key_epDesc[keyCnt].simpleDesc->AppNumOutClusters,
+                                                Key_epDesc[keyCnt].simpleDesc->pAppOutClusterList ) )
         {
           // Try to match with a device in the allow bind mode
           ret = ZDP_MatchDescReq( &destination, NWK_BROADCAST_SHORTADDR,
-              Button_epDesc[buttonCnt].simpleDesc->AppProfId, BUTTON_MAX_CLUSTERS, commandId, BUTTON_MAX_CLUSTERS, commandId, 0 );
+              Key_epDesc[keyCnt].simpleDesc->AppProfId, KEY_MAX_CLUSTERS, commandId, KEY_MAX_CLUSTERS, commandId, 0 );
         }
-        else if ( ZDO_AnyClusterMatches( BUTTON_MAX_CLUSTERS, commandId, Button_epDesc[buttonCnt].simpleDesc->AppNumInClusters,
-                                                Button_epDesc[buttonCnt].simpleDesc->pAppInClusterList ) )
+        else if ( ZDO_AnyClusterMatches( KEY_MAX_CLUSTERS, commandId, Key_epDesc[keyCnt].simpleDesc->AppNumInClusters,
+                                                Key_epDesc[keyCnt].simpleDesc->pAppInClusterList ) )
         {
           ret = ZDP_MatchDescReq( &destination, NWK_BROADCAST_SHORTADDR,
-              Button_epDesc[buttonCnt].simpleDesc->AppProfId, BUTTON_MAX_CLUSTERS, commandId, BUTTON_MAX_CLUSTERS, commandId, 0 );
+              Key_epDesc[keyCnt].simpleDesc->AppProfId, KEY_MAX_CLUSTERS, commandId, KEY_MAX_CLUSTERS, commandId, 0 );
         }
 
         if ( ret == ZB_SUCCESS )
         {
           // Set a timer to make sure bind completes
 #if ( ZG_BUILD_RTR_TYPE )
-          osal_start_timerEx(Button_TaskID, BUTTON_BIND_TIMER, AIB_MaxBindingTime);
+          osal_start_timerEx(Key_TaskID, KEY_BIND_TIMER, AIB_MaxBindingTime);
 #else
           // AIB_MaxBindingTime is not defined for an End Device
-          osal_start_timerEx(Button_TaskID, BUTTON_BIND_TIMER, zgApsDefaultMaxBindingTime);
+          osal_start_timerEx(Key_TaskID, KEY_BIND_TIMER, zgApsDefaultMaxBindingTime);
 #endif
-          button_bindInProgress = commandId[0];
+          key_bindInProgress = commandId[0];
           return; // dont send cback event
         }
       }
@@ -357,7 +356,7 @@ void Button_BindDevice ( uint8 create, uint8 endpoint, uint16 *commandId, uint8 
 
 
 /*********************************************************************
- * @fn      Button_HandleKeys
+ * @fn      Key_HandleKeys
  *
  * @brief   Handles all key events for this device.
  *
@@ -370,9 +369,9 @@ void Button_BindDevice ( uint8 create, uint8 endpoint, uint16 *commandId, uint8 
  *
  * @return  none
  */
-void Button_HandleKeys( byte shift, byte keys )
+void Key_HandleKeys( byte shift, byte keys )
 {
-  // Shift is used to make each button/switch dual purpose.
+  // Shift is used to make each key/switch dual purpose.
   if ( shift )
   {
     if ( keys & HAL_KEY_SW_1 )
@@ -419,8 +418,8 @@ void Button_HandleKeys( byte shift, byte keys )
       dstAddr.addr.shortAddr = NWK_BROADCAST_SHORTADDR;
       ZDP_MatchDescReq( &dstAddr, NWK_BROADCAST_SHORTADDR,
                         SYS_PROFID,
-                        SYS_MAX_CLUSTERS, (cId_t *)Button_ClusterList,
-                        SYS_MAX_CLUSTERS, (cId_t *)Button_ClusterList,
+                        SYS_MAX_CLUSTERS, (cId_t *)Key_ClusterList,
+                        SYS_MAX_CLUSTERS, (cId_t *)Key_ClusterList,
                         FALSE );
                         */
     }

@@ -243,7 +243,7 @@ void Motor_ProcessZDOMsgs( zdoIncomingMsg_t *inMsg )
             // Send bind confirm callback to application
             Sys_BindConfirm( motor_bindInProgress, ZB_SUCCESS );
             motor_bindInProgress = 0xffff;
-            motorCnt++;
+            motorCnt++;            
           }
           else
           {

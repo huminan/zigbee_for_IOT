@@ -95,6 +95,8 @@ UINT16 Motor_ProcessEvent( byte task_id, UINT16 events );
 static void Motor_ReceiveDataIndication( uint16 source, uint8 endPoint, 
                               uint16 command, uint16 len, uint8 *pData  );
 static void Motor_AllowBindConfirm( uint16 source );
+
+static void Send2Coor(uint8 dev_num, uint16 commandId, uint8 *pData);
 static void MotorAction( uint8 motor, uint16 command, uint16 len, uint8 *pData );
 static void MotorUpdate(uint8 motor, uint8 first_boot);
 static uint8 MotorDone(void);
@@ -309,7 +311,7 @@ void MotorAction( uint8 motor, uint16 command, uint16 len, uint8 *pData )
   uint16 len_t;
   sensor_msg_t *msg_t = NULL;
   len_t = len/OPERATE_MSG_NUM;
-  msg_t = (sensor_msg_t *)malloc(sizeof(sensor_msg_t) * len_t);
+  msg_t = (sensor_msg_t *)osal_mem_alloc(sizeof(sensor_msg_t) * len_t);
   uint16 v;
   uint8 i;
   for(i=0; i<len_t; i++)
@@ -329,7 +331,7 @@ void MotorAction( uint8 motor, uint16 command, uint16 len, uint8 *pData )
   MotorControl[motor].total = len_t;
   MotorControl[motor].status = 0;
   MotorControl[motor].command = command;
-  
+  osal_mem_free(msg_t);
   /**************************** use ',' devide datas
   // devide word between No.3 and No.4 ','
   if(motor>=MOTOR_NUM_MAX)return;   // data error
@@ -390,7 +392,7 @@ void MotorUpdate(uint8 motor, uint8 first_boot)
             if(MotorDone())
             {
                 HalTimerStop();
-                free(MotorControl[motor].msg);
+                osal_mem_free(MotorControl[motor].msg);
             }
             return;
         }
@@ -479,4 +481,11 @@ uint8 MotorDone(void)
     }
     // all is 0 : all is Stop
     return 1;
+}
+
+
+void Send2Coor(uint8 dev_num, uint16 commandId, uint8 *pData)
+{
+    Sys_SendDataRequest( 0xFFFE, &Motor_epDesc[dev_num], commandId, (uint8)osal_strlen( pData ),
+                           pData, sysSeqNumber, 0, 0 );
 }

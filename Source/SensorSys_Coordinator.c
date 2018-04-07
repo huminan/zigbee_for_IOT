@@ -154,7 +154,7 @@ const SimpleDescriptionFormat_t zb_SimpleDesc =
 };
 
 // This is the Endpoint/Interface description.  It is defined here, but
-// filled-in in Button_Init().  Another way to go would be to fill
+// filled-in in Key_Init().  Another way to go would be to fill
 // in the structure here and make it a "const" (in code space).  The
 // way it's defined in this sample app it is define in RAM.
 endPointDesc_t Sys_epDesc;
@@ -459,8 +459,8 @@ void Sys_SendPreBindMessage( byte type_id )
     //(想要绑定什么就对应的 TypeID)
     switch(type_id)
     {
-        case BUTTON_TYPE_ID:
-          osal_start_timerEx(Button_TaskID, MATCH_BIND_EVT, 5000);
+        case KEY_TYPE_ID:
+          osal_start_timerEx(Key_TaskID, MATCH_BIND_EVT, 5000);
           break;
         
         case MOTOR_TYPE_ID:
@@ -480,9 +480,9 @@ void Sys_SendPreBindMessage( byte type_id )
 }
 
 /******************************************************************************
- * @fn          zb_SendDataRequest
+ * @fn          Sys_SendDataRequest
  *
- * @brief       The zb_SendDataRequest function initiates transmission of data
+ * @brief       The Sys_SendDataRequest function initiates transmission of data
  *              to a peer device
  *
  * @param       destination - The destination of the data.  The destination can
@@ -636,7 +636,8 @@ void Sys_SendCback( uint8 event, uint8 status, uint16 data )
  * @brief       The Sys_BindConfirm callback is called by the ZigBee stack
  *              after a bind operation completes.
  *
- * @param       commandId - The command ID of the binding being confirmed.
+ * @param       endpoint - The endpoint of the binding being confirmed.
+ *              src - The 16-bit srcAddr of the binding being confirmed.
  *              status - The status of the bind operation.
  *
  * @return      none
@@ -648,6 +649,18 @@ void Sys_BindConfirm( uint16 commandId, uint8 status )
     // Light D2
     HalLedSet(HAL_LED_3, HAL_LED_MODE_ON);
     HalLedSet(HAL_LED_2, HAL_LED_MODE_OFF);
+    /*  // Search Enddevice's ieee64
+    ZLongAddr_t ext64;
+    if(APSME_LookupNwkAddr( ext64, src ) == TRUE)
+    {
+        SearchExtChain(ext64);
+    }
+    else
+    {
+     // Faild
+      return;
+    }
+   */
     osal_start_timerEx(Sys_TaskID, CLOSE_LIGHT_EVT, 5000);
   }
   else
@@ -691,7 +704,7 @@ const pTaskEventHandlerFn tasksArr[] = {
   ZDApp_event_loop,
 
   Sys_ProcessEvent,
-  Button_ProcessEvent,
+  Key_ProcessEvent,
   Motor_ProcessEvent,
   Switch_ProcessEvent,
   SAPI_ProcessEvent
@@ -727,7 +740,7 @@ void osalInitTasks( void )
   APS_Init( taskID++ );
   ZDApp_Init( taskID++ );
   Sys_Init( taskID++ );
-  Button_Init( taskID++ );
+  Key_Init( taskID++ );
   Motor_Init( taskID++ );
   Switch_Init( taskID++ );
   SAPI_Init( taskID );
