@@ -22,7 +22,8 @@
 /*********************************************************************
  * MACROS
  */
-#define KEY_INIT_MSG_MAX    2
+#define KEY_TOGGLE_PORT_BIT    0
+#define KEY_TOGGLE_EDGE_BIT    1
 
 // #define KEY_INIT_POS_PORT   0
 // #define KEY_INIT_POS_TOGGLE 1
@@ -398,20 +399,25 @@ void KeyAction( uint8 key, uint16 command, uint16 len, uint8 *pData )
   }
   if(command == TOGGLE_INIT_CLUSTER)
   {
-    if(key > 3) // not exist
+    uint8 i;
+    byte *data_p = NULL;
+    data_p = (byte *)osal_mem_alloc(sizeof(byte) * len);
+    for(i=0; i<len; i++, pData++)
+    {
+        data_p[i] = *pData;
+    }
+    if(data_p[KEY_TOGGLE_PORT_BIT] > 3) // not exist
     {
         //send error
         return;
     }
-    uint8 edge;
-    edge = *pData;
-    if(edge == KEY_RISE_EDGE)
+    if(data_p[KEY_TOGGLE_EDGE_BIT] == KEY_RISE_EDGE)
     {
-        PICTL &= ~(0x01<<key);
+        PICTL &= ~(0x01<<data_p[KEY_TOGGLE_PORT_BIT]);
     }
     else
     {
-        PICTL |= 0x01<<key;
+        PICTL |= 0x01<<data_p[KEY_TOGGLE_PORT_BIT];
     }
   }
 }

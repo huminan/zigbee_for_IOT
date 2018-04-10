@@ -68,9 +68,27 @@ void BluetoothInit(byte task_id)
 
 void Bluetooth_Handle(byte *msg)
 {
-    if(msg[MT_RPC_POS_CMD0] == BT_CMD_BIND)
+    if( msg[MT_RPC_POS_CMD0] == BT_CMD_BIND )
     {
        Sys_SendPreBindMessage(msg[MT_RPC_POS_CMD1]);
+    }
+    else if( msg[MT_RPC_POS_CMD0] == BT_CMD_TOGGLE )
+    {
+       if(msg[MT_RPC_POS_CMD1] != KEY_TYPE_ID)
+       {
+         // return error
+         return;
+       }
+       byte *data_p = NULL;
+       uint8 len_t = msg[MT_RPC_POS_LEN];
+       data_p = (byte *)osal_mem_alloc(sizeof(byte) * len_t);
+       for(uint8 i = 0; i<len_t; i++)
+       {
+            data_p[i] = msg[MT_RPC_FRAME_HDR_SZ+i];
+       }
+       Sys_SendDataRequest( 0xFFFE, &Key_epDesc[0], msg[MT_RPC_POS_CMD0], len_t,
+                           data_p, sysSeqNumber, 0, 0 );   // 端点默认第一个，无所谓
+       osal_mem_free(data_p);
     }
     else
     {
