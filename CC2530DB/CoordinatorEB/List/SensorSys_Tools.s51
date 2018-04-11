@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //                                                                            /
-// IAR C/C++ Compiler V8.10.3.10338/W32 for 8051        07/Apr/2018  15:44:49 /
+// IAR C/C++ Compiler V8.10.3.10338/W32 for 8051        11/Apr/2018  15:58:13 /
 // Copyright 2004-2011 IAR Systems AB.                                        /
 //                                                                            /
 //    Core               =  plain                                             /
@@ -275,8 +275,8 @@
         CFI EndCommon cfiCommon0
         
 strlen              SYMBOL "strlen"
-__xdata_malloc      SYMBOL "__xdata_malloc"
-??__xdata_malloc?relay SYMBOL "?relay", __xdata_malloc
+osal_mem_alloc      SYMBOL "osal_mem_alloc"
+??osal_mem_alloc?relay SYMBOL "?relay", osal_mem_alloc
 ??strlen?relay      SYMBOL "?relay", strlen
 Locate_Pos          SYMBOL "Locate_Pos"
 ??Locate_Pos?relay  SYMBOL "?relay", Locate_Pos
@@ -298,15 +298,15 @@ ss_FindObserveList  SYMBOL "ss_FindObserveList"
         ARGFRAME XSTACK, 18, STACK
         ARGFRAME IOVERLAY, 0, STATIC
         ARGFRAME DOVERLAY, 0, STATIC
-        EXTERN __xdata_malloc
-        FUNCTION __xdata_malloc,0202H
+        EXTERN osal_mem_alloc
+        FUNCTION osal_mem_alloc,0202H
         ARGFRAME ISTACK, 0, STACK
         ARGFRAME PSTACK, 0, STACK
         ARGFRAME XSTACK, 14, STACK
         ARGFRAME IOVERLAY, 0, STATIC
         ARGFRAME DOVERLAY, 0, STATIC
-        EXTERN ??__xdata_malloc?relay
-        FUNCTION ??__xdata_malloc?relay,00H
+        EXTERN ??osal_mem_alloc?relay
+        FUNCTION ??osal_mem_alloc?relay,00H
         EXTERN ??strlen?relay
         FUNCTION ??strlen?relay,00H
 
@@ -649,18 +649,7 @@ ss_AddObserveList:
         CFI Function ss_AddObserveList
         CODE
 //   49 {
-        FUNCALL ss_AddObserveList, __xdata_malloc
-        LOCFRAME ISTACK, 0, STACK
-        LOCFRAME PSTACK, 0, STACK
-        LOCFRAME XSTACK, 14, STACK
-        LOCFRAME IOVERLAY, 0, STATIC
-        LOCFRAME DOVERLAY, 0, STATIC
-        ARGFRAME ISTACK, 0, STACK
-        ARGFRAME PSTACK, 0, STACK
-        ARGFRAME XSTACK, 14, STACK
-        ARGFRAME IOVERLAY, 0, STATIC
-        ARGFRAME DOVERLAY, 0, STATIC
-        FUNCALL ss_AddObserveList, __xdata_malloc
+        FUNCALL ss_AddObserveList, osal_mem_alloc
         LOCFRAME ISTACK, 0, STACK
         LOCFRAME PSTACK, 0, STACK
         LOCFRAME XSTACK, 14, STACK
@@ -707,62 +696,30 @@ ss_AddObserveList:
         MOV     A,R3
         MOV     R7,A
         MOV     ?V0 + 2,R1
-//   50     if(ob == NULL)
-        MOV     A,R6
-        ORL     A,R7
+//   50         SensorObserve_t *new_p, *p;
+//   51         new_p = (SensorObserve_t *)osal_mem_alloc(sizeof(SensorObserve_t));
+        ; Setup parameters for call to function osal_mem_alloc
         MOV     R2,#0x3
         MOV     R3,#0x0
-        JNZ     ??ss_AddObserveList_0
-//   51     {
-//   52         SensorObserve_t *new_p;
-//   53         new_p = (SensorObserve_t *)malloc(sizeof(SensorObserve_t));
-        ; Setup parameters for call to function __xdata_malloc
-        LCALL   ??__xdata_malloc?relay
+        LCALL   ??osal_mem_alloc?relay
         MOV     ?V0 + 0,R2
         MOV     ?V0 + 1,R3
-        MOV     R0,?V0 + 0
-        MOV     R1,?V0 + 1
-//   54         new_p->port = port;
-        MOV     DPL,R0
-        MOV     DPH,R1
-        INC     DPTR
-        INC     DPTR
-        MOV     A,?V0 + 2
-        MOVX    @DPTR,A
-//   55         new_p->next = NULL;
-        MOV     DPL,R0
-        MOV     DPH,R1
-        CLR     A
-        MOVX    @DPTR,A
-        INC     DPTR
-        SJMP    ??ss_AddObserveList_1
-//   56         ob = new_p;
-//   57     }
-//   58     else
-//   59     {
-//   60         SensorObserve_t *new_p, *p;
-//   61         new_p = (SensorObserve_t *)malloc(sizeof(SensorObserve_t));
-??ss_AddObserveList_0:
-        ; Setup parameters for call to function __xdata_malloc
-        LCALL   ??__xdata_malloc?relay
-        MOV     ?V0 + 0,R2
-        MOV     ?V0 + 1,R3
-//   62         new_p->port = port;
+//   52         new_p->port = port;
         MOV     DPL,R2
         MOV     DPH,R3
         INC     DPTR
         INC     DPTR
         MOV     A,?V0 + 2
         MOVX    @DPTR,A
-//   63         new_p->next = NULL;
+//   53         new_p->next = NULL;
         MOV     DPL,R2
         MOV     DPH,R3
         CLR     A
         MOVX    @DPTR,A
         INC     DPTR
         MOVX    @DPTR,A
-//   64         p = ss_EndObserveList(ob);
-//   65         p->next = new_p;
+//   54         p = ss_EndObserveList(ob);
+//   55         p->next = new_p;
         ; Setup parameters for call to function ss_EndObserveList
         MOV     A,R6
         MOV     R2,A
@@ -775,23 +732,21 @@ ss_AddObserveList:
         MOVX    @DPTR,A
         INC     DPTR
         MOV     A,?V0 + 1
-??ss_AddObserveList_1:
         MOVX    @DPTR,A
-//   66     }
-//   67 }
+//   56 }
         MOV     R7,#0x6
         LJMP    ?BANKED_LEAVE_XDATA
         CFI EndBlock cfiBlock4
-//   68 
-//   69 
+//   57 
+//   58 
 
         RSEG BANKED_CODE:CODE:NOROOT(0)
-//   70 SensorObserve_t *ss_EndObserveList( SensorObserve_t *ob)
+//   59 SensorObserve_t *ss_EndObserveList( SensorObserve_t *ob)
 ss_EndObserveList:
         CFI Block cfiBlock5 Using cfiCommon0
         CFI Function ss_EndObserveList
         CODE
-//   71 {
+//   60 {
         PUSH    DPL
         CFI DPL0 Frame(CFA_SP, 4)
         CFI CFA_SP SP+-4
@@ -800,12 +755,12 @@ ss_EndObserveList:
         CFI CFA_SP SP+-5
         ; Saved register size: 2
         ; Auto size: 0
-//   72     SensorObserve_t *p;
-//   73     p = ob;
+//   61     SensorObserve_t *p;
+//   62     p = ob;
         SJMP    ??ss_EndObserveList_0
-//   74     while(p->next != NULL)
-//   75     {
-//   76         p = p->next;
+//   63     while(p->next != NULL)
+//   64     {
+//   65         p = p->next;
 ??ss_EndObserveList_1:
         MOV     DPL,R2
         MOV     DPH,R3
@@ -814,7 +769,7 @@ ss_EndObserveList:
         INC     DPTR
         MOVX    A,@DPTR
         MOV     R3,A
-//   77     }
+//   66     }
 ??ss_EndObserveList_0:
         MOV     DPL,R2
         MOV     DPH,R3
@@ -826,20 +781,20 @@ ss_EndObserveList:
         MOV     A,R0
         ORL     A,R1
         JNZ     ??ss_EndObserveList_1
-//   78     return p;
+//   67     return p;
         LJMP    ?Subroutine0 & 0xFFFF
         CFI EndBlock cfiBlock5
-//   79 }
-//   80 
-//   81 
+//   68 }
+//   69 
+//   70 
 
         RSEG BANKED_CODE:CODE:NOROOT(0)
-//   82 SensorObserve_t *ss_FindObserveList( SensorObserve_t *ob, uint8 num)
+//   71 SensorObserve_t *ss_FindObserveList( SensorObserve_t *ob, uint8 num)
 ss_FindObserveList:
         CFI Block cfiBlock6 Using cfiCommon0
         CFI Function ss_FindObserveList
         CODE
-//   83 {
+//   72 {
         PUSH    DPL
         CFI DPL0 Frame(CFA_SP, 4)
         CFI CFA_SP SP+-4
@@ -848,16 +803,16 @@ ss_FindObserveList:
         CFI CFA_SP SP+-5
         ; Saved register size: 2
         ; Auto size: 0
-//   84     SensorObserve_t *p;
-//   85     p = ob;
+//   73     SensorObserve_t *p;
+//   74     p = ob;
         MOV     DPL,R2
         MOV     DPH,R3
-//   86     uint8 i;
-//   87     for(i=0; i<num; i++)
+//   75     uint8 i;
+//   76     for(i=0; i<num; i++)
         MOV     R0,#0x0
         SJMP    ??ss_FindObserveList_0
-//   88     {
-//   89         p = ob->next;
+//   77     {
+//   78         p = ob->next;
 ??ss_FindObserveList_1:
         MOV     DPL,R2
         MOV     DPH,R3
@@ -868,19 +823,19 @@ ss_FindObserveList:
         MOV     R5,A
         MOV     DPL,R4
         MOV     DPH,R5
-//   90     }
+//   79     }
         INC     R0
 ??ss_FindObserveList_0:
         MOV     A,R0
         CLR     C
         SUBB    A,R1
         JC      ??ss_FindObserveList_1
-//   91     return p;
+//   80     return p;
         MOV     R2,DPL
         MOV     R3,DPH
         LJMP    ?Subroutine0 & 0xFFFF
         CFI EndBlock cfiBlock6
-//   92 }
+//   81 }
 
         RSEG BANK_RELAYS:CODE:REORDER:NOROOT(0)
 ??mid?relay:
@@ -919,81 +874,81 @@ ss_FindObserveList:
         DC24    ss_FindObserveList
 
         END
-//   93 
-//   94 #ifndef COOR
-//   95 void ss_KeyDetermine(SensorObserve_t *ob)
-//   96 {
-//   97     if(ob ==NULL)
-//   98     {
-//   99         return;
-//  100     }
-//  101 // estimate *ob first
-//  102     SensorObserve_t *p;
-//  103     p = ob;
-//  104     uint8 count = 0;
-//  105     do{
-//  106         if(p->port < P2_KEY_MAX)
-//  107         {
-//  108             if(PICTL & 0x08)    // P2 in falling edge.
-//  109             {
-//  110                 if(P2 & (0x01 << (p->port + 1)))
-//  111                 {
-//  112                     break;
-//  113                 }
-//  114             }
-//  115             else        // P2 in rising edge.
-//  116             {
-//  117                 if(~(P2 | (0xFF &(0x01 << (p->port + 1)))))
-//  118                 {
-//  119                     break;
-//  120                 }
-//  121             }
-//  122         }
-//  123         else if(p->port < P2_KEY_MAX + P1_KEY_MAXL)
-//  124         {
-//  125             if(PICTL & 0x02)    // P1 L falling edge.
-//  126             {
-//  127                 if(P1 & (0x01 << (p->port - 2)))
-//  128                 {
-//  129                     break;
-//  130                 }
-//  131             }
-//  132             else        // P1 L rising edge.
-//  133             {
-//  134                 if(~(P1 | (0xFF &(0x01 << (p->port - 2)))))
-//  135                 {
-//  136                     break;
-//  137                 }
-//  138             }
-//  139         }
-//  140         else
-//  141         {
-//  142             if(PICTL & 0x04)    // P1 H falling edge.
-//  143             {
-//  144                 if(P1 & (0x01 << (p->port - 2)))
-//  145                 {
-//  146                     break;
-//  147                 }
-//  148             }
-//  149             else        // P1 H rising edge.
-//  150             {
-//  151                 if(~(P1 | (0xFF &(0x01 << (p->port - 2)))))
-//  152                 {
-//  153                     break;
-//  154                 }
-//  155             }
-//  156         }
-//  157         p = p->next;
-//  158         count++;
-//  159     }while(p == NULL);
-//  160     KeySend2Coor(count, OPERATE_CLUSTER, NULL);
-//  161 }
-//  162 #endif
+//   82 
+//   83 #ifndef COOR
+//   84 void ss_KeyDetermine(SensorObserve_t *ob)
+//   85 {
+//   86     if(ob ==NULL)
+//   87     {
+//   88         return;
+//   89     }
+//   90 // estimate *ob first
+//   91     SensorObserve_t *p;
+//   92     p = ob;
+//   93     uint8 count = 0;
+//   94     do{
+//   95         if(p->port < P2_KEY_MAX)
+//   96         {
+//   97             if(PICTL & 0x08)    // P2 in falling edge.
+//   98             {
+//   99                 if(P2 & (0x01 << (p->port + 1)))
+//  100                 {
+//  101                     break;
+//  102                 }
+//  103             }
+//  104             else        // P2 in rising edge.
+//  105             {
+//  106                 if(~(P2 | (0xFF &(0x01 << (p->port + 1)))))
+//  107                 {
+//  108                     break;
+//  109                 }
+//  110             }
+//  111         }
+//  112         else if(p->port < P2_KEY_MAX + P1_KEY_MAXL)
+//  113         {
+//  114             if(PICTL & 0x02)    // P1 L falling edge.
+//  115             {
+//  116                 if(P1 & (0x01 << (p->port - 2)))
+//  117                 {
+//  118                     break;
+//  119                 }
+//  120             }
+//  121             else        // P1 L rising edge.
+//  122             {
+//  123                 if(~(P1 | (0xFF &(0x01 << (p->port - 2)))))
+//  124                 {
+//  125                     break;
+//  126                 }
+//  127             }
+//  128         }
+//  129         else
+//  130         {
+//  131             if(PICTL & 0x04)    // P1 H falling edge.
+//  132             {
+//  133                 if(P1 & (0x01 << (p->port - 2)))
+//  134                 {
+//  135                     break;
+//  136                 }
+//  137             }
+//  138             else        // P1 H rising edge.
+//  139             {
+//  140                 if(~(P1 | (0xFF &(0x01 << (p->port - 2)))))
+//  141                 {
+//  142                     break;
+//  143                 }
+//  144             }
+//  145         }
+//  146         p = p->next;
+//  147         count++;
+//  148     }while(p == NULL);
+//  149     KeySend2Coor(count, OPERATE_CLUSTER, NULL);
+//  150 }
+//  151 #endif
 // 
-// 467 bytes in segment BANKED_CODE
+// 434 bytes in segment BANKED_CODE
 //  36 bytes in segment BANK_RELAYS
 // 
-// 503 bytes of CODE memory
+// 470 bytes of CODE memory
 //
 //Errors: none
 //Warnings: 1

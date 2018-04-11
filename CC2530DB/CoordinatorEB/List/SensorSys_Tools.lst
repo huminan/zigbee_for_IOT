@@ -1,6 +1,6 @@
 ###############################################################################
 #                                                                             #
-# IAR C/C++ Compiler V8.10.3.10338/W32 for 8051         07/Apr/2018  15:44:49 #
+# IAR C/C++ Compiler V8.10.3.10338/W32 for 8051         11/Apr/2018  15:58:13 #
 # Copyright 2004-2011 IAR Systems AB.                                         #
 #                                                                             #
 #    Core               =  plain                                              #
@@ -400,97 +400,63 @@ Warning[Pe167]: argument of type "unsigned char *" is incompatible with
    \   000007   EB           MOV     A,R3
    \   000008   FF           MOV     R7,A
    \   000009   89..         MOV     ?V0 + 2,R1
-     50              if(ob == NULL)
-   \   00000B   EE           MOV     A,R6
-   \   00000C   4F           ORL     A,R7
-   \   00000D   7A03         MOV     R2,#0x3
-   \   00000F   7B00         MOV     R3,#0x0
-   \   000011   701D         JNZ     ??ss_AddObserveList_0
-     51              {
-     52                  SensorObserve_t *new_p;
-     53                  new_p = (SensorObserve_t *)malloc(sizeof(SensorObserve_t));
-   \   000013                ; Setup parameters for call to function __xdata_malloc
-   \   000013   12....       LCALL   ??__xdata_malloc?relay
-   \   000016   8A..         MOV     ?V0 + 0,R2
-   \   000018   8B..         MOV     ?V0 + 1,R3
-   \   00001A   A8..         MOV     R0,?V0 + 0
-   \   00001C   A9..         MOV     R1,?V0 + 1
-     54                  new_p->port = port;
-   \   00001E   8882         MOV     DPL,R0
-   \   000020   8983         MOV     DPH,R1
-   \   000022   A3           INC     DPTR
-   \   000023   A3           INC     DPTR
-   \   000024   E5..         MOV     A,?V0 + 2
+     50                  SensorObserve_t *new_p, *p;
+     51                  new_p = (SensorObserve_t *)osal_mem_alloc(sizeof(SensorObserve_t));
+   \   00000B                ; Setup parameters for call to function osal_mem_alloc
+   \   00000B   7A03         MOV     R2,#0x3
+   \   00000D   7B00         MOV     R3,#0x0
+   \   00000F   12....       LCALL   ??osal_mem_alloc?relay
+   \   000012   8A..         MOV     ?V0 + 0,R2
+   \   000014   8B..         MOV     ?V0 + 1,R3
+     52                  new_p->port = port;
+   \   000016   8A82         MOV     DPL,R2
+   \   000018   8B83         MOV     DPH,R3
+   \   00001A   A3           INC     DPTR
+   \   00001B   A3           INC     DPTR
+   \   00001C   E5..         MOV     A,?V0 + 2
+   \   00001E   F0           MOVX    @DPTR,A
+     53                  new_p->next = NULL;
+   \   00001F   8A82         MOV     DPL,R2
+   \   000021   8B83         MOV     DPH,R3
+   \   000023   E4           CLR     A
+   \   000024   F0           MOVX    @DPTR,A
+   \   000025   A3           INC     DPTR
    \   000026   F0           MOVX    @DPTR,A
-     55                  new_p->next = NULL;
-   \   000027   8882         MOV     DPL,R0
-   \   000029   8983         MOV     DPH,R1
-   \   00002B   E4           CLR     A
-   \   00002C   F0           MOVX    @DPTR,A
-   \   00002D   A3           INC     DPTR
-   \   00002E   8029         SJMP    ??ss_AddObserveList_1
-     56                  ob = new_p;
-     57              }
-     58              else
-     59              {
-     60                  SensorObserve_t *new_p, *p;
-     61                  new_p = (SensorObserve_t *)malloc(sizeof(SensorObserve_t));
-   \                     ??ss_AddObserveList_0:
-   \   000030                ; Setup parameters for call to function __xdata_malloc
-   \   000030   12....       LCALL   ??__xdata_malloc?relay
-   \   000033   8A..         MOV     ?V0 + 0,R2
-   \   000035   8B..         MOV     ?V0 + 1,R3
-     62                  new_p->port = port;
-   \   000037   8A82         MOV     DPL,R2
-   \   000039   8B83         MOV     DPH,R3
-   \   00003B   A3           INC     DPTR
-   \   00003C   A3           INC     DPTR
-   \   00003D   E5..         MOV     A,?V0 + 2
-   \   00003F   F0           MOVX    @DPTR,A
-     63                  new_p->next = NULL;
-   \   000040   8A82         MOV     DPL,R2
-   \   000042   8B83         MOV     DPH,R3
-   \   000044   E4           CLR     A
-   \   000045   F0           MOVX    @DPTR,A
-   \   000046   A3           INC     DPTR
-   \   000047   F0           MOVX    @DPTR,A
-     64                  p = ss_EndObserveList(ob);
-     65                  p->next = new_p;
-   \   000048                ; Setup parameters for call to function ss_EndObserveList
-   \   000048   EE           MOV     A,R6
-   \   000049   FA           MOV     R2,A
-   \   00004A   EF           MOV     A,R7
-   \   00004B   FB           MOV     R3,A
-   \   00004C   12....       LCALL   ??ss_EndObserveList?relay
-   \   00004F   8A82         MOV     DPL,R2
-   \   000051   8B83         MOV     DPH,R3
-   \   000053   E5..         MOV     A,?V0 + 0
-   \   000055   F0           MOVX    @DPTR,A
-   \   000056   A3           INC     DPTR
-   \   000057   E5..         MOV     A,?V0 + 1
-   \                     ??ss_AddObserveList_1:
-   \   000059   F0           MOVX    @DPTR,A
-     66              }
-     67          }
-   \   00005A   7F06         MOV     R7,#0x6
-   \   00005C   02....       LJMP    ?BANKED_LEAVE_XDATA
-     68          
-     69          
+     54                  p = ss_EndObserveList(ob);
+     55                  p->next = new_p;
+   \   000027                ; Setup parameters for call to function ss_EndObserveList
+   \   000027   EE           MOV     A,R6
+   \   000028   FA           MOV     R2,A
+   \   000029   EF           MOV     A,R7
+   \   00002A   FB           MOV     R3,A
+   \   00002B   12....       LCALL   ??ss_EndObserveList?relay
+   \   00002E   8A82         MOV     DPL,R2
+   \   000030   8B83         MOV     DPH,R3
+   \   000032   E5..         MOV     A,?V0 + 0
+   \   000034   F0           MOVX    @DPTR,A
+   \   000035   A3           INC     DPTR
+   \   000036   E5..         MOV     A,?V0 + 1
+   \   000038   F0           MOVX    @DPTR,A
+     56          }
+   \   000039   7F06         MOV     R7,#0x6
+   \   00003B   02....       LJMP    ?BANKED_LEAVE_XDATA
+     57          
+     58          
 
    \                                 In  segment BANKED_CODE, align 1, keep-with-next
-     70          SensorObserve_t *ss_EndObserveList( SensorObserve_t *ob)
+     59          SensorObserve_t *ss_EndObserveList( SensorObserve_t *ob)
    \                     ss_EndObserveList:
-     71          {
+     60          {
    \   000000   C082         PUSH    DPL
    \   000002   C083         PUSH    DPH
    \   000004                ; Saved register size: 2
    \   000004                ; Auto size: 0
-     72              SensorObserve_t *p;
-     73              p = ob;
+     61              SensorObserve_t *p;
+     62              p = ob;
    \   000004   8009         SJMP    ??ss_EndObserveList_0
-     74              while(p->next != NULL)
-     75              {
-     76                  p = p->next;
+     63              while(p->next != NULL)
+     64              {
+     65                  p = p->next;
    \                     ??ss_EndObserveList_1:
    \   000006   8A82         MOV     DPL,R2
    \   000008   8B83         MOV     DPH,R3
@@ -499,7 +465,7 @@ Warning[Pe167]: argument of type "unsigned char *" is incompatible with
    \   00000C   A3           INC     DPTR
    \   00000D   E0           MOVX    A,@DPTR
    \   00000E   FB           MOV     R3,A
-     77              }
+     66              }
    \                     ??ss_EndObserveList_0:
    \   00000F   8A82         MOV     DPL,R2
    \   000011   8B83         MOV     DPH,R3
@@ -511,30 +477,30 @@ Warning[Pe167]: argument of type "unsigned char *" is incompatible with
    \   000018   E8           MOV     A,R0
    \   000019   49           ORL     A,R1
    \   00001A   70EA         JNZ     ??ss_EndObserveList_1
-     78              return p;
+     67              return p;
    \   00001C   02....       LJMP    ?Subroutine0 & 0xFFFF
-     79          }
-     80          
-     81          
+     68          }
+     69          
+     70          
 
    \                                 In  segment BANKED_CODE, align 1, keep-with-next
-     82          SensorObserve_t *ss_FindObserveList( SensorObserve_t *ob, uint8 num)
+     71          SensorObserve_t *ss_FindObserveList( SensorObserve_t *ob, uint8 num)
    \                     ss_FindObserveList:
-     83          {
+     72          {
    \   000000   C082         PUSH    DPL
    \   000002   C083         PUSH    DPH
    \   000004                ; Saved register size: 2
    \   000004                ; Auto size: 0
-     84              SensorObserve_t *p;
-     85              p = ob;
+     73              SensorObserve_t *p;
+     74              p = ob;
    \   000004   8A82         MOV     DPL,R2
    \   000006   8B83         MOV     DPH,R3
-     86              uint8 i;
-     87              for(i=0; i<num; i++)
+     75              uint8 i;
+     76              for(i=0; i<num; i++)
    \   000008   7800         MOV     R0,#0x0
    \   00000A   800E         SJMP    ??ss_FindObserveList_0
-     88              {
-     89                  p = ob->next;
+     77              {
+     78                  p = ob->next;
    \                     ??ss_FindObserveList_1:
    \   00000C   8A82         MOV     DPL,R2
    \   00000E   8B83         MOV     DPH,R3
@@ -545,18 +511,18 @@ Warning[Pe167]: argument of type "unsigned char *" is incompatible with
    \   000014   FD           MOV     R5,A
    \   000015   8C82         MOV     DPL,R4
    \   000017   8D83         MOV     DPH,R5
-     90              }
+     79              }
    \   000019   08           INC     R0
    \                     ??ss_FindObserveList_0:
    \   00001A   E8           MOV     A,R0
    \   00001B   C3           CLR     C
    \   00001C   99           SUBB    A,R1
    \   00001D   40ED         JC      ??ss_FindObserveList_1
-     91              return p;
+     80              return p;
    \   00001F   AA82         MOV     R2,DPL
    \   000021   AB83         MOV     R3,DPH
    \   000023   02....       LJMP    ?Subroutine0 & 0xFFFF
-     92          }
+     81          }
 
    \                                 In  segment BANK_RELAYS, align 1
    \                     ??mid?relay:
@@ -587,76 +553,76 @@ Warning[Pe167]: argument of type "unsigned char *" is incompatible with
    \                     ??ss_FindObserveList?relay:
    \   000000   12....       LCALL   ?BDISPATCH
    \   000003   ......       DC24    ss_FindObserveList
-     93          
-     94          #ifndef COOR
-     95          void ss_KeyDetermine(SensorObserve_t *ob)
-     96          {
-     97              if(ob ==NULL)
-     98              {
-     99                  return;
-    100              }
-    101          // estimate *ob first
-    102              SensorObserve_t *p;
-    103              p = ob;
-    104              uint8 count = 0;
-    105              do{
-    106                  if(p->port < P2_KEY_MAX)
-    107                  {
-    108                      if(PICTL & 0x08)    // P2 in falling edge.
-    109                      {
-    110                          if(P2 & (0x01 << (p->port + 1)))
-    111                          {
-    112                              break;
-    113                          }
-    114                      }
-    115                      else        // P2 in rising edge.
-    116                      {
-    117                          if(~(P2 | (0xFF &(0x01 << (p->port + 1)))))
-    118                          {
-    119                              break;
-    120                          }
-    121                      }
-    122                  }
-    123                  else if(p->port < P2_KEY_MAX + P1_KEY_MAXL)
-    124                  {
-    125                      if(PICTL & 0x02)    // P1 L falling edge.
-    126                      {
-    127                          if(P1 & (0x01 << (p->port - 2)))
-    128                          {
-    129                              break;
-    130                          }
-    131                      }
-    132                      else        // P1 L rising edge.
-    133                      {
-    134                          if(~(P1 | (0xFF &(0x01 << (p->port - 2)))))
-    135                          {
-    136                              break;
-    137                          }
-    138                      }
-    139                  }
-    140                  else
-    141                  {
-    142                      if(PICTL & 0x04)    // P1 H falling edge.
-    143                      {
-    144                          if(P1 & (0x01 << (p->port - 2)))
-    145                          {
-    146                              break;
-    147                          }
-    148                      }
-    149                      else        // P1 H rising edge.
-    150                      {
-    151                          if(~(P1 | (0xFF &(0x01 << (p->port - 2)))))
-    152                          {
-    153                              break;
-    154                          }
-    155                      }
-    156                  }
-    157                  p = p->next;
-    158                  count++;
-    159              }while(p == NULL);
-    160              KeySend2Coor(count, OPERATE_CLUSTER, NULL);
-    161          }
-    162          #endif
+     82          
+     83          #ifndef COOR
+     84          void ss_KeyDetermine(SensorObserve_t *ob)
+     85          {
+     86              if(ob ==NULL)
+     87              {
+     88                  return;
+     89              }
+     90          // estimate *ob first
+     91              SensorObserve_t *p;
+     92              p = ob;
+     93              uint8 count = 0;
+     94              do{
+     95                  if(p->port < P2_KEY_MAX)
+     96                  {
+     97                      if(PICTL & 0x08)    // P2 in falling edge.
+     98                      {
+     99                          if(P2 & (0x01 << (p->port + 1)))
+    100                          {
+    101                              break;
+    102                          }
+    103                      }
+    104                      else        // P2 in rising edge.
+    105                      {
+    106                          if(~(P2 | (0xFF &(0x01 << (p->port + 1)))))
+    107                          {
+    108                              break;
+    109                          }
+    110                      }
+    111                  }
+    112                  else if(p->port < P2_KEY_MAX + P1_KEY_MAXL)
+    113                  {
+    114                      if(PICTL & 0x02)    // P1 L falling edge.
+    115                      {
+    116                          if(P1 & (0x01 << (p->port - 2)))
+    117                          {
+    118                              break;
+    119                          }
+    120                      }
+    121                      else        // P1 L rising edge.
+    122                      {
+    123                          if(~(P1 | (0xFF &(0x01 << (p->port - 2)))))
+    124                          {
+    125                              break;
+    126                          }
+    127                      }
+    128                  }
+    129                  else
+    130                  {
+    131                      if(PICTL & 0x04)    // P1 H falling edge.
+    132                      {
+    133                          if(P1 & (0x01 << (p->port - 2)))
+    134                          {
+    135                              break;
+    136                          }
+    137                      }
+    138                      else        // P1 H rising edge.
+    139                      {
+    140                          if(~(P1 | (0xFF &(0x01 << (p->port - 2)))))
+    141                          {
+    142                              break;
+    143                          }
+    144                      }
+    145                  }
+    146                  p = p->next;
+    147                  count++;
+    148              }while(p == NULL);
+    149              KeySend2Coor(count, OPERATE_CLUSTER, NULL);
+    150          }
+    151          #endif
 
    Maximum stack usage in bytes:
 
@@ -667,8 +633,7 @@ Warning[Pe167]: argument of type "unsigned char *" is incompatible with
      mid                        1      0     22
        -> strlen                0      0     36
      ss_AddObserveList          1      0     14
-       -> __xdata_malloc        0      0     28
-       -> __xdata_malloc        0      0     28
+       -> osal_mem_alloc        0      0     28
        -> ss_EndObserveList     0      0     28
      ss_EndObserveList          2      0     14
      ss_FindObserveList         2      0      0
@@ -682,7 +647,7 @@ Warning[Pe167]: argument of type "unsigned char *" is incompatible with
      Locate_Pos                   49
      ?Subroutine0                  7
      Num_Pos                      49
-     ss_AddObserveList            95
+     ss_AddObserveList            62
      ss_EndObserveList            31
      ss_FindObserveList           38
      ??mid?relay                   6
@@ -693,10 +658,10 @@ Warning[Pe167]: argument of type "unsigned char *" is incompatible with
      ??ss_FindObserveList?relay    6
 
  
- 467 bytes in segment BANKED_CODE
+ 434 bytes in segment BANKED_CODE
   36 bytes in segment BANK_RELAYS
  
- 503 bytes of CODE memory
+ 470 bytes of CODE memory
 
 Errors: none
 Warnings: 1

@@ -89,6 +89,7 @@ void Key_HandleKeys( byte shift, byte keys );
 
 void Key_BindDevice ( uint8 create, uint8 endpoint, uint16 *commandId, uint8 *pDestination );
 
+static void Key_ReceiveDataIndication( uint16 source, uint8 endPoint, uint16 command, uint16 len, uint8 *pData  );
 static void SAPI_BindConfirm( uint16 commandId, uint8 status );
 /*********************************************************************
  * @fn      Key_Init
@@ -174,7 +175,12 @@ UINT16 Key_ProcessEvent( byte task_id, UINT16 events )
 
         case KEY_CHANGE:
           Key_HandleKeys( ((keyChange_t *)MSGpkt)->state, ((keyChange_t *)MSGpkt)->keys );
-        break;
+          break;
+          
+        case AF_INCOMING_MSG_CMD:
+          Key_ReceiveDataIndication( MSGpkt->srcAddr.addr.shortAddr, MSGpkt->endPoint, MSGpkt->clusterId,
+                                    MSGpkt->cmd.DataLength, MSGpkt->cmd.Data);
+          break;
       }
       // Release the memory
       osal_msg_deallocate( (uint8 *)MSGpkt );
@@ -423,6 +429,36 @@ void Key_HandleKeys( byte shift, byte keys )
                         FALSE );
                         */
     }
+  }
+}
+
+
+/******************************************************************************
+ * @fn          Key_ReceiveDataIndication
+ *
+ * @brief       The SAPI_ReceiveDataIndication callback function is called
+ *              asynchronously by the ZigBee stack to notify the application
+ *              when data is received from a peer device.
+ *
+ * @param       source - The short address of the peer device that sent the data
+ *              command - The commandId associated with the data
+ *              len - The number of bytes in the pData parameter
+ *              pData - The data sent by the peer device
+ *
+ * @return      none
+ */
+void Key_ReceiveDataIndication( uint16 source, uint8 endPoint, uint16 command, uint16 len, uint8 *pData  )
+{
+  uint8 *buff = (uint8 *)osal_mem_alloc(sizeof(uint8)*(len+1));
+  uint8 i;
+  buff[0] = endPoint - KEY_ENDPOINT;
+  for(i=1; i<len+1; i++,pData++)
+  {
+    buff[i] = *pData;
+  }
+  if(command == OPERATE_CLUSTER)
+  {
+    HalUARTWrite(0, buff, (byte)osal_strlen( buff ) + 1);
   }
 }
 
