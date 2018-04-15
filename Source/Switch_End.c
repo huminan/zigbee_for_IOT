@@ -394,6 +394,7 @@ void SwitchUpdate(uint8 sw, uint8 first_boot)
  */
 void Switch_AllowBindConfirm( uint16 source )
 {
+     swCnt++;
      Sys_AllowBindConfirm(source);
 }
 

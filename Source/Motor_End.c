@@ -272,6 +272,7 @@ void Motor_ReceiveDataIndication( uint16 source, uint8 endPoint, uint16 command,
  */
 void Motor_AllowBindConfirm( uint16 source )
 {
+     motorCnt++;
      Sys_AllowBindConfirm(source);
 }
 

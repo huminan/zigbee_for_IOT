@@ -86,9 +86,8 @@ void Bluetooth_Handle(byte *msg)
        {
             data_p[i] = msg[MT_RPC_FRAME_HDR_SZ+i];
        }
-       Sys_SendDataRequest( 0xFFFE, &Key_epDesc[0], msg[MT_RPC_POS_CMD0], len_t,
-                           data_p, sysSeqNumber, 0, 0 );   // 端点默认第一个，无所谓
-       osal_mem_free(data_p);
+       Sys_SendDataRequest( 0xFFFE, Key_epDesc[0], msg[MT_RPC_POS_CMD0], len_t,
+                           data_p, sysSeqNumber, 0, 0 );   // 端点默认第一个，无所�?       osal_mem_free(data_p);
     }
     else
     {
@@ -107,7 +106,7 @@ void Bluetooth_Handle(byte *msg)
        switch(msg[MT_RPC_POS_CMD1])
        {
            case KEY_TYPE_ID:
-             Sys_SendDataRequest( 0xFFFE, &Key_epDesc[dev_num], msg[MT_RPC_POS_CMD0], len_t,
+             Sys_SendDataRequest( 0xFFFE, Key_epDesc[dev_num], msg[MT_RPC_POS_CMD0], len_t,
                            data_p, sysSeqNumber, 0, 0 );
              break;
              

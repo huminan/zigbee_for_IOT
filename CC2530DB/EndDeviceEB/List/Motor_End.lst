@@ -1,6 +1,6 @@
 ###############################################################################
 #                                                                             #
-# IAR C/C++ Compiler V8.10.3.10338/W32 for 8051         07/Apr/2018  16:26:44 #
+# IAR C/C++ Compiler V8.10.3.10338/W32 for 8051         15/Apr/2018  22:48:21 #
 # Copyright 2004-2011 IAR Systems AB.                                         #
 #                                                                             #
 #    Core               =  plain                                              #
@@ -512,7 +512,7 @@ D:\ProgramData\Hardware\zigbee\Projects\zstack\Samples\SensorSys\Source\Motor_En
     179              {
     180                  MSGpkt = (afIncomingMSGPacket_t *)osal_msg_receive( task_id );
    \   000010                ; Setup parameters for call to function osal_msg_receive
-   \   000010   8012         SJMP    ??Motor_ProcessEvent_1
+   \   000010   8018         SJMP    ??Motor_ProcessEvent_1
     181                  while ( MSGpkt )
     182                  {
     183                    switch ( MSGpkt->hdr.event )
@@ -525,257 +525,261 @@ D:\ProgramData\Hardware\zigbee\Projects\zstack\Samples\SensorSys\Source\Motor_En
     190                      case ZDO_MATCH_DESC_RSP_SENT:
     191                          Motor_AllowBindConfirm( ((ZDO_MatchDescRspSent_t *)MSGpkt)->nwkAddr );
    \                     ??Motor_ProcessEvent_2:
-   \   000012                ; Setup parameters for call to function Sys_AllowBindConfirm
    \   000012   12....       LCALL   ?Subroutine22 & 0xFFFF
    \                     ??CrossCallReturnLabel_54:
-   \   000015   12....       LCALL   ??Sys_AllowBindConfirm?relay
+   \   000015   90....       MOV     DPTR,#motorCnt
+   \   000018   E0           MOVX    A,@DPTR
+   \   000019   04           INC     A
+   \   00001A   F0           MOVX    @DPTR,A
+   \   00001B                ; Setup parameters for call to function Sys_AllowBindConfirm
+   \   00001B   12....       LCALL   ??Sys_AllowBindConfirm?relay
     192                          break;
     193                    }
     194                    // Release the memory
     195                    osal_msg_deallocate( (uint8 *)MSGpkt );
    \                     ??Motor_ProcessEvent_3:
-   \   000018                ; Setup parameters for call to function osal_msg_deallocate
-   \   000018   AA..         MOV     R2,?V0 + 0
-   \   00001A   AB..         MOV     R3,?V0 + 1
-   \   00001C   12....       LCALL   ??osal_msg_deallocate?relay
+   \   00001E                ; Setup parameters for call to function osal_msg_deallocate
+   \   00001E   AA..         MOV     R2,?V0 + 0
+   \   000020   AB..         MOV     R3,?V0 + 1
+   \   000022   12....       LCALL   ??osal_msg_deallocate?relay
     196              
     197                    // Next
     198                    MSGpkt = (afIncomingMSGPacket_t *)osal_msg_receive( Motor_TaskID );
-   \   00001F                ; Setup parameters for call to function osal_msg_receive
-   \   00001F   90....       MOV     DPTR,#Motor_TaskID
-   \   000022   E0           MOVX    A,@DPTR
-   \   000023   F9           MOV     R1,A
+   \   000025                ; Setup parameters for call to function osal_msg_receive
+   \   000025   90....       MOV     DPTR,#Motor_TaskID
+   \   000028   E0           MOVX    A,@DPTR
+   \   000029   F9           MOV     R1,A
    \                     ??Motor_ProcessEvent_1:
-   \   000024   12....       LCALL   ??osal_msg_receive?relay
-   \   000027   8A..         MOV     ?V0 + 0,R2
-   \   000029   8B..         MOV     ?V0 + 1,R3
-   \   00002B   E5..         MOV     A,?V0 + 0
-   \   00002D   45..         ORL     A,?V0 + 1
-   \   00002F   6056         JZ      ??Motor_ProcessEvent_4
-   \   000031   85..82       MOV     DPL,?V0 + 0
-   \   000034   85..83       MOV     DPH,?V0 + 1
-   \   000037   E0           MOVX    A,@DPTR
-   \   000038   24E6         ADD     A,#-0x1a
-   \   00003A   6006         JZ      ??Motor_ProcessEvent_5
-   \   00003C   2448         ADD     A,#0x48
-   \   00003E   60D2         JZ      ??Motor_ProcessEvent_2
-   \   000040   80D6         SJMP    ??Motor_ProcessEvent_3
+   \   00002A   12....       LCALL   ??osal_msg_receive?relay
+   \   00002D   8A..         MOV     ?V0 + 0,R2
+   \   00002F   8B..         MOV     ?V0 + 1,R3
+   \   000031   E5..         MOV     A,?V0 + 0
+   \   000033   45..         ORL     A,?V0 + 1
+   \   000035   6056         JZ      ??Motor_ProcessEvent_4
+   \   000037   85..82       MOV     DPL,?V0 + 0
+   \   00003A   85..83       MOV     DPH,?V0 + 1
+   \   00003D   E0           MOVX    A,@DPTR
+   \   00003E   24E6         ADD     A,#-0x1a
+   \   000040   6006         JZ      ??Motor_ProcessEvent_5
+   \   000042   2448         ADD     A,#0x48
+   \   000044   60CC         JZ      ??Motor_ProcessEvent_2
+   \   000046   80D6         SJMP    ??Motor_ProcessEvent_3
    \                     ??Motor_ProcessEvent_5:
-   \   000042                ; Setup parameters for call to function MotorAction
-   \   000042   E5..         MOV     A,?V0 + 0
-   \   000044   2422         ADD     A,#0x22
-   \   000046   F582         MOV     DPL,A
-   \   000048   E5..         MOV     A,?V0 + 1
-   \   00004A   3400         ADDC    A,#0x0
-   \   00004C   F583         MOV     DPH,A
-   \   00004E   12....       LCALL   ?PUSH_XSTACK8_X_TWO
-   \   000051   E5..         MOV     A,?V0 + 0
-   \   000053   2420         ADD     A,#0x20
-   \   000055   F582         MOV     DPL,A
-   \   000057   E5..         MOV     A,?V0 + 1
-   \   000059   3400         ADDC    A,#0x0
-   \   00005B   F583         MOV     DPH,A
-   \   00005D   E0           MOVX    A,@DPTR
-   \   00005E   FC           MOV     R4,A
-   \   00005F   A3           INC     DPTR
-   \   000060   E0           MOVX    A,@DPTR
-   \   000061   FD           MOV     R5,A
-   \   000062   85..82       MOV     DPL,?V0 + 0
-   \   000065   85..83       MOV     DPH,?V0 + 1
-   \   000068   A3           INC     DPTR
-   \   000069   A3           INC     DPTR
-   \   00006A   12....       LCALL   ?Subroutine22 & 0xFFFF
+   \   000048                ; Setup parameters for call to function MotorAction
+   \   000048   E5..         MOV     A,?V0 + 0
+   \   00004A   2422         ADD     A,#0x22
+   \   00004C   F582         MOV     DPL,A
+   \   00004E   E5..         MOV     A,?V0 + 1
+   \   000050   3400         ADDC    A,#0x0
+   \   000052   F583         MOV     DPH,A
+   \   000054   12....       LCALL   ?PUSH_XSTACK8_X_TWO
+   \   000057   E5..         MOV     A,?V0 + 0
+   \   000059   2420         ADD     A,#0x20
+   \   00005B   F582         MOV     DPL,A
+   \   00005D   E5..         MOV     A,?V0 + 1
+   \   00005F   3400         ADDC    A,#0x0
+   \   000061   F583         MOV     DPH,A
+   \   000063   E0           MOVX    A,@DPTR
+   \   000064   FC           MOV     R4,A
+   \   000065   A3           INC     DPTR
+   \   000066   E0           MOVX    A,@DPTR
+   \   000067   FD           MOV     R5,A
+   \   000068   85..82       MOV     DPL,?V0 + 0
+   \   00006B   85..83       MOV     DPH,?V0 + 1
+   \   00006E   A3           INC     DPTR
+   \   00006F   A3           INC     DPTR
+   \   000070   12....       LCALL   ?Subroutine22 & 0xFFFF
    \                     ??CrossCallReturnLabel_55:
-   \   00006D   E5..         MOV     A,?V0 + 0
-   \   00006F   2414         ADD     A,#0x14
-   \   000071   F582         MOV     DPL,A
-   \   000073   E5..         MOV     A,?V0 + 1
-   \   000075   3400         ADDC    A,#0x0
-   \   000077   F583         MOV     DPH,A
-   \   000079   E0           MOVX    A,@DPTR
-   \   00007A   2492         ADD     A,#-0x6e
-   \   00007C   F9           MOV     R1,A
-   \   00007D   12....       LCALL   ??MotorAction?relay
-   \   000080   7402         MOV     A,#0x2
-   \   000082   12....       LCALL   ?DEALLOC_XSTACK8
-   \   000085   8091         SJMP    ??Motor_ProcessEvent_3
+   \   000073   E5..         MOV     A,?V0 + 0
+   \   000075   2414         ADD     A,#0x14
+   \   000077   F582         MOV     DPL,A
+   \   000079   E5..         MOV     A,?V0 + 1
+   \   00007B   3400         ADDC    A,#0x0
+   \   00007D   F583         MOV     DPH,A
+   \   00007F   E0           MOVX    A,@DPTR
+   \   000080   2492         ADD     A,#-0x6e
+   \   000082   F9           MOV     R1,A
+   \   000083   12....       LCALL   ??MotorAction?relay
+   \   000086   7402         MOV     A,#0x2
+   \   000088   12....       LCALL   ?DEALLOC_XSTACK8
+   \   00008B   8091         SJMP    ??Motor_ProcessEvent_3
     199                  }
     200                  return (events ^ SYS_EVENT_MSG);
    \                     ??Motor_ProcessEvent_4:
-   \   000087   EE           MOV     A,R6
-   \   000088   FA           MOV     R2,A
-   \   000089   EF           MOV     A,R7
-   \   00008A   6480         XRL     A,#0x80
-   \   00008C   FB           MOV     R3,A
-   \   00008D   02....       LJMP    ??Motor_ProcessEvent_6 & 0xFFFF
+   \   00008D   EE           MOV     A,R6
+   \   00008E   FA           MOV     R2,A
+   \   00008F   EF           MOV     A,R7
+   \   000090   6480         XRL     A,#0x80
+   \   000092   FB           MOV     R3,A
+   \   000093   02....       LJMP    ??Motor_ProcessEvent_6 & 0xFFFF
     201              }
     202              if ( (events & 0xFF00) & MOTOR_UPDATE_EVT )
    \                     ??Motor_ProcessEvent_0:
-   \   000090   EF           MOV     A,R7
-   \   000091   5450         ANL     A,#0x50
-   \   000093   7003         JNZ     $+5
-   \   000095   02....       LJMP    ??Motor_ProcessEvent_7 & 0xFFFF
+   \   000096   EF           MOV     A,R7
+   \   000097   5450         ANL     A,#0x50
+   \   000099   7003         JNZ     $+5
+   \   00009B   02....       LJMP    ??Motor_ProcessEvent_7 & 0xFFFF
     203              {
     204                  uint8 motor;
     205                  motor = (uint8)(events);
-   \   000098   EE           MOV     A,R6
-   \   000099   FC           MOV     R4,A
+   \   00009E   EE           MOV     A,R6
+   \   00009F   FC           MOV     R4,A
     206                  uint8 status_m;
     207                  status_m = MotorControl[motor].status;
-   \   00009A   75F007       MOV     B,#0x7
-   \   00009D   A4           MUL     AB
-   \   00009E   F8           MOV     R0,A
-   \   00009F   A9F0         MOV     R1,B
-   \   0000A1   74..         MOV     A,#MotorControl & 0xff
-   \   0000A3   28           ADD     A,R0
-   \   0000A4   F5..         MOV     ?V0 + 0,A
-   \   0000A6   74..         MOV     A,#(MotorControl >> 8) & 0xff
-   \   0000A8   39           ADDC    A,R1
-   \   0000A9   F5..         MOV     ?V0 + 1,A
-   \   0000AB   85..82       MOV     DPL,?V0 + 0
-   \   0000AE   F583         MOV     DPH,A
-   \   0000B0   A3           INC     DPTR
-   \   0000B1   A3           INC     DPTR
-   \   0000B2   A3           INC     DPTR
-   \   0000B3   E0           MOVX    A,@DPTR
-   \   0000B4   FD           MOV     R5,A
+   \   0000A0   75F007       MOV     B,#0x7
+   \   0000A3   A4           MUL     AB
+   \   0000A4   F8           MOV     R0,A
+   \   0000A5   A9F0         MOV     R1,B
+   \   0000A7   74..         MOV     A,#MotorControl & 0xff
+   \   0000A9   28           ADD     A,R0
+   \   0000AA   F5..         MOV     ?V0 + 0,A
+   \   0000AC   74..         MOV     A,#(MotorControl >> 8) & 0xff
+   \   0000AE   39           ADDC    A,R1
+   \   0000AF   F5..         MOV     ?V0 + 1,A
+   \   0000B1   85..82       MOV     DPL,?V0 + 0
+   \   0000B4   F583         MOV     DPH,A
+   \   0000B6   A3           INC     DPTR
+   \   0000B7   A3           INC     DPTR
+   \   0000B8   A3           INC     DPTR
+   \   0000B9   E0           MOVX    A,@DPTR
+   \   0000BA   FD           MOV     R5,A
     208                  if(MotorControl[motor].msg[status_m].hour)
-   \   0000B5   75F006       MOV     B,#0x6
-   \   0000B8   A4           MUL     AB
-   \   0000B9   F8           MOV     R0,A
-   \   0000BA   A9F0         MOV     R1,B
-   \   0000BC   85..82       MOV     DPL,?V0 + 0
-   \   0000BF   85..83       MOV     DPH,?V0 + 1
-   \   0000C2   12....       LCALL   ?Subroutine4 & 0xFFFF
+   \   0000BB   75F006       MOV     B,#0x6
+   \   0000BE   A4           MUL     AB
+   \   0000BF   F8           MOV     R0,A
+   \   0000C0   A9F0         MOV     R1,B
+   \   0000C2   85..82       MOV     DPL,?V0 + 0
+   \   0000C5   85..83       MOV     DPH,?V0 + 1
+   \   0000C8   12....       LCALL   ?Subroutine4 & 0xFFFF
    \                     ??CrossCallReturnLabel_6:
-   \   0000C5   E0           MOVX    A,@DPTR
-   \   0000C6   6020         JZ      ??Motor_ProcessEvent_8
+   \   0000CB   E0           MOVX    A,@DPTR
+   \   0000CC   6020         JZ      ??Motor_ProcessEvent_8
     209                  {
     210                      if(MotorControl[motor].msg[status_m].min == 0)
-   \   0000C8   12....       LCALL   ?Subroutine3 & 0xFFFF
+   \   0000CE   12....       LCALL   ?Subroutine3 & 0xFFFF
    \                     ??CrossCallReturnLabel_4:
-   \   0000CB   7016         JNZ     ??Motor_ProcessEvent_9
+   \   0000D1   7016         JNZ     ??Motor_ProcessEvent_9
     211                      {
     212                          (MotorControl[motor].msg[status_m].hour)--;
-   \   0000CD   ED           MOV     A,R5
-   \   0000CE   75F006       MOV     B,#0x6
-   \   0000D1   A4           MUL     AB
-   \   0000D2   FE           MOV     R6,A
-   \   0000D3   AFF0         MOV     R7,B
-   \   0000D5   12....       LCALL   ?Subroutine12 & 0xFFFF
-   \                     ??CrossCallReturnLabel_22:
-   \   0000D8   E0           MOVX    A,@DPTR
-   \   0000D9   14           DEC     A
-   \   0000DA   F0           MOVX    @DPTR,A
-    213                          MotorControl[motor].msg[status_m].min = 59;
+   \   0000D3   ED           MOV     A,R5
+   \   0000D4   75F006       MOV     B,#0x6
+   \   0000D7   A4           MUL     AB
+   \   0000D8   FE           MOV     R6,A
+   \   0000D9   AFF0         MOV     R7,B
    \   0000DB   12....       LCALL   ?Subroutine12 & 0xFFFF
+   \                     ??CrossCallReturnLabel_22:
+   \   0000DE   E0           MOVX    A,@DPTR
+   \   0000DF   14           DEC     A
+   \   0000E0   F0           MOVX    @DPTR,A
+    213                          MotorControl[motor].msg[status_m].min = 59;
+   \   0000E1   12....       LCALL   ?Subroutine12 & 0xFFFF
     214                      }
    \                     ??CrossCallReturnLabel_23:
-   \   0000DE   A3           INC     DPTR
-   \   0000DF   743B         MOV     A,#0x3b
-   \   0000E1   8054         SJMP    ??CrossCallReturnLabel_1
+   \   0000E4   A3           INC     DPTR
+   \   0000E5   743B         MOV     A,#0x3b
+   \   0000E7   8054         SJMP    ??CrossCallReturnLabel_1
     215                      else
     216                        (MotorControl[motor].msg[status_m].min)--;
    \                     ??Motor_ProcessEvent_9:
-   \   0000E3   12....       LCALL   ?Subroutine1 & 0xFFFF
+   \   0000E9   12....       LCALL   ?Subroutine1 & 0xFFFF
     217                      osal_start_timerEx(Motor_TaskID, MOTOR_UPDATE_EVT, 60000); // calc 1min
     218                  }
    \                     ??CrossCallReturnLabel_0:
-   \   0000E6   804F         SJMP    ??CrossCallReturnLabel_1
-   \   0000E8                ; Setup parameters for call to function osal_start_timerEx
+   \   0000EC   804F         SJMP    ??CrossCallReturnLabel_1
+   \   0000EE                ; Setup parameters for call to function osal_start_timerEx
     219                  else
     220                  {
     221                      if(MotorControl[motor].msg[status_m].min == 0)
    \                     ??Motor_ProcessEvent_8:
-   \   0000E8   12....       LCALL   ?Subroutine3 & 0xFFFF
+   \   0000EE   12....       LCALL   ?Subroutine3 & 0xFFFF
    \                     ??CrossCallReturnLabel_5:
-   \   0000EB   7047         JNZ     ??Motor_ProcessEvent_10
+   \   0000F1   7047         JNZ     ??Motor_ProcessEvent_10
     222                      {
     223                          if(MotorControl[motor].msg[status_m].sec == 0)
-   \   0000ED   EC           MOV     A,R4
-   \   0000EE   75F007       MOV     B,#0x7
-   \   0000F1   A4           MUL     AB
-   \   0000F2   FA           MOV     R2,A
-   \   0000F3   12....       LCALL   ?Subroutine21 & 0xFFFF
+   \   0000F3   EC           MOV     A,R4
+   \   0000F4   75F007       MOV     B,#0x7
+   \   0000F7   A4           MUL     AB
+   \   0000F8   FA           MOV     R2,A
+   \   0000F9   12....       LCALL   ?Subroutine21 & 0xFFFF
    \                     ??CrossCallReturnLabel_40:
-   \   0000F6   12....       LCALL   ?Subroutine4 & 0xFFFF
+   \   0000FC   12....       LCALL   ?Subroutine4 & 0xFFFF
    \                     ??CrossCallReturnLabel_7:
-   \   0000F9   A3           INC     DPTR
-   \   0000FA   A3           INC     DPTR
-   \   0000FB   E0           MOVX    A,@DPTR
-   \   0000FC   7009         JNZ     ??Motor_ProcessEvent_11
+   \   0000FF   A3           INC     DPTR
+   \   000100   A3           INC     DPTR
+   \   000101   E0           MOVX    A,@DPTR
+   \   000102   7009         JNZ     ??Motor_ProcessEvent_11
     224                          {
     225                              MotorUpdate(motor,0);
-   \   0000FE                ; Setup parameters for call to function MotorUpdate
-   \   0000FE   7A00         MOV     R2,#0x0
-   \   000100   EC           MOV     A,R4
-   \   000101   F9           MOV     R1,A
-   \   000102   12....       LCALL   ??MotorUpdate?relay
-   \   000105   8041         SJMP    ??Motor_ProcessEvent_7
+   \   000104                ; Setup parameters for call to function MotorUpdate
+   \   000104   7A00         MOV     R2,#0x0
+   \   000106   EC           MOV     A,R4
+   \   000107   F9           MOV     R1,A
+   \   000108   12....       LCALL   ??MotorUpdate?relay
+   \   00010B   8041         SJMP    ??Motor_ProcessEvent_7
     226                              return 0;
     227                          }
     228                          else
     229                          {
     230                              osal_start_timerEx(Motor_TaskID, MOTOR_UPDATE_EVT, (MotorControl[motor].msg[status_m].sec)*1000);
    \                     ??Motor_ProcessEvent_11:
-   \   000107   ED           MOV     A,R5
-   \   000108   75F006       MOV     B,#0x6
-   \   00010B   A4           MUL     AB
-   \   00010C   FE           MOV     R6,A
-   \   00010D   AFF0         MOV     R7,B
-   \   00010F                ; Setup parameters for call to function osal_start_timerEx
-   \   00010F   12....       LCALL   ?Subroutine11 & 0xFFFF
+   \   00010D   ED           MOV     A,R5
+   \   00010E   75F006       MOV     B,#0x6
+   \   000111   A4           MUL     AB
+   \   000112   FE           MOV     R6,A
+   \   000113   AFF0         MOV     R7,B
+   \   000115                ; Setup parameters for call to function osal_start_timerEx
+   \   000115   12....       LCALL   ?Subroutine11 & 0xFFFF
    \                     ??CrossCallReturnLabel_20:
-   \   000112   E0           MOVX    A,@DPTR
-   \   000113   FC           MOV     R4,A
-   \   000114   75F0E8       MOV     B,#-0x18
-   \   000117   A4           MUL     AB
-   \   000118   CC           XCH     A,R4
-   \   000119   A8F0         MOV     R0,B
-   \   00011B   75F003       MOV     B,#0x3
-   \   00011E   A4           MUL     AB
-   \   00011F   28           ADD     A,R0
-   \   000120   FD           MOV     R5,A
-   \   000121   7A00         MOV     R2,#0x0
-   \   000123   7B50         MOV     R3,#0x50
-   \   000125   90....       MOV     DPTR,#Motor_TaskID
-   \   000128   E0           MOVX    A,@DPTR
-   \   000129   F9           MOV     R1,A
-   \   00012A   12....       LCALL   ??osal_start_timerEx?relay
+   \   000118   E0           MOVX    A,@DPTR
+   \   000119   FC           MOV     R4,A
+   \   00011A   75F0E8       MOV     B,#-0x18
+   \   00011D   A4           MUL     AB
+   \   00011E   CC           XCH     A,R4
+   \   00011F   A8F0         MOV     R0,B
+   \   000121   75F003       MOV     B,#0x3
+   \   000124   A4           MUL     AB
+   \   000125   28           ADD     A,R0
+   \   000126   FD           MOV     R5,A
+   \   000127   7A00         MOV     R2,#0x0
+   \   000129   7B50         MOV     R3,#0x50
+   \   00012B   90....       MOV     DPTR,#Motor_TaskID
+   \   00012E   E0           MOVX    A,@DPTR
+   \   00012F   F9           MOV     R1,A
+   \   000130   12....       LCALL   ??osal_start_timerEx?relay
     231                              MotorControl[motor].msg[status_m].sec = 0;
-   \   00012D   12....       LCALL   ?Subroutine11 & 0xFFFF
+   \   000133   12....       LCALL   ?Subroutine11 & 0xFFFF
     232                          }
     233                      }
    \                     ??CrossCallReturnLabel_21:
-   \   000130   E4           CLR     A
-   \   000131   F0           MOVX    @DPTR,A
-   \   000132   8014         SJMP    ??Motor_ProcessEvent_7
+   \   000136   E4           CLR     A
+   \   000137   F0           MOVX    @DPTR,A
+   \   000138   8014         SJMP    ??Motor_ProcessEvent_7
     234                      else
     235                      {
     236                        (MotorControl[motor].msg[status_m].min)--;
    \                     ??Motor_ProcessEvent_10:
-   \   000134   12....       LCALL   ?Subroutine1 & 0xFFFF
+   \   00013A   12....       LCALL   ?Subroutine1 & 0xFFFF
    \                     ??CrossCallReturnLabel_1:
-   \   000137   F0           MOVX    @DPTR,A
+   \   00013D   F0           MOVX    @DPTR,A
     237                        osal_start_timerEx(Motor_TaskID, MOTOR_UPDATE_EVT, 60000); // calc 1min
-   \   000138                ; Setup parameters for call to function osal_start_timerEx
-   \   000138   7C60         MOV     R4,#0x60
-   \   00013A   7DEA         MOV     R5,#-0x16
-   \   00013C   7A00         MOV     R2,#0x0
-   \   00013E   7B50         MOV     R3,#0x50
-   \   000140   90....       MOV     DPTR,#Motor_TaskID
-   \   000143   E0           MOVX    A,@DPTR
-   \   000144   F9           MOV     R1,A
-   \   000145   12....       LCALL   ??osal_start_timerEx?relay
+   \   00013E                ; Setup parameters for call to function osal_start_timerEx
+   \   00013E   7C60         MOV     R4,#0x60
+   \   000140   7DEA         MOV     R5,#-0x16
+   \   000142   7A00         MOV     R2,#0x0
+   \   000144   7B50         MOV     R3,#0x50
+   \   000146   90....       MOV     DPTR,#Motor_TaskID
+   \   000149   E0           MOVX    A,@DPTR
+   \   00014A   F9           MOV     R1,A
+   \   00014B   12....       LCALL   ??osal_start_timerEx?relay
     238                      }
     239                  }
     240                  return 0;
    \                     ??Motor_ProcessEvent_7:
-   \   000148   7A00         MOV     R2,#0x0
-   \   00014A   7B00         MOV     R3,#0x0
+   \   00014E   7A00         MOV     R2,#0x0
+   \   000150   7B00         MOV     R3,#0x0
    \                     ??Motor_ProcessEvent_6:
-   \   00014C   7F06         MOV     R7,#0x6
-   \   00014E   02....       LJMP    ?BANKED_LEAVE_XDATA
+   \   000152   7F06         MOV     R7,#0x6
+   \   000154   02....       LJMP    ?BANKED_LEAVE_XDATA
     241              }
     242              return 0;
     243          }
@@ -888,6 +892,27 @@ D:\ProgramData\Hardware\zigbee\Projects\zstack\Samples\SensorSys\Source\Motor_En
    \   000006   8A82         MOV     DPL,R2
    \   000008   F583         MOV     DPH,A
    \   00000A   22           RET
+
+   \                                 In  segment BANKED_CODE, align 1, keep-with-next
+   \                     ?Subroutine22:
+   \   000000   A3           INC     DPTR
+   \   000001                REQUIRE ??Subroutine27_0
+   \   000001                ; // Fall through to label ??Subroutine27_0
+
+   \                                 In  segment BANKED_CODE, align 1, keep-with-next
+   \                     ??Subroutine27_0:
+   \   000000   A3           INC     DPTR
+   \   000001                REQUIRE ??Subroutine28_0
+   \   000001                ; // Fall through to label ??Subroutine28_0
+
+   \                                 In  segment BANKED_CODE, align 1, keep-with-next
+   \                     ??Subroutine28_0:
+   \   000000   E0           MOVX    A,@DPTR
+   \   000001   FA           MOV     R2,A
+   \   000002   A3           INC     DPTR
+   \   000003   E0           MOVX    A,@DPTR
+   \   000004   FB           MOV     R3,A
+   \   000005   22           RET
     244          
     245          /******************************************************************************
     246           * @fn          Motor_ReceiveDataIndication
@@ -919,23 +944,24 @@ D:\ProgramData\Hardware\zigbee\Projects\zstack\Samples\SensorSys\Source\Motor_En
     272           */
     273          void Motor_AllowBindConfirm( uint16 source )
     274          {
-    275               Sys_AllowBindConfirm(source);
-    276          }
-    277          
-    278          /******************************************************************************
-    279           * @fn          MotorAction
-    280           *
-    281           * @brief       Motor Action Decide
-    282           *
-    283           * @param
-    284           *
-    285           * @return      none
-    286           */
+    275               motorCnt++;
+    276               Sys_AllowBindConfirm(source);
+    277          }
+    278          
+    279          /******************************************************************************
+    280           * @fn          MotorAction
+    281           *
+    282           * @brief       Motor Action Decide
+    283           *
+    284           * @param
+    285           *
+    286           * @return      none
+    287           */
 
    \                                 In  segment BANKED_CODE, align 1, keep-with-next
-    287          void MotorAction( uint8 motor, uint16 command, uint16 len, uint8 *pData )
+    288          void MotorAction( uint8 motor, uint16 command, uint16 len, uint8 *pData )
    \                     MotorAction:
-    288          {
+    289          {
    \   000000   74EC         MOV     A,#-0x14
    \   000002   12....       LCALL   ?BANKED_ENTER_XDATA
    \   000005                ; Saved register size: 20
@@ -950,28 +976,28 @@ D:\ProgramData\Hardware\zigbee\Projects\zstack\Samples\SensorSys\Source\Motor_En
    \   000012   A3           INC     DPTR
    \   000013   E0           MOVX    A,@DPTR
    \   000014   FF           MOV     R7,A
-    289            // pData contains : " velocity(r/min), delay(0xffff: never)(sec), velocity, delay, ... "
-    290            if(command == PORT_INIT_CLUSTER)
+    290            // pData contains : " velocity(r/min), delay(0xffff: never)(sec), velocity, delay, ... "
+    291            if(command == PORT_INIT_CLUSTER)
    \   000015   7401         MOV     A,#0x1
    \   000017   65..         XRL     A,?V0 + 0
    \   000019   7001         JNZ     ??MotorAction_0
    \   00001B   EB           MOV     A,R3
    \                     ??MotorAction_0:
    \   00001C   702E         JNZ     ??MotorAction_1
-    291            {
-    292              uint8 port;
-    293              port = *pData;
+    292            {
+    293              uint8 port;
+    294              port = *pData;
    \   00001E   8E82         MOV     DPL,R6
    \   000020   8F83         MOV     DPH,R7
    \   000022   E0           MOVX    A,@DPTR
    \   000023   F9           MOV     R1,A
-    294              if(port < MOTOR_NUM_MAX)    // Port: 0, 1
+    295              if(port < MOTOR_NUM_MAX)    // Port: 0, 1
    \   000024   C3           CLR     C
    \   000025   9402         SUBB    A,#0x2
    \   000027   4003         JC      $+5
    \   000029   02....       LJMP    ??MotorAction_2 & 0xFFFF
-    295              {
-    296                  P1DIR |= 0x03 << (port*2);
+    296              {
+    297                  P1DIR |= 0x03 << (port*2);
    \   00002C   75..03       MOV     ?V0 + 0,#0x3
    \   00002F   75..00       MOV     ?V0 + 1,#0x0
    \   000032   E9           MOV     A,R1
@@ -981,7 +1007,7 @@ D:\ProgramData\Hardware\zigbee\Projects\zstack\Samples\SensorSys\Source\Motor_En
    \   000037   12....       LCALL   ?S_SHL
    \   00003A   E5..         MOV     A,?V0 + 0
    \   00003C   42FE         ORL     0xfe,A
-    297                  MotorControl[motor].port = port;
+    298                  MotorControl[motor].port = port;
    \   00003E   E9           MOV     A,R1
    \   00003F   C0E0         PUSH    A
    \   000041   E5..         MOV     A,?V0 + 2
@@ -989,25 +1015,25 @@ D:\ProgramData\Hardware\zigbee\Projects\zstack\Samples\SensorSys\Source\Motor_En
    \                     ??CrossCallReturnLabel_36:
    \   000046   D0E0         POP     A
    \   000048   F0           MOVX    @DPTR,A
-    298                  return;
+    299                  return;
    \   000049   02....       LJMP    ??MotorAction_2 & 0xFFFF
-    299              }
-    300              else
-    301              {
-    302                  // send error back
-    303                  return;
-    304              }
-    305            }
-    306            
+    300              }
+    301              else
+    302              {
+    303                  // send error back
+    304                  return;
+    305              }
+    306            }
     307            
-    308            if(motor>=MOTOR_NUM_MAX)return;   // data error
+    308            
+    309            if(motor>=MOTOR_NUM_MAX)return;   // data error
    \                     ??MotorAction_1:
    \   00004C   E9           MOV     A,R1
    \   00004D   C3           CLR     C
    \   00004E   9402         SUBB    A,#0x2
    \   000050   4003         JC      $+5
    \   000052   02....       LJMP    ??MotorAction_2 & 0xFFFF
-    309            if( len % OPERATE_MSG_NUM )return;  // data error: Must be 6 data each group
+    310            if( len % OPERATE_MSG_NUM )return;  // data error: Must be 6 data each group
    \   000055   EC           MOV     A,R4
    \   000056   F8           MOV     R0,A
    \   000057   ED           MOV     A,R5
@@ -1020,10 +1046,10 @@ D:\ProgramData\Hardware\zigbee\Projects\zstack\Samples\SensorSys\Source\Motor_En
    \   000063   45..         ORL     A,?V0 + 5
    \   000065   6003         JZ      $+5
    \   000067   02....       LJMP    ??MotorAction_2 & 0xFFFF
-    310          
-    311            uint16 len_t;
-    312            sensor_msg_t *msg_t = NULL;
-    313            len_t = len/OPERATE_MSG_NUM;
+    311          
+    312            uint16 len_t;
+    313            sensor_msg_t *msg_t = NULL;
+    314            len_t = len/OPERATE_MSG_NUM;
    \   00006A   EC           MOV     A,R4
    \   00006B   F8           MOV     R0,A
    \   00006C   ED           MOV     A,R5
@@ -1033,7 +1059,7 @@ D:\ProgramData\Hardware\zigbee\Projects\zstack\Samples\SensorSys\Source\Motor_En
    \   000072   12....       LCALL   ?US_DIV_MOD
    \   000075   88..         MOV     ?V0 + 4,R0
    \   000077   89..         MOV     ?V0 + 5,R1
-    314            msg_t = (sensor_msg_t *)osal_mem_alloc(sizeof(sensor_msg_t) * len_t);
+    315            msg_t = (sensor_msg_t *)osal_mem_alloc(sizeof(sensor_msg_t) * len_t);
    \   000079                ; Setup parameters for call to function osal_mem_alloc
    \   000079   E8           MOV     A,R0
    \   00007A   75F006       MOV     B,#0x6
@@ -1050,16 +1076,16 @@ D:\ProgramData\Hardware\zigbee\Projects\zstack\Samples\SensorSys\Source\Motor_En
    \   00008D   8B..         MOV     ?V0 + 7,R3
    \   00008F   AC..         MOV     R4,?V0 + 6
    \   000091   AD..         MOV     R5,?V0 + 7
-    315            uint16 v;
-    316            uint8 i;
-    317            for(i=0; i<len_t; i++)
+    316            uint16 v;
+    317            uint8 i;
+    318            for(i=0; i<len_t; i++)
    \   000093   75..00       MOV     ?V0 + 3,#0x0
    \   000096   8069         SJMP    ??MotorAction_3
-    318            {
-    319                if(pData[i*OPERATE_MSG_NUM] >= 1)      // direction
-    320                  msg_t[i].value = 1;
-    321                else
-    322                  msg_t[i].value = 0;
+    319            {
+    320                if(pData[i*OPERATE_MSG_NUM] >= 1)      // direction
+    321                  msg_t[i].value = 1;
+    322                else
+    323                  msg_t[i].value = 0;
    \                     ??MotorAction_4:
    \   000098   EC           MOV     A,R4
    \   000099   28           ADD     A,R0
@@ -1070,9 +1096,9 @@ D:\ProgramData\Hardware\zigbee\Projects\zstack\Samples\SensorSys\Source\Motor_En
    \   0000A0   E4           CLR     A
    \                     ??MotorAction_5:
    \   0000A1   F0           MOVX    @DPTR,A
-    323                
-    324                v = (pData[i*OPERATE_MSG_NUM+1]<<8) | pData[i*OPERATE_MSG_NUM+2];
-    325                msg_t[i].level = 150000/TIMER3_INT_DELAY/v;  // velocity
+    324                
+    325                v = (pData[i*OPERATE_MSG_NUM+1]<<8) | pData[i*OPERATE_MSG_NUM+2];
+    326                msg_t[i].level = 150000/TIMER3_INT_DELAY/v;  // velocity
    \   0000A2   E5..         MOV     A,?V0 + 3
    \   0000A4   75F006       MOV     B,#0x6
    \   0000A7   A4           MUL     AB
@@ -1116,18 +1142,18 @@ D:\ProgramData\Hardware\zigbee\Projects\zstack\Samples\SensorSys\Source\Motor_En
    \   0000E1   A3           INC     DPTR
    \   0000E2   E9           MOV     A,R1
    \   0000E3   12....       LCALL   ?Subroutine16 & 0xFFFF
-    326                msg_t[i].hour = pData[i*OPERATE_MSG_NUM+3];
+    327                msg_t[i].hour = pData[i*OPERATE_MSG_NUM+3];
    \                     ??CrossCallReturnLabel_28:
    \   0000E6   E0           MOVX    A,@DPTR
    \   0000E7   85..82       MOV     DPL,?V0 + 6
    \   0000EA   85..83       MOV     DPH,?V0 + 7
    \   0000ED   12....       LCALL   ?Subroutine6 & 0xFFFF
-    327                msg_t[i].min = pData[i*OPERATE_MSG_NUM+4];
+    328                msg_t[i].min = pData[i*OPERATE_MSG_NUM+4];
    \                     ??CrossCallReturnLabel_10:
    \   0000F0   12....       LCALL   ?Subroutine13 & 0xFFFF
    \                     ??CrossCallReturnLabel_24:
    \   0000F3   12....       LCALL   ?Subroutine6 & 0xFFFF
-    328                msg_t[i].sec = pData[i*OPERATE_MSG_NUM+5];
+    329                msg_t[i].sec = pData[i*OPERATE_MSG_NUM+5];
    \                     ??CrossCallReturnLabel_11:
    \   0000F6   A3           INC     DPTR
    \   0000F7   12....       LCALL   ?Subroutine13 & 0xFFFF
@@ -1168,8 +1194,8 @@ D:\ProgramData\Hardware\zigbee\Projects\zstack\Samples\SensorSys\Source\Motor_En
    \   00012B   F583         MOV     DPH,A
    \   00012D   7401         MOV     A,#0x1
    \   00012F   02....       LJMP    ??MotorAction_5 & 0xFFFF
-    329            }
-    330            MotorControl[motor].msg = msg_t;
+    330            }
+    331            MotorControl[motor].msg = msg_t;
    \                     ??MotorAction_6:
    \   000132   85..82       MOV     DPL,?V0 + 2
    \   000135   AE82         MOV     R6,DPL
@@ -1185,17 +1211,17 @@ D:\ProgramData\Hardware\zigbee\Projects\zstack\Samples\SensorSys\Source\Motor_En
    \   000144   A3           INC     DPTR
    \   000145   ED           MOV     A,R5
    \   000146   12....       LCALL   ?Subroutine17 & 0xFFFF
-    331            MotorControl[motor].total = len_t;
+    332            MotorControl[motor].total = len_t;
    \                     ??CrossCallReturnLabel_31:
    \   000149   A3           INC     DPTR
    \   00014A   A3           INC     DPTR
    \   00014B   E5..         MOV     A,?V0 + 4
    \   00014D   12....       LCALL   ?Subroutine9 & 0xFFFF
-    332            MotorControl[motor].status = 0;
+    333            MotorControl[motor].status = 0;
    \                     ??CrossCallReturnLabel_16:
    \   000150   E4           CLR     A
    \   000151   12....       LCALL   ?Subroutine9 & 0xFFFF
-    333            MotorControl[motor].command = command;
+    334            MotorControl[motor].command = command;
    \                     ??CrossCallReturnLabel_17:
    \   000154   A3           INC     DPTR
    \   000155   A3           INC     DPTR
@@ -1204,50 +1230,50 @@ D:\ProgramData\Hardware\zigbee\Projects\zstack\Samples\SensorSys\Source\Motor_En
    \   000159   A3           INC     DPTR
    \   00015A   E5..         MOV     A,?V0 + 1
    \   00015C   F0           MOVX    @DPTR,A
-    334            osal_mem_free(msg_t);
+    335            osal_mem_free(msg_t);
    \   00015D                ; Setup parameters for call to function osal_mem_free
    \   00015D   EC           MOV     A,R4
    \   00015E   FA           MOV     R2,A
    \   00015F   ED           MOV     A,R5
    \   000160   FB           MOV     R3,A
    \   000161   12....       LCALL   ??osal_mem_free?relay
-    335            /**************************** use ',' devide datas
-    336            // devide word between No.3 and No.4 ','
-    337            if(motor>=MOTOR_NUM_MAX)return;   // data error
-    338            uint8 i;
-    339            uint8 posx1, posx2;
-    340            uint8 num = Num_Pos(len, pData);
-    341            uint8 motorVelocity_arr[5], motorDelay_arr[5];
-    342            if(num%2)return;  // data error
-    343            if(num/2 > MOTOR_MAX_OPERATION)num = MOTOR_MAX_OPERATION*2;   // data too long
-    344            
-    345            posx1 = 0;
-    346            for(i=0; i<num; i++)
-    347            {
-    348                posx2 = Locate_Pos(pData, i+1);
-    349                if(posx2 - posx1 == 0)
-    350                  return; //data error
-    351                if(i%2)
-    352                {
-    353                  mid(motorDelay_arr, pData, posx2-posx1-1,posx1);
-    354                  MotorControl[motor].delay[i/2] = atoi(motorDelay_arr);
-    355                }
-    356                else
-    357                {
-    358                  mid(motorVelocity_arr, pData, posx2-posx1-1,posx1);
-    359                  MotorControl[motor].velocity[i/2] = 150000/TIMER3_INT_DELAY/atoi(motorVelocity_arr);
-    360                }
-    361                posx1 = posx2;
-    362            }
-    363            MotorControl[motor].total = num/2;
-    364            MotorControl[motor].direct = command;
-    365            MotorControl[motor].status = 0;
-    366            */
-    367            
-    368            uint16 event_t;
-    369            event_t = MOTOR_UPDATE_EVT | motor;       // 0x5000 | 0x00??
-    370            
-    371            osal_stop_timerEx(Motor_TaskID, event_t);
+    336            /**************************** use ',' devide datas
+    337            // devide word between No.3 and No.4 ','
+    338            if(motor>=MOTOR_NUM_MAX)return;   // data error
+    339            uint8 i;
+    340            uint8 posx1, posx2;
+    341            uint8 num = Num_Pos(len, pData);
+    342            uint8 motorVelocity_arr[5], motorDelay_arr[5];
+    343            if(num%2)return;  // data error
+    344            if(num/2 > MOTOR_MAX_OPERATION)num = MOTOR_MAX_OPERATION*2;   // data too long
+    345            
+    346            posx1 = 0;
+    347            for(i=0; i<num; i++)
+    348            {
+    349                posx2 = Locate_Pos(pData, i+1);
+    350                if(posx2 - posx1 == 0)
+    351                  return; //data error
+    352                if(i%2)
+    353                {
+    354                  mid(motorDelay_arr, pData, posx2-posx1-1,posx1);
+    355                  MotorControl[motor].delay[i/2] = atoi(motorDelay_arr);
+    356                }
+    357                else
+    358                {
+    359                  mid(motorVelocity_arr, pData, posx2-posx1-1,posx1);
+    360                  MotorControl[motor].velocity[i/2] = 150000/TIMER3_INT_DELAY/atoi(motorVelocity_arr);
+    361                }
+    362                posx1 = posx2;
+    363            }
+    364            MotorControl[motor].total = num/2;
+    365            MotorControl[motor].direct = command;
+    366            MotorControl[motor].status = 0;
+    367            */
+    368            
+    369            uint16 event_t;
+    370            event_t = MOTOR_UPDATE_EVT | motor;       // 0x5000 | 0x00??
+    371            
+    372            osal_stop_timerEx(Motor_TaskID, event_t);
    \   000164                ; Setup parameters for call to function osal_stop_timerEx
    \   000164   EE           MOV     A,R6
    \   000165   FA           MOV     R2,A
@@ -1256,12 +1282,12 @@ D:\ProgramData\Hardware\zigbee\Projects\zstack\Samples\SensorSys\Source\Motor_En
    \   00016B   E0           MOVX    A,@DPTR
    \   00016C   F9           MOV     R1,A
    \   00016D   12....       LCALL   ??osal_stop_timerEx?relay
-    372            MotorUpdate(motor, 1);
+    373            MotorUpdate(motor, 1);
    \   000170                ; Setup parameters for call to function MotorUpdate
    \   000170   7A01         MOV     R2,#0x1
    \   000172   A9..         MOV     R1,?V0 + 2
    \   000174   12....       LCALL   ??MotorUpdate?relay
-    373          }
+    374          }
    \                     ??MotorAction_2:
    \   000177   7F0C         MOV     R7,#0xc
    \   000179   02....       LJMP    ?BANKED_LEAVE_XDATA
@@ -1329,12 +1355,12 @@ D:\ProgramData\Hardware\zigbee\Projects\zstack\Samples\SensorSys\Source\Motor_En
    \   00000E   39           ADDC    A,R1
    \   00000F   F583         MOV     DPH,A
    \   000011   22           RET
-    374          
+    375          
 
    \                                 In  segment BANKED_CODE, align 1, keep-with-next
-    375          void MotorUpdate(uint8 motor, uint8 first_boot)
+    376          void MotorUpdate(uint8 motor, uint8 first_boot)
    \                     MotorUpdate:
-    376          {
+    377          {
    \   000000   74F4         MOV     A,#-0xc
    \   000002   12....       LCALL   ?BANKED_ENTER_XDATA
    \   000005                ; Saved register size: 12
@@ -1343,8 +1369,8 @@ D:\ProgramData\Hardware\zigbee\Projects\zstack\Samples\SensorSys\Source\Motor_En
    \   000006   FF           MOV     R7,A
    \   000007   EA           MOV     A,R2
    \   000008   FE           MOV     R6,A
-    377              uint8 status_m;
-    378              status_m = MotorControl[motor].status;
+    378              uint8 status_m;
+    379              status_m = MotorControl[motor].status;
    \   000009   8F82         MOV     DPL,R7
    \   00000B   E582         MOV     A,DPL
    \   00000D   75F007       MOV     B,#0x7
@@ -1360,7 +1386,7 @@ D:\ProgramData\Hardware\zigbee\Projects\zstack\Samples\SensorSys\Source\Motor_En
    \   00001B   A3           INC     DPTR
    \   00001C   E0           MOVX    A,@DPTR
    \   00001D   F5..         MOV     ?V0 + 0,A
-    379              if(status_m == (MotorControl[motor].total)-1)
+    380              if(status_m == (MotorControl[motor].total)-1)
    \   00001F   F5..         MOV     ?V0 + 2,A
    \   000021   8882         MOV     DPL,R0
    \   000023   8983         MOV     DPH,R1
@@ -1378,8 +1404,8 @@ D:\ProgramData\Hardware\zigbee\Projects\zstack\Samples\SensorSys\Source\Motor_En
    \   000034   E9           MOV     A,R1
    \                     ??MotorUpdate_0:
    \   000035   7023         JNZ     ??MotorUpdate_1
-    380              {
-    381                  if(MotorControl[motor].command == LOOP_OPERATE_CLUSTER)
+    381              {
+    382                  if(MotorControl[motor].command == LOOP_OPERATE_CLUSTER)
    \   000037   EF           MOV     A,R7
    \   000038   75F007       MOV     B,#0x7
    \   00003B   A4           MUL     AB
@@ -1399,44 +1425,44 @@ D:\ProgramData\Hardware\zigbee\Projects\zstack\Samples\SensorSys\Source\Motor_En
    \   00004F   E0           MOVX    A,@DPTR
    \                     ??MotorUpdate_2:
    \   000050   7016         JNZ     ??MotorUpdate_3
-    382                  {
-    383                      MotorControl[motor].status = 0x00;
+    383                  {
+    384                      MotorControl[motor].status = 0x00;
    \   000052   12....       LCALL   ?Subroutine10 & 0xFFFF
    \                     ??CrossCallReturnLabel_18:
    \   000055   E4           CLR     A
    \   000056   F0           MOVX    @DPTR,A
-    384                      status_m = 0xff;
+    385                      status_m = 0xff;
    \   000057   75..FF       MOV     ?V0 + 0,#-0x1
-    385                  }
-    386                  else
-    387                  {
-    388                      // STOP
-    389                      // Sleep Pin -> low
-    390                      (MotorControl[motor].status)++;
-    391                      motorTimeout[motor] = 0;
-    392                      if(MotorDone())
-    393                      {
-    394                          HalTimerStop();
-    395                          osal_mem_free(MotorControl[motor].msg);
-    396                      }
-    397                      return;
-    398                  }
-    399              }
-    400              if(MotorDone())   // first boot
+    386                  }
+    387                  else
+    388                  {
+    389                      // STOP
+    390                      // Sleep Pin -> low
+    391                      (MotorControl[motor].status)++;
+    392                      motorTimeout[motor] = 0;
+    393                      if(MotorDone())
+    394                      {
+    395                          HalTimerStop();
+    396                          osal_mem_free(MotorControl[motor].msg);
+    397                      }
+    398                      return;
+    399                  }
+    400              }
+    401              if(MotorDone())   // first boot
    \                     ??MotorUpdate_1:
    \   00005A                ; Setup parameters for call to function MotorDone
    \   00005A   12....       LCALL   ??MotorDone?relay
    \   00005D   E9           MOV     A,R1
    \   00005E   604B         JZ      ??MotorUpdate_4
-    401              {
-    402                motorTimeout[motor] = MotorControl[motor].msg[status_m].level;
+    402              {
+    403                motorTimeout[motor] = MotorControl[motor].msg[status_m].level;
    \   000060   12....       LCALL   ?Subroutine0 & 0xFFFF
-    403                HalTimerStart();
+    404                HalTimerStart();
    \                     ??CrossCallReturnLabel_48:
    \   000063                ; Setup parameters for call to function HalTimerStart
    \   000063   12....       LCALL   ??HalTimerStart?relay
    \   000066   806A         SJMP    ??CrossCallReturnLabel_49
-    404              }
+    405              }
    \                     ??MotorUpdate_3:
    \   000068   8F82         MOV     DPL,R7
    \   00006A   A882         MOV     R0,DPL
@@ -1482,25 +1508,25 @@ D:\ProgramData\Hardware\zigbee\Projects\zstack\Samples\SensorSys\Source\Motor_En
    \                     ??CrossCallReturnLabel_53:
    \   0000A6   12....       LCALL   ??osal_mem_free?relay
    \   0000A9   804A         SJMP    ??MotorUpdate_5
-    405              else
-    406              {
-    407                if(!first_boot)
+    406              else
+    407              {
+    408                if(!first_boot)
    \                     ??MotorUpdate_4:
    \   0000AB   EE           MOV     A,R6
    \   0000AC   7021         JNZ     ??MotorUpdate_6
-    408                {
-    409                    if(status_m == 0xff)
+    409                {
+    410                    if(status_m == 0xff)
    \   0000AE   74FF         MOV     A,#-0x1
    \   0000B0   65..         XRL     A,?V0 + 0
    \   0000B2   7005         JNZ     ??MotorUpdate_7
-    410                    {
-    411                      status_m = 0;
+    411                    {
+    412                      status_m = 0;
    \   0000B4   75..00       MOV     ?V0 + 0,#0x0
    \   0000B7   8016         SJMP    ??MotorUpdate_6
-    412                    }
-    413                    else
-    414                    {
-    415                      MotorControl[motor].status = status_m+1;
+    413                    }
+    414                    else
+    415                    {
+    416                      MotorControl[motor].status = status_m+1;
    \                     ??MotorUpdate_7:
    \   0000B9   7401         MOV     A,#0x1
    \   0000BB   25..         ADD     A,?V0 + 0
@@ -1514,16 +1540,16 @@ D:\ProgramData\Hardware\zigbee\Projects\zstack\Samples\SensorSys\Source\Motor_En
    \                     ??CrossCallReturnLabel_19:
    \   0000CA   D0E0         POP     A
    \   0000CC   F0           MOVX    @DPTR,A
-    416                      status_m++;
+    417                      status_m++;
    \   0000CD   05..         INC     ?V0 + 0
-    417                    }
-    418                }
-    419                motorTimeout[motor] = MotorControl[motor].msg[status_m].level;
+    418                    }
+    419                }
+    420                motorTimeout[motor] = MotorControl[motor].msg[status_m].level;
    \                     ??MotorUpdate_6:
    \   0000CF   12....       LCALL   ?Subroutine0 & 0xFFFF
-    420              }
-    421              
-    422              switch (MotorControl[motor].port)
+    421              }
+    422              
+    423              switch (MotorControl[motor].port)
    \                     ??CrossCallReturnLabel_49:
    \   0000D2   EF           MOV     A,R7
    \   0000D3   12....       LCALL   ?Subroutine8 & 0xFFFF
@@ -1532,33 +1558,33 @@ D:\ProgramData\Hardware\zigbee\Projects\zstack\Samples\SensorSys\Source\Motor_En
    \   0000D8   14           DEC     A
    \   0000D9   6009         JZ      ??MotorUpdate_9
    \   0000DB   800C         SJMP    ??MotorUpdate_10
-    423              {
-    424                case 0:
-    425                  MOTOR_DIR_1 = MotorControl[motor].msg[status_m].value;
+    424              {
+    425                case 0:
+    426                  MOTOR_DIR_1 = MotorControl[motor].msg[status_m].value;
    \                     ??MotorUpdate_8:
    \   0000DD   12....       LCALL   ?Subroutine5 & 0xFFFF
    \                     ??CrossCallReturnLabel_8:
    \   0000E0   9292         MOV     0x90.2,C
-    426                  break;
+    427                  break;
    \   0000E2   8005         SJMP    ??MotorUpdate_10
-    427                case 1:
-    428                  MOTOR_DIR_2 = MotorControl[motor].msg[status_m].value;
+    428                case 1:
+    429                  MOTOR_DIR_2 = MotorControl[motor].msg[status_m].value;
    \                     ??MotorUpdate_9:
    \   0000E4   12....       LCALL   ?Subroutine5 & 0xFFFF
    \                     ??CrossCallReturnLabel_9:
    \   0000E7   9294         MOV     0x90.4,C
-    429                  break;
-    430              }
-    431              
-    432              uint16 event_t;
-    433              event_t = MOTOR_UPDATE_EVT | motor;       // 0x5000 | 0x00??
-    434              /*
-    435              if(MotorControl[motor].msg[status_m].hour || MotorControl[motor].msg[status_m].min)
-    436                osal_start_timerEx(Motor_TaskID, event_t, 60000); // calc 1min
-    437              else
-    438                osal_start_timerEx(Motor_TaskID, event_t, (MotorControl[motor].msg[status_m].sec)*1000);
-    439                MotorControl[motor].msg[status_m].sec = 0;*/
-    440              osal_set_event(Motor_TaskID, event_t);
+    430                  break;
+    431              }
+    432              
+    433              uint16 event_t;
+    434              event_t = MOTOR_UPDATE_EVT | motor;       // 0x5000 | 0x00??
+    435              /*
+    436              if(MotorControl[motor].msg[status_m].hour || MotorControl[motor].msg[status_m].min)
+    437                osal_start_timerEx(Motor_TaskID, event_t, 60000); // calc 1min
+    438              else
+    439                osal_start_timerEx(Motor_TaskID, event_t, (MotorControl[motor].msg[status_m].sec)*1000);
+    440                MotorControl[motor].msg[status_m].sec = 0;*/
+    441              osal_set_event(Motor_TaskID, event_t);
    \                     ??MotorUpdate_10:
    \   0000E9                ; Setup parameters for call to function osal_set_event
    \   0000E9   EF           MOV     A,R7
@@ -1568,7 +1594,7 @@ D:\ProgramData\Hardware\zigbee\Projects\zstack\Samples\SensorSys\Source\Motor_En
    \   0000F0   E0           MOVX    A,@DPTR
    \   0000F1   F9           MOV     R1,A
    \   0000F2   12....       LCALL   ??osal_set_event?relay
-    441          }
+    442          }
    \                     ??MotorUpdate_5:
    \   0000F5   7F04         MOV     R7,#0x4
    \   0000F7   02....       LJMP    ?BANKED_LEAVE_XDATA
@@ -1668,49 +1694,34 @@ D:\ProgramData\Hardware\zigbee\Projects\zstack\Samples\SensorSys\Source\Motor_En
    \   000015   22           RET
 
    \                                 In  segment BANKED_CODE, align 1, keep-with-next
-   \                     ??Subroutine27_0:
-   \   000000   A3           INC     DPTR
-   \   000001                REQUIRE ??Subroutine28_0
-   \   000001                ; // Fall through to label ??Subroutine28_0
-
-   \                                 In  segment BANKED_CODE, align 1, keep-with-next
-   \                     ??Subroutine28_0:
-   \   000000   E0           MOVX    A,@DPTR
-   \   000001   FA           MOV     R2,A
-   \   000002   A3           INC     DPTR
-   \   000003   E0           MOVX    A,@DPTR
-   \   000004   FB           MOV     R3,A
-   \   000005   22           RET
-
-   \                                 In  segment BANKED_CODE, align 1, keep-with-next
    \                     ?Subroutine8:
    \   000000   12....       LCALL   ?Subroutine19 & 0xFFFF
    \                     ??CrossCallReturnLabel_37:
    \   000003   E0           MOVX    A,@DPTR
    \   000004   22           RET
-    442          
+    443          
 
    \                                 In  segment BANKED_CODE, align 1, keep-with-next
-    443          void Timer3_uSec()
+    444          void Timer3_uSec()
    \                     Timer3_uSec:
-    444          {
+    445          {
    \   000000   74F7         MOV     A,#-0x9
    \   000002   12....       LCALL   ?BANKED_ENTER_XDATA
    \   000005                ; Saved register size: 9
    \   000005                ; Auto size: 0
-    445              for(char i = 0; i<MOTOR_NUM_MAX; i++)
+    446              for(char i = 0; i<MOTOR_NUM_MAX; i++)
    \   000005   7E00         MOV     R6,#0x0
-    446              {
-    447                  if(motorTimeout[i] == 0)
+    447              {
+    448                  if(motorTimeout[i] == 0)
    \                     ??Timer3_uSec_0:
    \   000007   EE           MOV     A,R6
    \   000008   12....       LCALL   ?Subroutine2 & 0xFFFF
    \                     ??CrossCallReturnLabel_2:
    \   00000B   6067         JZ      ??CrossCallReturnLabel_47
-    448                  {
-    449                    continue;
-    450                  }
-    451                  motorTimeout[i]--;
+    449                  {
+    450                    continue;
+    451                  }
+    452                  motorTimeout[i]--;
    \   00000D   8E82         MOV     DPL,R6
    \   00000F   E582         MOV     A,DPL
    \   000011   C3           CLR     C
@@ -1734,7 +1745,7 @@ D:\ProgramData\Hardware\zigbee\Projects\zstack\Samples\SensorSys\Source\Motor_En
    \   000028   E0           MOVX    A,@DPTR
    \   000029   34FF         ADDC    A,#-0x1
    \   00002B   12....       LCALL   ?Subroutine17 & 0xFFFF
-    452                  if(motorTimeout[i] == 0)
+    453                  if(motorTimeout[i] == 0)
    \                     ??CrossCallReturnLabel_33:
    \   00002E   E0           MOVX    A,@DPTR
    \   00002F   F8           MOV     R0,A
@@ -1744,9 +1755,9 @@ D:\ProgramData\Hardware\zigbee\Projects\zstack\Samples\SensorSys\Source\Motor_En
    \   000033   E8           MOV     A,R0
    \   000034   49           ORL     A,R1
    \   000035   703D         JNZ     ??CrossCallReturnLabel_47
-    453                  {
-    454                      // reverse
-    455                      switch(MotorControl[i].port)
+    454                  {
+    455                      // reverse
+    456                      switch(MotorControl[i].port)
    \   000037   EE           MOV     A,R6
    \   000038   12....       LCALL   ?Subroutine8 & 0xFFFF
    \                     ??CrossCallReturnLabel_15:
@@ -1754,20 +1765,20 @@ D:\ProgramData\Hardware\zigbee\Projects\zstack\Samples\SensorSys\Source\Motor_En
    \   00003D   14           DEC     A
    \   00003E   6007         JZ      ??Timer3_uSec_2
    \   000040   8008         SJMP    ??Timer3_uSec_3
-    456                      {
-    457                      case 0:
-    458                        MOTOR_STEP_1 ^= 1;
+    457                      {
+    458                      case 0:
+    459                        MOTOR_STEP_1 ^= 1;
    \                     ??Timer3_uSec_1:
    \   000042   639008       XRL     0x90,#0x8
-    459                        break;
+    460                        break;
    \   000045   8003         SJMP    ??Timer3_uSec_3
-    460                      case 1:
-    461                        MOTOR_STEP_2 ^= 1;
+    461                      case 1:
+    462                        MOTOR_STEP_2 ^= 1;
    \                     ??Timer3_uSec_2:
    \   000047   639020       XRL     0x90,#0x20
-    462                        break;
-    463                      }
-    464                      motorTimeout[i] = MotorControl[i].msg[MotorControl[i].status].level;
+    463                        break;
+    464                      }
+    465                      motorTimeout[i] = MotorControl[i].msg[MotorControl[i].status].level;
    \                     ??Timer3_uSec_3:
    \   00004A   8E82         MOV     DPL,R6
    \   00004C   A882         MOV     R0,DPL
@@ -1795,15 +1806,15 @@ D:\ProgramData\Hardware\zigbee\Projects\zstack\Samples\SensorSys\Source\Motor_En
    \   00006D   8A82         MOV     DPL,R2
    \   00006F   8B83         MOV     DPH,R3
    \   000071   12....       LCALL   ??Subroutine26_0 & 0xFFFF
-    465                  }
-    466              }
+    466                  }
+    467              }
    \                     ??CrossCallReturnLabel_47:
    \   000074   0E           INC     R6
    \   000075   EE           MOV     A,R6
    \   000076   C3           CLR     C
    \   000077   9402         SUBB    A,#0x2
    \   000079   408C         JC      ??Timer3_uSec_0
-    467          }
+    468          }
    \   00007B   7F01         MOV     R7,#0x1
    \   00007D   02....       LJMP    ?BANKED_LEAVE_XDATA
    \   000080                REQUIRE _A_P1
@@ -1820,57 +1831,51 @@ D:\ProgramData\Hardware\zigbee\Projects\zstack\Samples\SensorSys\Source\Motor_En
    \   000008   E8           MOV     A,R0
    \   000009   49           ORL     A,R1
    \   00000A   22           RET
-    468          
     469          
-    470          // Whether all of motor is stop: 1 -> yes
+    470          
+    471          // Whether all of motor is stop: 1 -> yes
 
    \                                 In  segment BANKED_CODE, align 1, keep-with-next
-    471          uint8 MotorDone(void)
+    472          uint8 MotorDone(void)
    \                     MotorDone:
-    472          {
+    473          {
    \   000000   C082         PUSH    DPL
    \   000002   C083         PUSH    DPH
    \   000004                ; Saved register size: 2
    \   000004                ; Auto size: 0
-    473              char i=0;
+    474              char i=0;
    \   000004   7A00         MOV     R2,#0x0
-    474              for(i; i<MOTOR_NUM_MAX; i++)
+    475              for(i; i<MOTOR_NUM_MAX; i++)
                          ^
 Warning[Pe174]: expression has no effect
-    475              {
-    476                  if(motorTimeout[i]!=0)    
+    476              {
+    477                  if(motorTimeout[i]!=0)    
    \                     ??MotorDone_0:
    \   000006   EA           MOV     A,R2
    \   000007   12....       LCALL   ?Subroutine2 & 0xFFFF
    \                     ??CrossCallReturnLabel_3:
    \   00000A   6004         JZ      ??MotorDone_1
-    477                  { 
-    478                    // if not 0 : running
-    479                      return 0;   // not first
+    478                  { 
+    479                    // if not 0 : running
+    480                      return 0;   // not first
    \   00000C   7900         MOV     R1,#0x0
    \   00000E   8009         SJMP    ??MotorDone_2
-    480                  }
-    481              }
+    481                  }
+    482              }
    \                     ??MotorDone_1:
    \   000010   0A           INC     R2
    \   000011   EA           MOV     A,R2
    \   000012   C3           CLR     C
    \   000013   9402         SUBB    A,#0x2
    \   000015   40EF         JC      ??MotorDone_0
-    482              // all is 0 : all is Stop
-    483              return 1;
+    483              // all is 0 : all is Stop
+    484              return 1;
    \   000017   7901         MOV     R1,#0x1
    \                     ??MotorDone_2:
    \   000019   D083         POP     DPH
    \   00001B   D082         POP     DPL
    \   00001D   02....       LJMP    ?BRET
-    484          }
-
-   \                                 In  segment BANKED_CODE, align 1, keep-with-next
-   \                     ?Subroutine22:
-   \   000000   A3           INC     DPTR
-   \   000001                REQUIRE ??Subroutine27_0
-   \   000001                ; // Fall through to label ??Subroutine27_0
+    485          }
 
    \                                 In  segment XDATA_ID, align 1, keep-with-next
    \                     `?<Initializer for Motor_ClusterList>`:
@@ -1922,21 +1927,21 @@ Warning[Pe174]: expression has no effect
    \                     ??MotorDone?relay:
    \   000000   12....       LCALL   ?BDISPATCH
    \   000003   ......       DC24    MotorDone
-    485          
     486          
-    487          void Send2Coor(uint8 dev_num, uint16 commandId, uint8 *pData)
-    488          {
-    489              Sys_SendDataRequest( 0xFFFE, &Motor_epDesc[dev_num], commandId, (uint8)osal_strlen( pData ),
+    487          
+    488          void Send2Coor(uint8 dev_num, uint16 commandId, uint8 *pData)
+    489          {
+    490              Sys_SendDataRequest( 0xFFFE, &Motor_epDesc[dev_num], commandId, (uint8)osal_strlen( pData ),
                                                                                                          ^
 Warning[Pe167]: argument of type "unsigned char *" is incompatible with
           parameter of type "char *"
 
   void Send2Coor(uint8 dev_num, uint16 commandId, uint8 *pData)
        ^
-"D:\ProgramData\Hardware\zigbee\Projects\zstack\Samples\SensorSys\Source\Motor_End.c",487  Warning[Pe177]: 
+"D:\ProgramData\Hardware\zigbee\Projects\zstack\Samples\SensorSys\Source\Motor_End.c",488  Warning[Pe177]: 
           function "Send2Coor" was declared but never referenced
-    490                                     pData, sysSeqNumber, 0, 0 );
-    491          }
+    491                                     pData, sysSeqNumber, 0, 0 );
+    492          }
 
    Maximum stack usage in bytes:
 
@@ -1991,7 +1996,7 @@ Warning[Pe167]: argument of type "unsigned char *" is incompatible with
      motorTimeout                            4
      Motor_Init                            192
      ?Subroutine17                           6
-     Motor_ProcessEvent                    337
+     Motor_ProcessEvent                    343
      ?Subroutine12                           4
      ?Subroutine20                          20
      ?Subroutine11                           6
@@ -2003,6 +2008,9 @@ Warning[Pe167]: argument of type "unsigned char *" is incompatible with
      ?Subroutine24                          11
      ?Subroutine18                           4
      ?Subroutine23                          11
+     ?Subroutine22                           1
+     ??Subroutine27_0                        1
+     ??Subroutine28_0                        6
      MotorAction                           380
      ?Subroutine13                           9
      ?Subroutine9                            7
@@ -2017,13 +2025,10 @@ Warning[Pe167]: argument of type "unsigned char *" is incompatible with
      ?Subroutine5                           27
      ?Subroutine0                           27
      ??Subroutine26_0                       22
-     ??Subroutine27_0                        1
-     ??Subroutine28_0                        6
      ?Subroutine8                            5
      Timer3_uSec                           128
      ?Subroutine2                           11
      MotorDone                              32
-     ?Subroutine22                           1
      ?<Initializer for Motor_ClusterList>    8
      ?<Initializer for Motor_SimpleDesc>    24
      ??Motor_Init?relay                      6
@@ -2034,14 +2039,14 @@ Warning[Pe167]: argument of type "unsigned char *" is incompatible with
      ??MotorDone?relay                       6
 
  
- 1 622 bytes in segment BANKED_CODE
+ 1 628 bytes in segment BANKED_CODE
     36 bytes in segment BANK_RELAYS
      4 bytes in segment SFR_AN
     32 bytes in segment XDATA_I
     32 bytes in segment XDATA_ID
     44 bytes in segment XDATA_Z
  
- 1 690 bytes of CODE  memory
+ 1 696 bytes of CODE  memory
      0 bytes of DATA  memory (+ 4 bytes shared)
     76 bytes of XDATA memory
 

@@ -1,6 +1,6 @@
 ###############################################################################
 #                                                                             #
-# IAR C/C++ Compiler V8.10.3.10338/W32 for 8051         07/Apr/2018  16:26:45 #
+# IAR C/C++ Compiler V8.10.3.10338/W32 for 8051         15/Apr/2018  22:48:22 #
 # Copyright 2004-2011 IAR Systems AB.                                         #
 #                                                                             #
 #    Core               =  plain                                              #
@@ -475,7 +475,7 @@ D:\ProgramData\Hardware\zigbee\Projects\zstack\Samples\SensorSys\Source\Switch_E
     165              {
     166                  MSGpkt = (afIncomingMSGPacket_t *)osal_msg_receive( task_id );
    \   000010                ; Setup parameters for call to function osal_msg_receive
-   \   000010   8016         SJMP    ??Switch_ProcessEvent_1
+   \   000010   801C         SJMP    ??Switch_ProcessEvent_1
     167                  while ( MSGpkt )
     168                  {
     169                    switch ( MSGpkt->hdr.event )
@@ -488,7 +488,6 @@ D:\ProgramData\Hardware\zigbee\Projects\zstack\Samples\SensorSys\Source\Switch_E
     176                      case ZDO_MATCH_DESC_RSP_SENT:
     177                          Switch_AllowBindConfirm( ((ZDO_MatchDescRspSent_t *)MSGpkt)->nwkAddr );
    \                     ??Switch_ProcessEvent_2:
-   \   000012                ; Setup parameters for call to function Sys_AllowBindConfirm
    \   000012   A3           INC     DPTR
    \   000013   A3           INC     DPTR
    \   000014   E0           MOVX    A,@DPTR
@@ -496,262 +495,267 @@ D:\ProgramData\Hardware\zigbee\Projects\zstack\Samples\SensorSys\Source\Switch_E
    \   000016   A3           INC     DPTR
    \   000017   E0           MOVX    A,@DPTR
    \   000018   FB           MOV     R3,A
-   \   000019   12....       LCALL   ??Sys_AllowBindConfirm?relay
+   \   000019   90....       MOV     DPTR,#swCnt
+   \   00001C   E0           MOVX    A,@DPTR
+   \   00001D   04           INC     A
+   \   00001E   F0           MOVX    @DPTR,A
+   \   00001F                ; Setup parameters for call to function Sys_AllowBindConfirm
+   \   00001F   12....       LCALL   ??Sys_AllowBindConfirm?relay
     178                          break;
     179                    }
     180                    // Release the memory
     181                    osal_msg_deallocate( (uint8 *)MSGpkt );
    \                     ??Switch_ProcessEvent_3:
-   \   00001C                ; Setup parameters for call to function osal_msg_deallocate
-   \   00001C   AA..         MOV     R2,?V0 + 0
-   \   00001E   AB..         MOV     R3,?V0 + 1
-   \   000020   12....       LCALL   ??osal_msg_deallocate?relay
+   \   000022                ; Setup parameters for call to function osal_msg_deallocate
+   \   000022   AA..         MOV     R2,?V0 + 0
+   \   000024   AB..         MOV     R3,?V0 + 1
+   \   000026   12....       LCALL   ??osal_msg_deallocate?relay
     182              
     183                    // Next
     184                    MSGpkt = (afIncomingMSGPacket_t *)osal_msg_receive( Switch_TaskID );
-   \   000023                ; Setup parameters for call to function osal_msg_receive
-   \   000023   90....       MOV     DPTR,#Switch_TaskID
-   \   000026   E0           MOVX    A,@DPTR
-   \   000027   F9           MOV     R1,A
+   \   000029                ; Setup parameters for call to function osal_msg_receive
+   \   000029   90....       MOV     DPTR,#Switch_TaskID
+   \   00002C   E0           MOVX    A,@DPTR
+   \   00002D   F9           MOV     R1,A
    \                     ??Switch_ProcessEvent_1:
-   \   000028   12....       LCALL   ??osal_msg_receive?relay
-   \   00002B   8A..         MOV     ?V0 + 0,R2
-   \   00002D   8B..         MOV     ?V0 + 1,R3
-   \   00002F   E5..         MOV     A,?V0 + 0
-   \   000031   45..         ORL     A,?V0 + 1
-   \   000033   605A         JZ      ??Switch_ProcessEvent_4
-   \   000035   85..82       MOV     DPL,?V0 + 0
-   \   000038   85..83       MOV     DPH,?V0 + 1
-   \   00003B   E0           MOVX    A,@DPTR
-   \   00003C   24E6         ADD     A,#-0x1a
-   \   00003E   6006         JZ      ??Switch_ProcessEvent_5
-   \   000040   2448         ADD     A,#0x48
-   \   000042   60CE         JZ      ??Switch_ProcessEvent_2
-   \   000044   80D6         SJMP    ??Switch_ProcessEvent_3
+   \   00002E   12....       LCALL   ??osal_msg_receive?relay
+   \   000031   8A..         MOV     ?V0 + 0,R2
+   \   000033   8B..         MOV     ?V0 + 1,R3
+   \   000035   E5..         MOV     A,?V0 + 0
+   \   000037   45..         ORL     A,?V0 + 1
+   \   000039   605A         JZ      ??Switch_ProcessEvent_4
+   \   00003B   85..82       MOV     DPL,?V0 + 0
+   \   00003E   85..83       MOV     DPH,?V0 + 1
+   \   000041   E0           MOVX    A,@DPTR
+   \   000042   24E6         ADD     A,#-0x1a
+   \   000044   6006         JZ      ??Switch_ProcessEvent_5
+   \   000046   2448         ADD     A,#0x48
+   \   000048   60C8         JZ      ??Switch_ProcessEvent_2
+   \   00004A   80D6         SJMP    ??Switch_ProcessEvent_3
    \                     ??Switch_ProcessEvent_5:
-   \   000046                ; Setup parameters for call to function SwitchAction
-   \   000046   E5..         MOV     A,?V0 + 0
-   \   000048   2422         ADD     A,#0x22
-   \   00004A   F582         MOV     DPL,A
-   \   00004C   E5..         MOV     A,?V0 + 1
-   \   00004E   3400         ADDC    A,#0x0
-   \   000050   F583         MOV     DPH,A
-   \   000052   12....       LCALL   ?PUSH_XSTACK8_X_TWO
-   \   000055   E5..         MOV     A,?V0 + 0
-   \   000057   2420         ADD     A,#0x20
-   \   000059   F582         MOV     DPL,A
-   \   00005B   E5..         MOV     A,?V0 + 1
-   \   00005D   3400         ADDC    A,#0x0
-   \   00005F   F583         MOV     DPH,A
-   \   000061   E0           MOVX    A,@DPTR
-   \   000062   FC           MOV     R4,A
-   \   000063   A3           INC     DPTR
-   \   000064   E0           MOVX    A,@DPTR
-   \   000065   FD           MOV     R5,A
-   \   000066   85..82       MOV     DPL,?V0 + 0
-   \   000069   85..83       MOV     DPH,?V0 + 1
-   \   00006C   A3           INC     DPTR
-   \   00006D   A3           INC     DPTR
-   \   00006E   A3           INC     DPTR
-   \   00006F   A3           INC     DPTR
-   \   000070   E0           MOVX    A,@DPTR
-   \   000071   FA           MOV     R2,A
+   \   00004C                ; Setup parameters for call to function SwitchAction
+   \   00004C   E5..         MOV     A,?V0 + 0
+   \   00004E   2422         ADD     A,#0x22
+   \   000050   F582         MOV     DPL,A
+   \   000052   E5..         MOV     A,?V0 + 1
+   \   000054   3400         ADDC    A,#0x0
+   \   000056   F583         MOV     DPH,A
+   \   000058   12....       LCALL   ?PUSH_XSTACK8_X_TWO
+   \   00005B   E5..         MOV     A,?V0 + 0
+   \   00005D   2420         ADD     A,#0x20
+   \   00005F   F582         MOV     DPL,A
+   \   000061   E5..         MOV     A,?V0 + 1
+   \   000063   3400         ADDC    A,#0x0
+   \   000065   F583         MOV     DPH,A
+   \   000067   E0           MOVX    A,@DPTR
+   \   000068   FC           MOV     R4,A
+   \   000069   A3           INC     DPTR
+   \   00006A   E0           MOVX    A,@DPTR
+   \   00006B   FD           MOV     R5,A
+   \   00006C   85..82       MOV     DPL,?V0 + 0
+   \   00006F   85..83       MOV     DPH,?V0 + 1
    \   000072   A3           INC     DPTR
-   \   000073   E0           MOVX    A,@DPTR
-   \   000074   FB           MOV     R3,A
-   \   000075   E5..         MOV     A,?V0 + 0
-   \   000077   2414         ADD     A,#0x14
-   \   000079   F582         MOV     DPL,A
-   \   00007B   E5..         MOV     A,?V0 + 1
-   \   00007D   3400         ADDC    A,#0x0
-   \   00007F   F583         MOV     DPH,A
-   \   000081   E0           MOVX    A,@DPTR
-   \   000082   24C4         ADD     A,#-0x3c
-   \   000084   F9           MOV     R1,A
-   \   000085   12....       LCALL   ??SwitchAction?relay
-   \   000088   7402         MOV     A,#0x2
-   \   00008A   12....       LCALL   ?DEALLOC_XSTACK8
-   \   00008D   808D         SJMP    ??Switch_ProcessEvent_3
+   \   000073   A3           INC     DPTR
+   \   000074   A3           INC     DPTR
+   \   000075   A3           INC     DPTR
+   \   000076   E0           MOVX    A,@DPTR
+   \   000077   FA           MOV     R2,A
+   \   000078   A3           INC     DPTR
+   \   000079   E0           MOVX    A,@DPTR
+   \   00007A   FB           MOV     R3,A
+   \   00007B   E5..         MOV     A,?V0 + 0
+   \   00007D   2414         ADD     A,#0x14
+   \   00007F   F582         MOV     DPL,A
+   \   000081   E5..         MOV     A,?V0 + 1
+   \   000083   3400         ADDC    A,#0x0
+   \   000085   F583         MOV     DPH,A
+   \   000087   E0           MOVX    A,@DPTR
+   \   000088   24C4         ADD     A,#-0x3c
+   \   00008A   F9           MOV     R1,A
+   \   00008B   12....       LCALL   ??SwitchAction?relay
+   \   00008E   7402         MOV     A,#0x2
+   \   000090   12....       LCALL   ?DEALLOC_XSTACK8
+   \   000093   808D         SJMP    ??Switch_ProcessEvent_3
     185                  }
     186                  return (events ^ SYS_EVENT_MSG);
    \                     ??Switch_ProcessEvent_4:
-   \   00008F   EE           MOV     A,R6
-   \   000090   FA           MOV     R2,A
-   \   000091   EF           MOV     A,R7
-   \   000092   6480         XRL     A,#0x80
-   \   000094   FB           MOV     R3,A
-   \   000095   02....       LJMP    ??Switch_ProcessEvent_6 & 0xFFFF
+   \   000095   EE           MOV     A,R6
+   \   000096   FA           MOV     R2,A
+   \   000097   EF           MOV     A,R7
+   \   000098   6480         XRL     A,#0x80
+   \   00009A   FB           MOV     R3,A
+   \   00009B   02....       LJMP    ??Switch_ProcessEvent_6 & 0xFFFF
     187              }
     188              if( (events & 0xFF00) & SW_UPDATE_EVT )
    \                     ??Switch_ProcessEvent_0:
-   \   000098   EF           MOV     A,R7
-   \   000099   5450         ANL     A,#0x50
-   \   00009B   7003         JNZ     $+5
-   \   00009D   02....       LJMP    ??Switch_ProcessEvent_7 & 0xFFFF
+   \   00009E   EF           MOV     A,R7
+   \   00009F   5450         ANL     A,#0x50
+   \   0000A1   7003         JNZ     $+5
+   \   0000A3   02....       LJMP    ??Switch_ProcessEvent_7 & 0xFFFF
     189              {
     190                  uint8 sw;
     191                  sw = (uint8)(events);
-   \   0000A0   EE           MOV     A,R6
-   \   0000A1   FC           MOV     R4,A
+   \   0000A6   EE           MOV     A,R6
+   \   0000A7   FC           MOV     R4,A
     192                  uint8 status_m;
     193                  status_m = SwitchControl[sw].status;
-   \   0000A2   75F007       MOV     B,#0x7
-   \   0000A5   A4           MUL     AB
-   \   0000A6   F8           MOV     R0,A
-   \   0000A7   A9F0         MOV     R1,B
-   \   0000A9   74..         MOV     A,#SwitchControl & 0xff
-   \   0000AB   28           ADD     A,R0
-   \   0000AC   F5..         MOV     ?V0 + 2,A
-   \   0000AE   74..         MOV     A,#(SwitchControl >> 8) & 0xff
-   \   0000B0   39           ADDC    A,R1
-   \   0000B1   F5..         MOV     ?V0 + 3,A
-   \   0000B3   85..82       MOV     DPL,?V0 + 2
-   \   0000B6   F583         MOV     DPH,A
-   \   0000B8   A3           INC     DPTR
-   \   0000B9   A3           INC     DPTR
-   \   0000BA   A3           INC     DPTR
-   \   0000BB   E0           MOVX    A,@DPTR
-   \   0000BC   FD           MOV     R5,A
+   \   0000A8   75F007       MOV     B,#0x7
+   \   0000AB   A4           MUL     AB
+   \   0000AC   F8           MOV     R0,A
+   \   0000AD   A9F0         MOV     R1,B
+   \   0000AF   74..         MOV     A,#SwitchControl & 0xff
+   \   0000B1   28           ADD     A,R0
+   \   0000B2   F5..         MOV     ?V0 + 2,A
+   \   0000B4   74..         MOV     A,#(SwitchControl >> 8) & 0xff
+   \   0000B6   39           ADDC    A,R1
+   \   0000B7   F5..         MOV     ?V0 + 3,A
+   \   0000B9   85..82       MOV     DPL,?V0 + 2
+   \   0000BC   F583         MOV     DPH,A
+   \   0000BE   A3           INC     DPTR
+   \   0000BF   A3           INC     DPTR
+   \   0000C0   A3           INC     DPTR
+   \   0000C1   E0           MOVX    A,@DPTR
+   \   0000C2   FD           MOV     R5,A
     194                  if(SwitchControl[sw].msg[status_m].hour)
-   \   0000BD   75F006       MOV     B,#0x6
-   \   0000C0   A4           MUL     AB
-   \   0000C1   F8           MOV     R0,A
-   \   0000C2   A9F0         MOV     R1,B
-   \   0000C4   85..82       MOV     DPL,?V0 + 2
-   \   0000C7   85..83       MOV     DPH,?V0 + 3
-   \   0000CA   12....       LCALL   ?Subroutine3 & 0xFFFF
+   \   0000C3   75F006       MOV     B,#0x6
+   \   0000C6   A4           MUL     AB
+   \   0000C7   F8           MOV     R0,A
+   \   0000C8   A9F0         MOV     R1,B
+   \   0000CA   85..82       MOV     DPL,?V0 + 2
+   \   0000CD   85..83       MOV     DPH,?V0 + 3
+   \   0000D0   12....       LCALL   ?Subroutine3 & 0xFFFF
    \                     ??CrossCallReturnLabel_6:
-   \   0000CD   E0           MOVX    A,@DPTR
-   \   0000CE   6023         JZ      ??Switch_ProcessEvent_8
+   \   0000D3   E0           MOVX    A,@DPTR
+   \   0000D4   6023         JZ      ??Switch_ProcessEvent_8
     195                  {
     196                      if(SwitchControl[sw].msg[status_m].min == 0)
-   \   0000D0   12....       LCALL   ?Subroutine2 & 0xFFFF
+   \   0000D6   12....       LCALL   ?Subroutine2 & 0xFFFF
    \                     ??CrossCallReturnLabel_4:
-   \   0000D3   7019         JNZ     ??Switch_ProcessEvent_9
+   \   0000D9   7019         JNZ     ??Switch_ProcessEvent_9
     197                      {
     198                          (SwitchControl[sw].msg[status_m].hour)--;
-   \   0000D5   ED           MOV     A,R5
-   \   0000D6   75F006       MOV     B,#0x6
-   \   0000D9   A4           MUL     AB
-   \   0000DA   F5..         MOV     ?V0 + 0,A
-   \   0000DC   E5F0         MOV     A,B
-   \   0000DE   F5..         MOV     ?V0 + 1,A
-   \   0000E0   12....       LCALL   ?Subroutine10 & 0xFFFF
-   \                     ??CrossCallReturnLabel_21:
-   \   0000E3   E0           MOVX    A,@DPTR
-   \   0000E4   14           DEC     A
-   \   0000E5   F0           MOVX    @DPTR,A
-    199                          SwitchControl[sw].msg[status_m].min = 59;
+   \   0000DB   ED           MOV     A,R5
+   \   0000DC   75F006       MOV     B,#0x6
+   \   0000DF   A4           MUL     AB
+   \   0000E0   F5..         MOV     ?V0 + 0,A
+   \   0000E2   E5F0         MOV     A,B
+   \   0000E4   F5..         MOV     ?V0 + 1,A
    \   0000E6   12....       LCALL   ?Subroutine10 & 0xFFFF
+   \                     ??CrossCallReturnLabel_21:
+   \   0000E9   E0           MOVX    A,@DPTR
+   \   0000EA   14           DEC     A
+   \   0000EB   F0           MOVX    @DPTR,A
+    199                          SwitchControl[sw].msg[status_m].min = 59;
+   \   0000EC   12....       LCALL   ?Subroutine10 & 0xFFFF
     200                      }
    \                     ??CrossCallReturnLabel_22:
-   \   0000E9   A3           INC     DPTR
-   \   0000EA   743B         MOV     A,#0x3b
-   \   0000EC   8057         SJMP    ??CrossCallReturnLabel_3
+   \   0000EF   A3           INC     DPTR
+   \   0000F0   743B         MOV     A,#0x3b
+   \   0000F2   8057         SJMP    ??CrossCallReturnLabel_3
     201                      else
     202                        (SwitchControl[sw].msg[status_m].min)--;
    \                     ??Switch_ProcessEvent_9:
-   \   0000EE   12....       LCALL   ?Subroutine1 & 0xFFFF
+   \   0000F4   12....       LCALL   ?Subroutine1 & 0xFFFF
     203                      osal_start_timerEx(Switch_TaskID, events, 60000); // calc 1min
     204                  }
    \                     ??CrossCallReturnLabel_2:
-   \   0000F1   8052         SJMP    ??CrossCallReturnLabel_3
-   \   0000F3                ; Setup parameters for call to function osal_start_timerEx
+   \   0000F7   8052         SJMP    ??CrossCallReturnLabel_3
+   \   0000F9                ; Setup parameters for call to function osal_start_timerEx
     205                  else
     206                  {
     207                      if(SwitchControl[sw].msg[status_m].min == 0)
    \                     ??Switch_ProcessEvent_8:
-   \   0000F3   12....       LCALL   ?Subroutine2 & 0xFFFF
+   \   0000F9   12....       LCALL   ?Subroutine2 & 0xFFFF
    \                     ??CrossCallReturnLabel_5:
-   \   0000F6   704A         JNZ     ??Switch_ProcessEvent_10
+   \   0000FC   704A         JNZ     ??Switch_ProcessEvent_10
     208                      {
     209                          if(SwitchControl[sw].msg[status_m].sec == 0)
-   \   0000F8   EC           MOV     A,R4
-   \   0000F9   75F007       MOV     B,#0x7
-   \   0000FC   A4           MUL     AB
-   \   0000FD   FA           MOV     R2,A
-   \   0000FE   12....       LCALL   ?Subroutine15 & 0xFFFF
+   \   0000FE   EC           MOV     A,R4
+   \   0000FF   75F007       MOV     B,#0x7
+   \   000102   A4           MUL     AB
+   \   000103   FA           MOV     R2,A
+   \   000104   12....       LCALL   ?Subroutine15 & 0xFFFF
    \                     ??CrossCallReturnLabel_31:
-   \   000101   12....       LCALL   ?Subroutine3 & 0xFFFF
+   \   000107   12....       LCALL   ?Subroutine3 & 0xFFFF
    \                     ??CrossCallReturnLabel_7:
-   \   000104   A3           INC     DPTR
-   \   000105   A3           INC     DPTR
-   \   000106   E0           MOVX    A,@DPTR
-   \   000107   7009         JNZ     ??Switch_ProcessEvent_11
+   \   00010A   A3           INC     DPTR
+   \   00010B   A3           INC     DPTR
+   \   00010C   E0           MOVX    A,@DPTR
+   \   00010D   7009         JNZ     ??Switch_ProcessEvent_11
     210                              SwitchUpdate(sw,0);
-   \   000109                ; Setup parameters for call to function SwitchUpdate
-   \   000109   7A00         MOV     R2,#0x0
-   \   00010B   EC           MOV     A,R4
-   \   00010C   F9           MOV     R1,A
-   \   00010D   12....       LCALL   ??SwitchUpdate?relay
-   \   000110   8044         SJMP    ??Switch_ProcessEvent_7
+   \   00010F                ; Setup parameters for call to function SwitchUpdate
+   \   00010F   7A00         MOV     R2,#0x0
+   \   000111   EC           MOV     A,R4
+   \   000112   F9           MOV     R1,A
+   \   000113   12....       LCALL   ??SwitchUpdate?relay
+   \   000116   8044         SJMP    ??Switch_ProcessEvent_7
     211                          else
     212                          {
     213                              osal_start_timerEx(Switch_TaskID, events, (SwitchControl[sw].msg[status_m].sec)*1000);
    \                     ??Switch_ProcessEvent_11:
-   \   000112   ED           MOV     A,R5
-   \   000113   75F006       MOV     B,#0x6
-   \   000116   A4           MUL     AB
-   \   000117   F5..         MOV     ?V0 + 0,A
-   \   000119   E5F0         MOV     A,B
-   \   00011B   F5..         MOV     ?V0 + 1,A
-   \   00011D                ; Setup parameters for call to function osal_start_timerEx
-   \   00011D   12....       LCALL   ?Subroutine9 & 0xFFFF
+   \   000118   ED           MOV     A,R5
+   \   000119   75F006       MOV     B,#0x6
+   \   00011C   A4           MUL     AB
+   \   00011D   F5..         MOV     ?V0 + 0,A
+   \   00011F   E5F0         MOV     A,B
+   \   000121   F5..         MOV     ?V0 + 1,A
+   \   000123                ; Setup parameters for call to function osal_start_timerEx
+   \   000123   12....       LCALL   ?Subroutine9 & 0xFFFF
    \                     ??CrossCallReturnLabel_19:
-   \   000120   E0           MOVX    A,@DPTR
-   \   000121   FC           MOV     R4,A
-   \   000122   75F0E8       MOV     B,#-0x18
-   \   000125   A4           MUL     AB
-   \   000126   CC           XCH     A,R4
-   \   000127   A8F0         MOV     R0,B
-   \   000129   75F003       MOV     B,#0x3
-   \   00012C   A4           MUL     AB
-   \   00012D   28           ADD     A,R0
-   \   00012E   FD           MOV     R5,A
-   \   00012F   EE           MOV     A,R6
-   \   000130   FA           MOV     R2,A
-   \   000131   EF           MOV     A,R7
-   \   000132   FB           MOV     R3,A
-   \   000133   90....       MOV     DPTR,#Switch_TaskID
-   \   000136   E0           MOVX    A,@DPTR
-   \   000137   F9           MOV     R1,A
-   \   000138   12....       LCALL   ??osal_start_timerEx?relay
+   \   000126   E0           MOVX    A,@DPTR
+   \   000127   FC           MOV     R4,A
+   \   000128   75F0E8       MOV     B,#-0x18
+   \   00012B   A4           MUL     AB
+   \   00012C   CC           XCH     A,R4
+   \   00012D   A8F0         MOV     R0,B
+   \   00012F   75F003       MOV     B,#0x3
+   \   000132   A4           MUL     AB
+   \   000133   28           ADD     A,R0
+   \   000134   FD           MOV     R5,A
+   \   000135   EE           MOV     A,R6
+   \   000136   FA           MOV     R2,A
+   \   000137   EF           MOV     A,R7
+   \   000138   FB           MOV     R3,A
+   \   000139   90....       MOV     DPTR,#Switch_TaskID
+   \   00013C   E0           MOVX    A,@DPTR
+   \   00013D   F9           MOV     R1,A
+   \   00013E   12....       LCALL   ??osal_start_timerEx?relay
     214                              SwitchControl[sw].msg[status_m].sec = 0;
-   \   00013B   12....       LCALL   ?Subroutine9 & 0xFFFF
+   \   000141   12....       LCALL   ?Subroutine9 & 0xFFFF
     215                          }
     216                      }
    \                     ??CrossCallReturnLabel_20:
-   \   00013E   E4           CLR     A
-   \   00013F   F0           MOVX    @DPTR,A
-   \   000140   8014         SJMP    ??Switch_ProcessEvent_7
+   \   000144   E4           CLR     A
+   \   000145   F0           MOVX    @DPTR,A
+   \   000146   8014         SJMP    ??Switch_ProcessEvent_7
     217                      else
     218                      {
     219                        (SwitchControl[sw].msg[status_m].min)--;
    \                     ??Switch_ProcessEvent_10:
-   \   000142   12....       LCALL   ?Subroutine1 & 0xFFFF
+   \   000148   12....       LCALL   ?Subroutine1 & 0xFFFF
    \                     ??CrossCallReturnLabel_3:
-   \   000145   F0           MOVX    @DPTR,A
+   \   00014B   F0           MOVX    @DPTR,A
     220                        osal_start_timerEx(Switch_TaskID, events, 60000); // calc 1min
-   \   000146                ; Setup parameters for call to function osal_start_timerEx
-   \   000146   7C60         MOV     R4,#0x60
-   \   000148   7DEA         MOV     R5,#-0x16
-   \   00014A   EE           MOV     A,R6
-   \   00014B   FA           MOV     R2,A
-   \   00014C   EF           MOV     A,R7
-   \   00014D   FB           MOV     R3,A
-   \   00014E   90....       MOV     DPTR,#Switch_TaskID
-   \   000151   E0           MOVX    A,@DPTR
-   \   000152   F9           MOV     R1,A
-   \   000153   12....       LCALL   ??osal_start_timerEx?relay
+   \   00014C                ; Setup parameters for call to function osal_start_timerEx
+   \   00014C   7C60         MOV     R4,#0x60
+   \   00014E   7DEA         MOV     R5,#-0x16
+   \   000150   EE           MOV     A,R6
+   \   000151   FA           MOV     R2,A
+   \   000152   EF           MOV     A,R7
+   \   000153   FB           MOV     R3,A
+   \   000154   90....       MOV     DPTR,#Switch_TaskID
+   \   000157   E0           MOVX    A,@DPTR
+   \   000158   F9           MOV     R1,A
+   \   000159   12....       LCALL   ??osal_start_timerEx?relay
     221                      }
     222                  }
     223                  return (events ^ events);
    \                     ??Switch_ProcessEvent_7:
-   \   000156   7A00         MOV     R2,#0x0
-   \   000158   7B00         MOV     R3,#0x0
+   \   00015C   7A00         MOV     R2,#0x0
+   \   00015E   7B00         MOV     R3,#0x0
    \                     ??Switch_ProcessEvent_6:
-   \   00015A   7F05         MOV     R7,#0x5
-   \   00015C   02....       LJMP    ?BANKED_LEAVE_XDATA
+   \   000160   7F05         MOV     R7,#0x5
+   \   000162   02....       LJMP    ?BANKED_LEAVE_XDATA
     224              }
     225              
     226              return 0;
@@ -1590,22 +1594,23 @@ D:\ProgramData\Hardware\zigbee\Projects\zstack\Samples\SensorSys\Source\Switch_E
     394           */
     395          void Switch_AllowBindConfirm( uint16 source )
     396          {
-    397               Sys_AllowBindConfirm(source);
-    398          }
-    399          
-    400          void Send2Coor(uint8 dev_num, uint16 commandId, uint8 *pData)
-    401          {
-    402              Sys_SendDataRequest( 0xFFFE, &Switch_epDesc[dev_num], commandId, (uint8)osal_strlen( pData ),
+    397               swCnt++;
+    398               Sys_AllowBindConfirm(source);
+    399          }
+    400          
+    401          void Send2Coor(uint8 dev_num, uint16 commandId, uint8 *pData)
+    402          {
+    403              Sys_SendDataRequest( 0xFFFE, &Switch_epDesc[dev_num], commandId, (uint8)osal_strlen( pData ),
                                                                                                           ^
 Warning[Pe167]: argument of type "unsigned char *" is incompatible with
           parameter of type "char *"
 
   void Send2Coor(uint8 dev_num, uint16 commandId, uint8 *pData)
        ^
-"D:\ProgramData\Hardware\zigbee\Projects\zstack\Samples\SensorSys\Source\Switch_End.c",400  Warning[Pe177]: 
+"D:\ProgramData\Hardware\zigbee\Projects\zstack\Samples\SensorSys\Source\Switch_End.c",401  Warning[Pe177]: 
           function "Send2Coor" was declared but never referenced
-    403                                     pData, sysSeqNumber, 0, 0 );
-    404          }
+    404                                     pData, sysSeqNumber, 0, 0 );
+    405          }
 
    Maximum stack usage in bytes:
 
@@ -1653,7 +1658,7 @@ Warning[Pe167]: argument of type "unsigned char *" is incompatible with
      SwitchControl                           35
      swTimenow                                1
      Switch_Init                            145
-     Switch_ProcessEvent                    351
+     Switch_ProcessEvent                    357
      ?Subroutine10                            4
      ?Subroutine16                           22
      ?Subroutine9                             6
@@ -1684,14 +1689,14 @@ Warning[Pe167]: argument of type "unsigned char *" is incompatible with
      ??SwitchUpdate?relay                     6
 
  
- 1 293 bytes in segment BANKED_CODE
+ 1 299 bytes in segment BANKED_CODE
     24 bytes in segment BANK_RELAYS
      6 bytes in segment SFR_AN
     68 bytes in segment XDATA_I
     68 bytes in segment XDATA_ID
     80 bytes in segment XDATA_Z
  
- 1 385 bytes of CODE  memory
+ 1 391 bytes of CODE  memory
      0 bytes of DATA  memory (+ 6 bytes shared)
    148 bytes of XDATA memory
 

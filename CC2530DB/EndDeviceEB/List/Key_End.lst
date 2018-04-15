@@ -1,6 +1,6 @@
 ###############################################################################
 #                                                                             #
-# IAR C/C++ Compiler V8.10.3.10338/W32 for 8051         11/Apr/2018  15:58:06 #
+# IAR C/C++ Compiler V8.10.3.10338/W32 for 8051         15/Apr/2018  22:50:15 #
 # Copyright 2004-2011 IAR Systems AB.                                         #
 #                                                                             #
 #    Core               =  plain                                              #
@@ -214,471 +214,372 @@ D:\ProgramData\Hardware\zigbee\Projects\zstack\Samples\SensorSys\Source\Key_End.
    \   000001                REQUIRE __INIT_XDATA_Z
      44          
      45          
-     46          
-     47          
-     48          // Key 端点的簇ID
-     49          // This list should be filled with Application specific Cluster IDs.
+     46          // Key 端点的簇ID
+     47          // This list should be filled with Application specific Cluster IDs.
 
    \                                 In  segment XDATA_I, align 1, keep-with-next
-     50          const cId_t Key_ClusterList[KEY_MAX_CLUSTERS] =
+     48          const cId_t Key_ClusterList[KEY_MAX_CLUSTERS] =
    \                     Key_ClusterList:
    \   000000                DS 8
    \   000008                REQUIRE `?<Initializer for Key_ClusterList>`
    \   000008                REQUIRE __INIT_XDATA_I
-     51          {
-     52              PORT_INIT_CLUSTER,
-     53              TOGGLE_INIT_CLUSTER,
-     54              OPERATE_CLUSTER,
-     55              DELETE_CLUSTER
-     56          };
-     57          
-     58          // Key 端点简单描述符
+     49          {
+     50              PORT_INIT_CLUSTER,
+     51              TOGGLE_INIT_CLUSTER,
+     52              OPERATE_CLUSTER,
+     53              DELETE_CLUSTER
+     54          };
+     55          
+     56          // Key 端点简单描述符
 
-   \                                 In  segment XDATA_I, align 1, keep-with-next
-     59          SimpleDescriptionFormat_t Key_SimpleDesc[KEY_NUM_MAX] =
+   \                                 In  segment XDATA_Z, align 1, keep-with-next
+     57          SimpleDescriptionFormat_t *Key_SimpleDesc[KEY_NUM_MAX];
    \                     Key_SimpleDesc:
-   \   000000                DS 120
-   \   000078                REQUIRE `?<Initializer for Key_SimpleDesc>`
-   \   000078                REQUIRE __INIT_XDATA_I
-     60          {
-     61          	KEY_ENDPOINT,           //  int Endpoint;
-     62          	SYS_PROFID,                //  uint16 AppProfId[2];
-     63          	SYS_DEVICEID,              //  uint16 AppDeviceId[2];
-     64          	SYS_DEVICE_VERSION,        //  int   AppDevVer:4;
-     65          	SYS_FLAGS,                 //  int   AppFlags:4;
-     66          	KEY_MAX_CLUSTERS,          //  byte  AppNumInClusters;
-     67          	(cId_t *)Key_ClusterList,  //  byte *pAppInClusterList;
-     68          	KEY_MAX_CLUSTERS,          //  byte  AppNumInClusters;
-     69          	(cId_t *)Key_ClusterList   //  byte *pAppInClusterList;
-     70          };
-     71          
+   \   000000                DS 20
+   \   000014                REQUIRE __INIT_XDATA_Z
+     58          
 
    \                                 In  segment XDATA_Z, align 1, keep-with-next
-     72          endPointDesc_t Key_epDesc[KEY_NUM_MAX];
+     59          endPointDesc_t *Key_epDesc[KEY_NUM_MAX];
    \                     Key_epDesc:
-   \   000000                DS 60
-   \   00003C                REQUIRE __INIT_XDATA_Z
-     73          
-     74          /*********************************************************************
-     75           * EXTERNAL VARIABLES
-     76           */
-     77          extern uint8 myAppState;
-     78          extern uint8 keys_shift;
-     79          extern uint8 type_join;
+   \   000000                DS 20
+   \   000014                REQUIRE __INIT_XDATA_Z
+     60          
+     61          /*********************************************************************
+     62           * EXTERNAL VARIABLES
+     63           */
+     64          extern uint8 myAppState;
+     65          extern uint8 keys_shift;
+     66          extern uint8 type_join;
 
    \                                 In  segment XDATA_Z, align 1, keep-with-next
-     80          SensorObserve_t *KeyObserve; 
+     67          SensorObserve_t *KeyObserve; 
    \                     KeyObserve:
    \   000000                DS 2
    \   000002                REQUIRE __INIT_XDATA_Z
-     81          /*********************************************************************
-     82           * EXTERNAL FUNCTIONS
-     83           */
-     84          
-     85          /*********************************************************************
-     86           * LOCAL VARIABLES
-     87           */
-     88          
-     89          
+     68          /*********************************************************************
+     69           * EXTERNAL FUNCTIONS
+     70           */
+     71          
+     72          /*********************************************************************
+     73           * LOCAL VARIABLES
+     74           */
 
    \                                 In  segment XDATA_Z, align 1, keep-with-next
-     90          byte Key_TaskID;
+     75          byte Key_TaskID;
    \                     Key_TaskID:
    \   000000                DS 1
    \   000001                REQUIRE __INIT_XDATA_Z
-     91          
+     76          
 
    \                                 In  segment XDATA_Z, align 1, keep-with-next
-     92          afAddrType_t Key_DstAddr;
+     77          afAddrType_t Key_DstAddr;
    \                     Key_DstAddr:
    \   000000                DS 12
    \   00000C                REQUIRE __INIT_XDATA_Z
-     93          
-     94          /*********************************************************************
-     95           * LOCAL FUNCTIONS
-     96           */
-     97          void Key_Init( byte task_id );
-     98          UINT16 Key_ProcessEvent( byte task_id, UINT16 events );
-     99          void Key_HandleKeys( byte shift, byte keys );
-    100          static void KeyAction( uint8 key, uint16 command, uint16 len, uint8 *pData );
-    101          
-    102          static void Key_ReceiveDataIndication( uint16 source, uint8 endPoint, 
-    103                                        uint16 command, uint16 len, uint8 *pData  );
-    104          static void Key_AllowBindConfirm( uint16 source );
-    105          
-    106          /*********************************************************************
-    107           * EXTERNAL FUNCTIONS
-    108           */
-    109          void KeySend2Coor(uint8 dev_num, uint16 commandId, uint8 *pData);
-    110          
-    111          
-    112          /*********************************************************************
-    113           * @fn      Key_Init
-    114           *
-    115           * @brief   Initialization function for the Generic App Task.
-    116           *          This is called during initialization and should contain
-    117           *          any application specific initialization (ie. hardware
-    118           *          initialization/setup, table initialization, power up
-    119           *          notificaiton ... ).
-    120           *
-    121           * @param   task_id - the ID assigned by OSAL.  This ID should be
-    122           *                    used to send messages and set timers.
-    123           *
-    124           * @return  none
-    125           */
+     78          
+     79          /*********************************************************************
+     80           * LOCAL FUNCTIONS
+     81           */
+     82          void Key_Init( byte task_id );
+     83          UINT16 Key_ProcessEvent( byte task_id, UINT16 events );
+     84          void Key_HandleKeys( byte shift, byte keys );
+     85          static void KeyAction( uint8 key, uint16 command, uint16 len, uint8 *pData );
+     86          
+     87          static void Key_ReceiveDataIndication( uint16 source, uint8 endPoint, 
+     88                                        uint16 command, uint16 len, uint8 *pData  );
+     89          static void Key_AllowBindConfirm( uint16 source );
+     90          
+     91          /*********************************************************************
+     92           * EXTERNAL FUNCTIONS
+     93           */
+     94          void KeySend2Coor(uint8 dev_num, uint16 commandId, uint8 *pData);
+     95          
+     96          
+     97          /*********************************************************************
+     98           * @fn      Key_Init
+     99           *
+    100           * @brief   Initialization function for the Generic App Task.
+    101           *          This is called during initialization and should contain
+    102           *          any application specific initialization (ie. hardware
+    103           *          initialization/setup, table initialization, power up
+    104           *          notificaiton ... ).
+    105           *
+    106           * @param   task_id - the ID assigned by OSAL.  This ID should be
+    107           *                    used to send messages and set timers.
+    108           *
+    109           * @return  none
+    110           */
 
    \                                 In  segment BANKED_CODE, align 1, keep-with-next
-    126          void Key_Init( byte task_id )
+    111          void Key_Init( byte task_id )
    \                     Key_Init:
-    127          {
+    112          {
    \   000000   74F7         MOV     A,#-0x9
    \   000002   12....       LCALL   ?BANKED_ENTER_XDATA
    \   000005                ; Saved register size: 9
    \   000005                ; Auto size: 0
    \   000005   E9           MOV     A,R1
-    128                  char i;
-    129          	Key_TaskID = task_id;
+    113                  char i;
+    114          	Key_TaskID = task_id;
    \   000006   90....       MOV     DPTR,#Key_TaskID
    \   000009   F0           MOVX    @DPTR,A
-    130          
-    131          	// Device hardware initialization can be added here or in main() (Zmain.c).
-    132          	// If the hardware is application specific - add it here.
-    133          	// If the hardware is other parts of the device add it in main().
-    134          
-    135          	Key_DstAddr.addrMode = (afAddrMode_t)AddrNotPresent;
+    115          
+    116          	// Device hardware initialization can be added here or in main() (Zmain.c).
+    117          	// If the hardware is application specific - add it here.
+    118          	// If the hardware is other parts of the device add it in main().
+    119          
+    120          	Key_DstAddr.addrMode = (afAddrMode_t)AddrNotPresent;
    \   00000A   90....       MOV     DPTR,#Key_DstAddr + 8
    \   00000D   E4           CLR     A
    \   00000E   F0           MOVX    @DPTR,A
-    136          	Key_DstAddr.endPoint = 0;
+    121          	Key_DstAddr.endPoint = 0;
    \   00000F   A3           INC     DPTR
    \   000010   F0           MOVX    @DPTR,A
-    137          	Key_DstAddr.addr.shortAddr = 0;
+    122          	Key_DstAddr.addr.shortAddr = 0;
    \   000011   90....       MOV     DPTR,#Key_DstAddr
    \   000014   F0           MOVX    @DPTR,A
    \   000015   A3           INC     DPTR
    \   000016   F0           MOVX    @DPTR,A
-    138                  
-    139                  for( i=0; i<KEY_NUM_MAX; i++)
-   \   000017   FF           MOV     R7,A
-    140                  {
-    141                      // Fill out the endpoint description.
-    142                      Key_epDesc[i].endPoint = KEY_ENDPOINT+i;
-   \                     ??Key_Init_0:
-   \   000018   8F82         MOV     DPL,R7
-   \   00001A   A882         MOV     R0,DPL
-   \   00001C   E8           MOV     A,R0
-   \   00001D   75F006       MOV     B,#0x6
-   \   000020   A4           MUL     AB
-   \   000021   FA           MOV     R2,A
-   \   000022   ABF0         MOV     R3,B
-   \   000024   74..         MOV     A,#Key_epDesc & 0xff
-   \   000026   2A           ADD     A,R2
-   \   000027   FA           MOV     R2,A
-   \   000028   74..         MOV     A,#(Key_epDesc >> 8) & 0xff
-   \   00002A   3B           ADDC    A,R3
-   \   00002B   FB           MOV     R3,A
-   \   00002C   740A         MOV     A,#0xa
-   \   00002E   2F           ADD     A,R7
-   \   00002F   8A82         MOV     DPL,R2
-   \   000031   8B83         MOV     DPH,R3
-   \   000033   F0           MOVX    @DPTR,A
-    143                      Key_epDesc[i].task_id = &Key_TaskID;
-   \   000034   A3           INC     DPTR
-   \   000035   74..         MOV     A,#Key_TaskID & 0xff
-   \   000037   F0           MOVX    @DPTR,A
-   \   000038   A3           INC     DPTR
-   \   000039   74..         MOV     A,#(Key_TaskID >> 8) & 0xff
-   \   00003B   F0           MOVX    @DPTR,A
-    144                      Key_SimpleDesc[i] = Key_SimpleDesc[0];
-   \   00003C   E8           MOV     A,R0
-   \   00003D   75F00C       MOV     B,#0xc
-   \   000040   A4           MUL     AB
-   \   000041   F8           MOV     R0,A
-   \   000042   A9F0         MOV     R1,B
-   \   000044   74..         MOV     A,#Key_SimpleDesc & 0xff
-   \   000046   28           ADD     A,R0
-   \   000047   F8           MOV     R0,A
-   \   000048   74..         MOV     A,#(Key_SimpleDesc >> 8) & 0xff
-   \   00004A   39           ADDC    A,R1
-   \   00004B   F9           MOV     R1,A
-   \   00004C   90....       MOV     DPTR,#Key_SimpleDesc
-   \   00004F   E8           MOV     A,R0
-   \   000050   FC           MOV     R4,A
-   \   000051   E9           MOV     A,R1
-   \   000052   FD           MOV     R5,A
-   \   000053   740C         MOV     A,#0xc
-   \   000055   12....       LCALL   ?MOVE_LONG8_XDATA_XDATA
-    145                      Key_epDesc[i].simpleDesc
-    146          						= (SimpleDescriptionFormat_t *)&(Key_SimpleDesc[i]);
-   \   000058   8A82         MOV     DPL,R2
-   \   00005A   8B83         MOV     DPH,R3
-   \   00005C   A3           INC     DPTR
-   \   00005D   A3           INC     DPTR
-   \   00005E   A3           INC     DPTR
-   \   00005F   E8           MOV     A,R0
-   \   000060   F0           MOVX    @DPTR,A
-   \   000061   A3           INC     DPTR
-   \   000062   E9           MOV     A,R1
-   \   000063   F0           MOVX    @DPTR,A
-    147                      Key_SimpleDesc[i].EndPoint += i;
-   \   000064   8882         MOV     DPL,R0
-   \   000066   8983         MOV     DPH,R1
-   \   000068   E0           MOVX    A,@DPTR
-   \   000069   2F           ADD     A,R7
-   \   00006A   F0           MOVX    @DPTR,A
-    148          	    Key_epDesc[i].latencyReq = noLatencyReqs;
-   \   00006B   8A82         MOV     DPL,R2
-   \   00006D   8B83         MOV     DPH,R3
-   \   00006F   A3           INC     DPTR
-   \   000070   A3           INC     DPTR
-   \   000071   A3           INC     DPTR
-   \   000072   A3           INC     DPTR
-   \   000073   A3           INC     DPTR
-   \   000074   E4           CLR     A
-   \   000075   F0           MOVX    @DPTR,A
-    149                      
-    150                      // Register the endpoint description with the AF
-    151          	    afRegister( &(Key_epDesc[i]) );
-   \   000076                ; Setup parameters for call to function afRegister
-   \   000076   12....       LCALL   ??afRegister?relay
-    152                  }
-   \   000079   0F           INC     R7
-   \   00007A   EF           MOV     A,R7
-   \   00007B   C3           CLR     C
-   \   00007C   940A         SUBB    A,#0xa
-   \   00007E   4098         JC      ??Key_Init_0
-    153          
-    154                  KeyObserve = NULL;
-   \   000080   90....       MOV     DPTR,#KeyObserve
-   \   000083   E4           CLR     A
-   \   000084   F0           MOVX    @DPTR,A
-   \   000085   A3           INC     DPTR
-   \   000086   F0           MOVX    @DPTR,A
-    155          	// Register for all key events - This app will handle all key events
-    156          	RegisterForKeys( Key_TaskID );
-   \   000087                ; Setup parameters for call to function RegisterForKeys
-   \   000087   90....       MOV     DPTR,#Key_TaskID
-   \   00008A   E0           MOVX    A,@DPTR
-   \   00008B   F9           MOV     R1,A
-   \   00008C   12....       LCALL   ??RegisterForKeys?relay
-    157           
-    158          	//	ZDO_RegisterForZDOMsg( Key_TaskID, End_Device_Bind_rsp );
-    159          	ZDO_RegisterForZDOMsg( Key_TaskID, Match_Desc_rsp );
-   \   00008F                ; Setup parameters for call to function ZDO_RegisterForZDOMsg
-   \   00008F   7A06         MOV     R2,#0x6
-   \   000091   7B80         MOV     R3,#-0x80
-   \   000093   90....       MOV     DPTR,#Key_TaskID
-   \   000096   E0           MOVX    A,@DPTR
-   \   000097   F9           MOV     R1,A
-   \   000098   12....       LCALL   ??ZDO_RegisterForZDOMsg?relay
-    160          }
-   \   00009B                REQUIRE ?Subroutine0
-   \   00009B                ; // Fall through to label ?Subroutine0
+    123                  
+    124                  for( i=0; i<KEY_NUM_MAX; i++)
+    125                  {
+    126                    
+    127                  }
+    128          
+    129                  KeyObserve = NULL;
+   \   000017   90....       MOV     DPTR,#KeyObserve
+   \   00001A   F0           MOVX    @DPTR,A
+   \   00001B   A3           INC     DPTR
+   \   00001C   F0           MOVX    @DPTR,A
+    130          	// Register for all key events - This app will handle all key events
+    131          	RegisterForKeys( Key_TaskID );
+   \   00001D                ; Setup parameters for call to function RegisterForKeys
+   \   00001D   12....       LCALL   ??RegisterForKeys?relay
+    132           
+    133          	//	ZDO_RegisterForZDOMsg( Key_TaskID, End_Device_Bind_rsp );
+    134          	ZDO_RegisterForZDOMsg( Key_TaskID, Match_Desc_rsp );
+   \   000020                ; Setup parameters for call to function ZDO_RegisterForZDOMsg
+   \   000020   7A06         MOV     R2,#0x6
+   \   000022   7B80         MOV     R3,#-0x80
+   \   000024   90....       MOV     DPTR,#Key_TaskID
+   \   000027   E0           MOVX    A,@DPTR
+   \   000028   F9           MOV     R1,A
+   \   000029   12....       LCALL   ??ZDO_RegisterForZDOMsg?relay
+    135          }
+   \   00002C                REQUIRE ?Subroutine0
+   \   00002C                ; // Fall through to label ?Subroutine0
 
    \                                 In  segment BANKED_CODE, align 1, keep-with-next
    \                     ?Subroutine0:
    \   000000   7F01         MOV     R7,#0x1
    \   000002   02....       LJMP    ?BANKED_LEAVE_XDATA
-    161          
-    162          /*********************************************************************
-    163           * @fn      Key_ProcessEvent
-    164           *
-    165           * @brief   Generic Application Task event processor.  This function
-    166           *          is called to process all events for the task.  Events
-    167           *          include timers, messages and any other user defined events.
-    168           *
-    169           * @param   task_id  - The OSAL assigned task ID.
-    170           * @param   events - events to process.  This is a bit map and can
-    171           *                   contain more than one event.
-    172           *
-    173           * @return  none
-    174           */
+    136          
+    137          /*********************************************************************
+    138           * @fn      Key_ProcessEvent
+    139           *
+    140           * @brief   Generic Application Task event processor.  This function
+    141           *          is called to process all events for the task.  Events
+    142           *          include timers, messages and any other user defined events.
+    143           *
+    144           * @param   task_id  - The OSAL assigned task ID.
+    145           * @param   events - events to process.  This is a bit map and can
+    146           *                   contain more than one event.
+    147           *
+    148           * @return  none
+    149           */
 
    \                                 In  segment BANKED_CODE, align 1, keep-with-next
-    175          UINT16 Key_ProcessEvent( byte task_id, UINT16 events )
+    150          UINT16 Key_ProcessEvent( byte task_id, UINT16 events )
    \                     Key_ProcessEvent:
-    176          {
+    151          {
    \   000000   74F2         MOV     A,#-0xe
    \   000002   12....       LCALL   ?BANKED_ENTER_XDATA
    \   000005                ; Saved register size: 14
    \   000005                ; Auto size: 0
    \   000005   8A..         MOV     ?V0 + 0,R2
    \   000007   8B..         MOV     ?V0 + 1,R3
-    177              afIncomingMSGPacket_t *MSGpkt = NULL;
-    178              (void)task_id;  // Intentionally unreferenced parameter
-    179          
-    180              if ( events & SYS_EVENT_MSG )
+    152              afIncomingMSGPacket_t *MSGpkt = NULL;
+    153              (void)task_id;  // Intentionally unreferenced parameter
+    154          
+    155              if ( events & SYS_EVENT_MSG )
    \   000009   EB           MOV     A,R3
    \   00000A   5480         ANL     A,#0x80
    \   00000C   7003         JNZ     $+5
    \   00000E   02....       LJMP    ??Key_ProcessEvent_0 & 0xFFFF
-    181              {
-    182                  MSGpkt = (afIncomingMSGPacket_t *)osal_msg_receive( task_id );
+    156              {
+    157                  MSGpkt = (afIncomingMSGPacket_t *)osal_msg_receive( task_id );
    \   000011                ; Setup parameters for call to function osal_msg_receive
-   \   000011   8016         SJMP    ??Key_ProcessEvent_1
-    183                  while ( MSGpkt )
-    184                  {
-    185                    switch ( MSGpkt->hdr.event )
-    186                    {
-    187                      case KEY_CHANGE:
-    188                          Key_HandleKeys( ((keyChange_t *)MSGpkt)->state, ((keyChange_t *)MSGpkt)->keys );
-    189                          break;
-    190                  
-    191                      case AF_INCOMING_MSG_CMD:
-    192                          Key_ReceiveDataIndication( MSGpkt->srcAddr.addr.shortAddr, MSGpkt->endPoint, MSGpkt->clusterId,
-    193                                                  MSGpkt->cmd.DataLength, MSGpkt->cmd.Data);
-    194                          break;
-    195                        
-    196                      case ZDO_MATCH_DESC_RSP_SENT:
-    197                          Key_AllowBindConfirm( ((ZDO_MatchDescRspSent_t *)MSGpkt)->nwkAddr );
+   \   000011   8012         SJMP    ??Key_ProcessEvent_1
+    158                  while ( MSGpkt )
+    159                  {
+    160                    switch ( MSGpkt->hdr.event )
+    161                    {
+    162                      case KEY_CHANGE:
+    163                          Key_HandleKeys( ((keyChange_t *)MSGpkt)->state, ((keyChange_t *)MSGpkt)->keys );
+    164                          break;
+    165                  
+    166                      case AF_INCOMING_MSG_CMD:
+    167                          Key_ReceiveDataIndication( MSGpkt->srcAddr.addr.shortAddr, MSGpkt->endPoint, MSGpkt->clusterId,
+    168                                                  MSGpkt->cmd.DataLength, MSGpkt->cmd.Data);
+    169                          break;
+    170                        
+    171                      case ZDO_MATCH_DESC_RSP_SENT:
+    172                          Key_AllowBindConfirm( ((ZDO_MatchDescRspSent_t *)MSGpkt)->nwkAddr );
    \                     ??Key_ProcessEvent_2:
-   \   000013                ; Setup parameters for call to function Sys_AllowBindConfirm
-   \   000013   A3           INC     DPTR
-   \   000014   A3           INC     DPTR
-   \   000015   E0           MOVX    A,@DPTR
-   \   000016   FA           MOV     R2,A
-   \   000017   A3           INC     DPTR
-   \   000018   E0           MOVX    A,@DPTR
-   \   000019   FB           MOV     R3,A
-   \   00001A   12....       LCALL   ??Sys_AllowBindConfirm?relay
-    198                          break;
-    199                    }
-    200                    // Release the memory
-    201                    osal_msg_deallocate( (uint8 *)MSGpkt );
+   \   000013                ; Setup parameters for call to function Key_AllowBindConfirm
+   \   000013   12....       LCALL   ?Subroutine5 & 0xFFFF
+   \                     ??CrossCallReturnLabel_21:
+   \   000016   12....       LCALL   ??Key_AllowBindConfirm?relay
+    173                          break;
+    174                    }
+    175                    // Release the memory
+    176                    osal_msg_deallocate( (uint8 *)MSGpkt );
    \                     ??Key_ProcessEvent_3:
-   \   00001D                ; Setup parameters for call to function osal_msg_deallocate
-   \   00001D   EE           MOV     A,R6
-   \   00001E   FA           MOV     R2,A
-   \   00001F   EF           MOV     A,R7
-   \   000020   FB           MOV     R3,A
-   \   000021   12....       LCALL   ??osal_msg_deallocate?relay
-    202              
-    203                    // Next
-    204                    MSGpkt = (afIncomingMSGPacket_t *)osal_msg_receive( Key_TaskID );
-   \   000024                ; Setup parameters for call to function osal_msg_receive
-   \   000024   90....       MOV     DPTR,#Key_TaskID
-   \   000027   E0           MOVX    A,@DPTR
-   \   000028   F9           MOV     R1,A
+   \   000019                ; Setup parameters for call to function osal_msg_deallocate
+   \   000019   EE           MOV     A,R6
+   \   00001A   FA           MOV     R2,A
+   \   00001B   EF           MOV     A,R7
+   \   00001C   FB           MOV     R3,A
+   \   00001D   12....       LCALL   ??osal_msg_deallocate?relay
+    177              
+    178                    // Next
+    179                    MSGpkt = (afIncomingMSGPacket_t *)osal_msg_receive( Key_TaskID );
+   \   000020                ; Setup parameters for call to function osal_msg_receive
+   \   000020   90....       MOV     DPTR,#Key_TaskID
+   \   000023   E0           MOVX    A,@DPTR
+   \   000024   F9           MOV     R1,A
    \                     ??Key_ProcessEvent_1:
-   \   000029   12....       LCALL   ??osal_msg_receive?relay
-   \   00002C   8A..         MOV     ?V0 + 4,R2
-   \   00002E   8B..         MOV     ?V0 + 5,R3
-   \   000030   AE..         MOV     R6,?V0 + 4
-   \   000032   AF..         MOV     R7,?V0 + 5
-   \   000034   EE           MOV     A,R6
-   \   000035   4F           ORL     A,R7
-   \   000036   6067         JZ      ??Key_ProcessEvent_4
-   \   000038   8E82         MOV     DPL,R6
-   \   00003A   8F83         MOV     DPH,R7
-   \   00003C   E0           MOVX    A,@DPTR
-   \   00003D   24E6         ADD     A,#-0x1a
-   \   00003F   601C         JZ      ??Key_ProcessEvent_5
-   \   000041   245A         ADD     A,#0x5a
-   \   000043   6006         JZ      ??Key_ProcessEvent_6
-   \   000045   24EE         ADD     A,#-0x12
-   \   000047   60CA         JZ      ??Key_ProcessEvent_2
-   \   000049   80D2         SJMP    ??Key_ProcessEvent_3
+   \   000025   12....       LCALL   ??osal_msg_receive?relay
+   \   000028   8A..         MOV     ?V0 + 4,R2
+   \   00002A   8B..         MOV     ?V0 + 5,R3
+   \   00002C   AE..         MOV     R6,?V0 + 4
+   \   00002E   AF..         MOV     R7,?V0 + 5
+   \   000030   EE           MOV     A,R6
+   \   000031   4F           ORL     A,R7
+   \   000032   6062         JZ      ??Key_ProcessEvent_4
+   \   000034   8E82         MOV     DPL,R6
+   \   000036   8F83         MOV     DPH,R7
+   \   000038   E0           MOVX    A,@DPTR
+   \   000039   24E6         ADD     A,#-0x1a
+   \   00003B   601C         JZ      ??Key_ProcessEvent_5
+   \   00003D   245A         ADD     A,#0x5a
+   \   00003F   6006         JZ      ??Key_ProcessEvent_6
+   \   000041   24EE         ADD     A,#-0x12
+   \   000043   60CE         JZ      ??Key_ProcessEvent_2
+   \   000045   80D2         SJMP    ??Key_ProcessEvent_3
    \                     ??Key_ProcessEvent_6:
-   \   00004B                ; Setup parameters for call to function Key_HandleKeys
-   \   00004B   A3           INC     DPTR
-   \   00004C   A3           INC     DPTR
-   \   00004D   A3           INC     DPTR
-   \   00004E   E0           MOVX    A,@DPTR
-   \   00004F   FA           MOV     R2,A
-   \   000050   8E82         MOV     DPL,R6
-   \   000052   8F83         MOV     DPH,R7
-   \   000054   A3           INC     DPTR
-   \   000055   A3           INC     DPTR
-   \   000056   E0           MOVX    A,@DPTR
-   \   000057   F9           MOV     R1,A
-   \   000058   12....       LCALL   ??Key_HandleKeys?relay
-   \   00005B   80C0         SJMP    ??Key_ProcessEvent_3
+   \   000047                ; Setup parameters for call to function Key_HandleKeys
+   \   000047   A3           INC     DPTR
+   \   000048   A3           INC     DPTR
+   \   000049   A3           INC     DPTR
+   \   00004A   E0           MOVX    A,@DPTR
+   \   00004B   FA           MOV     R2,A
+   \   00004C   8E82         MOV     DPL,R6
+   \   00004E   8F83         MOV     DPH,R7
+   \   000050   A3           INC     DPTR
+   \   000051   A3           INC     DPTR
+   \   000052   E0           MOVX    A,@DPTR
+   \   000053   F9           MOV     R1,A
+   \   000054   12....       LCALL   ??Key_HandleKeys?relay
+   \   000057   80C0         SJMP    ??Key_ProcessEvent_3
    \                     ??Key_ProcessEvent_5:
-   \   00005D                ; Setup parameters for call to function KeyAction
-   \   00005D   EE           MOV     A,R6
-   \   00005E   2422         ADD     A,#0x22
-   \   000060   F582         MOV     DPL,A
-   \   000062   EF           MOV     A,R7
-   \   000063   3400         ADDC    A,#0x0
-   \   000065   F583         MOV     DPH,A
-   \   000067   12....       LCALL   ?PUSH_XSTACK8_X_TWO
-   \   00006A   EE           MOV     A,R6
-   \   00006B   2420         ADD     A,#0x20
-   \   00006D   F582         MOV     DPL,A
-   \   00006F   EF           MOV     A,R7
-   \   000070   3400         ADDC    A,#0x0
-   \   000072   F583         MOV     DPH,A
-   \   000074   E0           MOVX    A,@DPTR
-   \   000075   FC           MOV     R4,A
-   \   000076   A3           INC     DPTR
-   \   000077   E0           MOVX    A,@DPTR
-   \   000078   FD           MOV     R5,A
-   \   000079   8E82         MOV     DPL,R6
-   \   00007B   8F83         MOV     DPH,R7
-   \   00007D   A3           INC     DPTR
-   \   00007E   A3           INC     DPTR
-   \   00007F   A3           INC     DPTR
-   \   000080   A3           INC     DPTR
-   \   000081   E0           MOVX    A,@DPTR
-   \   000082   FA           MOV     R2,A
-   \   000083   A3           INC     DPTR
-   \   000084   E0           MOVX    A,@DPTR
-   \   000085   FB           MOV     R3,A
-   \   000086   EE           MOV     A,R6
-   \   000087   2414         ADD     A,#0x14
-   \   000089   F582         MOV     DPL,A
-   \   00008B   EF           MOV     A,R7
-   \   00008C   3400         ADDC    A,#0x0
-   \   00008E   F583         MOV     DPH,A
-   \   000090   E0           MOVX    A,@DPTR
-   \   000091   24F6         ADD     A,#-0xa
-   \   000093   F9           MOV     R1,A
-   \   000094   12....       LCALL   ??KeyAction?relay
-   \   000097   7402         MOV     A,#0x2
-   \   000099   12....       LCALL   ?DEALLOC_XSTACK8
-   \   00009C   02....       LJMP    ??Key_ProcessEvent_3 & 0xFFFF
-    205                  }
-    206                  return (events ^ SYS_EVENT_MSG);
+   \   000059                ; Setup parameters for call to function KeyAction
+   \   000059   EE           MOV     A,R6
+   \   00005A   2422         ADD     A,#0x22
+   \   00005C   F582         MOV     DPL,A
+   \   00005E   EF           MOV     A,R7
+   \   00005F   3400         ADDC    A,#0x0
+   \   000061   F583         MOV     DPH,A
+   \   000063   12....       LCALL   ?PUSH_XSTACK8_X_TWO
+   \   000066   EE           MOV     A,R6
+   \   000067   2420         ADD     A,#0x20
+   \   000069   F582         MOV     DPL,A
+   \   00006B   EF           MOV     A,R7
+   \   00006C   3400         ADDC    A,#0x0
+   \   00006E   F583         MOV     DPH,A
+   \   000070   E0           MOVX    A,@DPTR
+   \   000071   FC           MOV     R4,A
+   \   000072   A3           INC     DPTR
+   \   000073   E0           MOVX    A,@DPTR
+   \   000074   FD           MOV     R5,A
+   \   000075   8E82         MOV     DPL,R6
+   \   000077   8F83         MOV     DPH,R7
+   \   000079   A3           INC     DPTR
+   \   00007A   A3           INC     DPTR
+   \   00007B   12....       LCALL   ?Subroutine5 & 0xFFFF
+   \                     ??CrossCallReturnLabel_22:
+   \   00007E   EE           MOV     A,R6
+   \   00007F   2414         ADD     A,#0x14
+   \   000081   F582         MOV     DPL,A
+   \   000083   EF           MOV     A,R7
+   \   000084   3400         ADDC    A,#0x0
+   \   000086   F583         MOV     DPH,A
+   \   000088   E0           MOVX    A,@DPTR
+   \   000089   24F6         ADD     A,#-0xa
+   \   00008B   F9           MOV     R1,A
+   \   00008C   12....       LCALL   ??KeyAction?relay
+   \   00008F   7402         MOV     A,#0x2
+   \   000091   12....       LCALL   ?DEALLOC_XSTACK8
+   \   000094   8083         SJMP    ??Key_ProcessEvent_3
+    180                  }
+    181                  return (events ^ SYS_EVENT_MSG);
    \                     ??Key_ProcessEvent_4:
-   \   00009F   AA..         MOV     R2,?V0 + 0
-   \   0000A1   E5..         MOV     A,?V0 + 1
-   \   0000A3   6480         XRL     A,#0x80
-   \   0000A5   FB           MOV     R3,A
-   \   0000A6   8004         SJMP    ??Key_ProcessEvent_7
-    207              }
-    208              return 0;
+   \   000096   AA..         MOV     R2,?V0 + 0
+   \   000098   E5..         MOV     A,?V0 + 1
+   \   00009A   6480         XRL     A,#0x80
+   \   00009C   FB           MOV     R3,A
+   \   00009D   8004         SJMP    ??Key_ProcessEvent_7
+    182              }
+    183              return 0;
    \                     ??Key_ProcessEvent_0:
-   \   0000A8   7A00         MOV     R2,#0x0
-   \   0000AA   7B00         MOV     R3,#0x0
+   \   00009F   7A00         MOV     R2,#0x0
+   \   0000A1   7B00         MOV     R3,#0x0
    \                     ??Key_ProcessEvent_7:
-   \   0000AC                REQUIRE ?Subroutine1
-   \   0000AC                ; // Fall through to label ?Subroutine1
-    209          }
+   \   0000A3                REQUIRE ?Subroutine1
+   \   0000A3                ; // Fall through to label ?Subroutine1
+    184          }
 
    \                                 In  segment BANKED_CODE, align 1, keep-with-next
    \                     ?Subroutine1:
    \   000000   7F06         MOV     R7,#0x6
    \   000002   02....       LJMP    ?BANKED_LEAVE_XDATA
-    210          
-    211          /*********************************************************************
-    212           * @fn      Key_HandleKeys
-    213           *
-    214           * @brief   Handles all key events for this device.
-    215           *
-    216           * @param   shift - true if in shift/alt.
-    217           * @param   keys - bit field for key events. Valid entries:
-    218           *                 HAL_KEY_SW_4
-    219           *                 HAL_KEY_SW_3
-    220           *                 HAL_KEY_SW_2
-    221           *                 HAL_KEY_SW_1
-    222           *
-    223           * @return  none
-    224           */
 
    \                                 In  segment BANKED_CODE, align 1, keep-with-next
-    225          void Key_HandleKeys( byte shift, byte keys )
+   \                     ?Subroutine5:
+   \   000000   A3           INC     DPTR
+   \   000001   A3           INC     DPTR
+   \   000002                REQUIRE ??Subroutine11_0
+   \   000002                ; // Fall through to label ??Subroutine11_0
+
+   \                                 In  segment BANKED_CODE, align 1, keep-with-next
+   \                     ??Subroutine11_0:
+   \   000000   E0           MOVX    A,@DPTR
+   \   000001   FA           MOV     R2,A
+   \   000002   A3           INC     DPTR
+   \   000003   E0           MOVX    A,@DPTR
+   \   000004   FB           MOV     R3,A
+   \   000005   22           RET
+    185          
+    186          /*********************************************************************
+    187           * @fn      Key_HandleKeys
+    188           *
+    189           * @brief   Handles all key events for this device.
+    190           *
+    191           * @param   shift - true if in shift/alt.
+    192           * @param   keys - bit field for key events. Valid entries:
+    193           *                 HAL_KEY_SW_4
+    194           *                 HAL_KEY_SW_3
+    195           *                 HAL_KEY_SW_2
+    196           *                 HAL_KEY_SW_1
+    197           *
+    198           * @return  none
+    199           */
+
+   \                                 In  segment BANKED_CODE, align 1, keep-with-next
+    200          void Key_HandleKeys( byte shift, byte keys )
    \                     Key_HandleKeys:
-    226          {
+    201          {
    \   000000   74F7         MOV     A,#-0x9
    \   000002   12....       LCALL   ?BANKED_ENTER_XDATA
    \   000005                ; Saved register size: 9
@@ -687,175 +588,175 @@ D:\ProgramData\Hardware\zigbee\Projects\zstack\Samples\SensorSys\Source\Key_End.
    \   000006   FE           MOV     R6,A
    \   000007   EA           MOV     A,R2
    \   000008   FF           MOV     R7,A
-    227            if(shift)
+    202            if(shift)
    \   000009   EE           MOV     A,R6
    \   00000A   601A         JZ      ??Key_HandleKeys_0
-    228            {
-    229                  if ( keys & HAL_KEY_SW_1 )
+    203            {
+    204                  if ( keys & HAL_KEY_SW_1 )
    \   00000C   EF           MOV     A,R7
    \   00000D   A2E0         MOV     C,0xE0 /* A   */.0
    \   00000F   5003         JNC     ??Key_HandleKeys_1
-    230                  {
-    231                    zb_SystemReset();
+    205                  {
+    206                    zb_SystemReset();
    \   000011                ; Setup parameters for call to function zb_SystemReset
    \   000011   12....       LCALL   ??zb_SystemReset?relay
-    232                  }
-    233                  if ( keys & HAL_KEY_SW_2 )
+    207                  }
+    208                  if ( keys & HAL_KEY_SW_2 )
    \                     ??Key_HandleKeys_1:
    \   000014   EF           MOV     A,R7
    \   000015   A2E1         MOV     C,0xE0 /* A   */.1
    \   000017   5003         JNC     ??Key_HandleKeys_2
-    234                  {
-    235                    zb_SystemReset();
+    209                  {
+    210                    zb_SystemReset();
    \   000019                ; Setup parameters for call to function zb_SystemReset
    \   000019   12....       LCALL   ??zb_SystemReset?relay
-    236                  }
-    237                  if ( keys & HAL_KEY_SW_3 )
+    211                  }
+    212                  if ( keys & HAL_KEY_SW_3 )
    \                     ??Key_HandleKeys_2:
    \   00001C   EF           MOV     A,R7
    \   00001D   A2E4         MOV     C,0xE0 /* A   */.4
    \   00001F   5020         JNC     ??Key_HandleKeys_3
-    238                  {
-    239                    zb_SystemReset();
+    213                  {
+    214                    zb_SystemReset();
    \   000021                ; Setup parameters for call to function zb_SystemReset
    \   000021   12....       LCALL   ??zb_SystemReset?relay
    \   000024   801B         SJMP    ??Key_HandleKeys_3
-    240                  }
-    241                  if ( keys & HAL_KEY_SW_4 )
-    242                  {
-    243                  }
-    244                  if ( keys & HAL_KEY_SW_6 )  // Physical Key S1
-    245                  {
-    246                      // Send to Watch Endpoint ? Send to Key Endpoint ?
-    247                  }
-    248            }
-    249            
-    250            else
-    251            {
-    252          //	uint8 startOptions;
-    253          //	uint8 logicalType;
-    254          	// Shift is used to make each key/switch dual purpose.
-    255          	if ( keys_shift )
+    215                  }
+    216                  if ( keys & HAL_KEY_SW_4 )
+    217                  {
+    218                  }
+    219                  if ( keys & HAL_KEY_SW_6 )  // Physical Key S1
+    220                  {
+    221                      // Send to Watch Endpoint ? Send to Key Endpoint ?
+    222                  }
+    223            }
+    224            
+    225            else
+    226            {
+    227          //	uint8 startOptions;
+    228          //	uint8 logicalType;
+    229          	// Shift is used to make each key/switch dual purpose.
+    230          	if ( keys_shift )
    \                     ??Key_HandleKeys_0:
    \   000026   90....       MOV     DPTR,#keys_shift
    \   000029   E0           MOVX    A,@DPTR
    \   00002A   6015         JZ      ??Key_HandleKeys_3
-    256          	{
-    257          		// Allow Binding
-    258          		if ( keys & HAL_KEY_SW_1 )
+    231          	{
+    232          		// Allow Binding
+    233          		if ( keys & HAL_KEY_SW_1 )
    \   00002C   EF           MOV     A,R7
    \   00002D   A2E0         MOV     C,0xE0 /* A   */.0
    \   00002F   5010         JNC     ??Key_HandleKeys_3
-    259          		{
-    260          			if(type_join)
+    234          		{
+    235          			if(type_join)
    \   000031   90....       MOV     DPTR,#type_join
    \   000034   E0           MOVX    A,@DPTR
    \   000035   600A         JZ      ??Key_HandleKeys_3
-    261          			{
-    262          				Sys_AllowBind(10);
+    236          			{
+    237          				Sys_AllowBind(10);
    \   000037                ; Setup parameters for call to function Sys_AllowBind
    \   000037   790A         MOV     R1,#0xa
    \   000039   12....       LCALL   ??Sys_AllowBind?relay
-    263                                          
-    264          			// osal_start_timerEx(Sys_TaskID, CLOSE_BIND_EVT, 10000);
-    265          			
-    266          				keys_shift = 0;
+    238                                          
+    239          			// osal_start_timerEx(Sys_TaskID, CLOSE_BIND_EVT, 10000);
+    240          			
+    241          				keys_shift = 0;
    \   00003C   90....       MOV     DPTR,#keys_shift
    \   00003F   E4           CLR     A
    \   000040   F0           MOVX    @DPTR,A
-    267          			}
-    268          			else
-    269          			{
-    270          				// wrong endpoint the presend send to
-    271          			}
-    272          		}
-    273          		if ( keys & HAL_KEY_SW_2 )
-    274          		{
-    275          		}
-    276          		if ( keys & HAL_KEY_SW_3 )
-    277          		{
-    278          		}
-    279          		if ( keys & HAL_KEY_SW_4 )
-    280          		{
-    281          		}
-    282          	}
-    283          	else
-    284          	{
-    285          		if ( keys & HAL_KEY_SW_1 )
+    242          			}
+    243          			else
+    244          			{
+    245          				// wrong endpoint the presend send to
+    246          			}
+    247          		}
+    248          		if ( keys & HAL_KEY_SW_2 )
+    249          		{
+    250          		}
+    251          		if ( keys & HAL_KEY_SW_3 )
+    252          		{
+    253          		}
+    254          		if ( keys & HAL_KEY_SW_4 )
+    255          		{
+    256          		}
+    257          	}
+    258          	else
+    259          	{
+    260          		if ( keys & HAL_KEY_SW_1 )
+    261          		{
+    262                            
+    263                            /*
+    264          		    if ( myAppState == APP_INIT )
+    265          		    {
+    266          		        // In the init state, keys are used to indicate the logical mode.
+    267          		        // The Switch device is always an end-device
+    268          		        logicalType = ZG_DEVICETYPE_ENDDEVICE;
+    269          		        zb_WriteConfiguration(ZCD_NV_LOGICAL_TYPE, sizeof(uint8), &logicalType);
+    270          
+    271          		        // Do more configuration if necessary and then restart device with auto-start bit set
+    272          
+    273          		        zb_ReadConfiguration( ZCD_NV_STARTUP_OPTION, sizeof(uint8), &startOptions );
+    274          		        startOptions = ZCD_STARTOPT_AUTO_START;
+    275          		        zb_WriteConfiguration( ZCD_NV_STARTUP_OPTION, sizeof(uint8), &startOptions );
+    276          		        zb_SystemReset();
+    277          
+    278              		    }*/
+    279          		  //  else
+    280          		//    {
+    281          
+    282          	//	    }
+    283          		}
+    284          
+    285          		if ( keys & HAL_KEY_SW_2 )
     286          		{
-    287                            
-    288                            /*
-    289          		    if ( myAppState == APP_INIT )
-    290          		    {
-    291          		        // In the init state, keys are used to indicate the logical mode.
-    292          		        // The Switch device is always an end-device
-    293          		        logicalType = ZG_DEVICETYPE_ENDDEVICE;
-    294          		        zb_WriteConfiguration(ZCD_NV_LOGICAL_TYPE, sizeof(uint8), &logicalType);
-    295          
-    296          		        // Do more configuration if necessary and then restart device with auto-start bit set
-    297          
-    298          		        zb_ReadConfiguration( ZCD_NV_STARTUP_OPTION, sizeof(uint8), &startOptions );
-    299          		        startOptions = ZCD_STARTOPT_AUTO_START;
-    300          		        zb_WriteConfiguration( ZCD_NV_STARTUP_OPTION, sizeof(uint8), &startOptions );
-    301          		        zb_SystemReset();
-    302          
-    303              		    }*/
-    304          		  //  else
-    305          		//    {
-    306          
-    307          	//	    }
-    308          		}
-    309          
-    310          		if ( keys & HAL_KEY_SW_2 )
-    311          		{
-    312          		}
-    313          
-    314          		if ( keys & HAL_KEY_SW_3 )
-    315          		{
-    316          		}
-    317          		
-    318          		if ( keys & HAL_KEY_SW_4 )
-    319          		{
-    320          		}
-    321          	}
-    322            }
-    323          }
+    287          		}
+    288          
+    289          		if ( keys & HAL_KEY_SW_3 )
+    290          		{
+    291          		}
+    292          		
+    293          		if ( keys & HAL_KEY_SW_4 )
+    294          		{
+    295          		}
+    296          	}
+    297            }
+    298          }
    \                     ??Key_HandleKeys_3:
    \   000041   02....       LJMP    ?Subroutine0 & 0xFFFF
-    324          
-    325          /******************************************************************************
-    326           * @fn          Key_ReceiveDataIndication
-    327           *
-    328           * @brief       The SAPI_ReceiveDataIndication callback function is called
-    329           *              asynchronously by the ZigBee stack to notify the application
-    330           *              when data is received from a peer device.
-    331           *
-    332           * @param       source - The short address of the peer device that sent the data
-    333           *              command - The commandId associated with the data
-    334           *              len - The number of bytes in the pData parameter
-    335           *              pData - The data sent by the peer device
-    336           *
-    337           * @return      none
-    338           */
-    339          void Key_ReceiveDataIndication( uint16 source, uint8 endPoint, uint16 command, uint16 len, uint8 *pData  )
-    340          {
-    341            KeyAction(endPoint-KEY_ENDPOINT, command, len, pData);
-    342          }
-    343          
-    344          /******************************************************************************
-    345           * @fn          SwitchAction
-    346           *
-    347           * @brief       Switch Action Decide
-    348           *
-    349           * @param
-    350           *
-    351           * @return      none
-    352           */
+    299          
+    300          /******************************************************************************
+    301           * @fn          Key_ReceiveDataIndication
+    302           *
+    303           * @brief       The SAPI_ReceiveDataIndication callback function is called
+    304           *              asynchronously by the ZigBee stack to notify the application
+    305           *              when data is received from a peer device.
+    306           *
+    307           * @param       source - The short address of the peer device that sent the data
+    308           *              command - The commandId associated with the data
+    309           *              len - The number of bytes in the pData parameter
+    310           *              pData - The data sent by the peer device
+    311           *
+    312           * @return      none
+    313           */
+    314          void Key_ReceiveDataIndication( uint16 source, uint8 endPoint, uint16 command, uint16 len, uint8 *pData  )
+    315          {
+    316            KeyAction(endPoint-KEY_ENDPOINT, command, len, pData);
+    317          }
+    318          
+    319          /******************************************************************************
+    320           * @fn          SwitchAction
+    321           *
+    322           * @brief       Switch Action Decide
+    323           *
+    324           * @param
+    325           *
+    326           * @return      none
+    327           */
 
    \                                 In  segment BANKED_CODE, align 1, keep-with-next
-    353          void KeyAction( uint8 key, uint16 command, uint16 len, uint8 *pData )
+    328          void KeyAction( uint8 key, uint16 command, uint16 len, uint8 *pData )
    \                     KeyAction:
-    354          {
+    329          {
    \   000000   74F4         MOV     A,#-0xc
    \   000002   12....       LCALL   ?BANKED_ENTER_XDATA
    \   000005                ; Saved register size: 12
@@ -869,265 +770,267 @@ D:\ProgramData\Hardware\zigbee\Projects\zstack\Samples\SensorSys\Source\Key_End.
    \   000010   A3           INC     DPTR
    \   000011   E0           MOVX    A,@DPTR
    \   000012   FF           MOV     R7,A
-    355            if(command == PORT_INIT_CLUSTER)
+    330            if(command == PORT_INIT_CLUSTER)
    \   000013   7401         MOV     A,#0x1
    \   000015   6A           XRL     A,R2
    \   000016   7001         JNZ     ??KeyAction_0
    \   000018   EB           MOV     A,R3
    \                     ??KeyAction_0:
-   \   000019   6003         JZ      $+5
-   \   00001B   02....       LJMP    ??KeyAction_1 & 0xFFFF
-    356            {
-    357          /*    uint8 i;
-    358              uint8 port[KEY_INIT_MSG_MAX];
-    359              for(i=0; i<KEY_INIT_MSG_MAX; i++, pData++)
-    360              {
-    361                  port[i] = *pData;
-    362              }*/
-    363              uint8 port;
-    364              port = *pData;
-   \   00001E   8E82         MOV     DPL,R6
-   \   000020   8F83         MOV     DPH,R7
-   \   000022   E0           MOVX    A,@DPTR
-   \   000023   FE           MOV     R6,A
-    365            //  P2: 1 2 3 4 ; P1: 2 3 4 5 6 7
-    366            //-----------------------------------
-    367            //port: 0 1 2 3       4 5 6 7 8 9
-    368              if(port < KEY_NUM_MAX)
-   \   000024   C3           CLR     C
-   \   000025   940A         SUBB    A,#0xa
-   \   000027   4003         JC      $+5
-   \   000029   02....       LJMP    ??KeyAction_2 & 0xFFFF
-    369              {
-    370                  if(port < P2_KEY_MAX)
-   \   00002C   EE           MOV     A,R6
-   \   00002D   C3           CLR     C
-   \   00002E   9404         SUBB    A,#0x4
-   \   000030   75..01       MOV     ?V0 + 0,#0x1
-   \   000033   75..00       MOV     ?V0 + 1,#0x0
-   \   000036   5018         JNC     ??KeyAction_3
-    371                  {
-    372                      P2SEL &= ~(0x01 << (port + 1));
-   \   000038   7401         MOV     A,#0x1
-   \   00003A   2E           ADD     A,R6
-   \   00003B   78..         MOV     R0,#?V0 + 0
-   \   00003D   12....       LCALL   ?S_SHL
-   \   000040   A8..         MOV     R0,?V0 + 0
-   \   000042   E8           MOV     A,R0
-   \   000043   F4           CPL     A
-   \   000044   52F5         ANL     0xf5,A
-    373                      P2DIR &= ~(0x01 << (port + 1));
-   \   000046   52FF         ANL     0xff,A
-    374                      P2IEN |= 0x01 << (port + 1);
-   \   000048   E8           MOV     A,R0
-   \   000049   42AC         ORL     0xac,A
-    375                      P2IFG = 0;
-   \   00004B   758B00       MOV     0x8b,#0x0
-   \   00004E   8016         SJMP    ??KeyAction_4
-    376                  }
-    377                  else
-    378                  {
-    379                      P1SEL &= ~(0x01 << (port - 2));
+   \   000019   707F         JNZ     ??KeyAction_1
+    331            {
+    332          /*    uint8 i;
+    333              uint8 port[KEY_INIT_MSG_MAX];
+    334              for(i=0; i<KEY_INIT_MSG_MAX; i++, pData++)
+    335              {
+    336                  port[i] = *pData;
+    337              }*/
+    338              uint8 port;
+    339              port = *pData;
+   \   00001B   8E82         MOV     DPL,R6
+   \   00001D   8F83         MOV     DPH,R7
+   \   00001F   E0           MOVX    A,@DPTR
+   \   000020   FE           MOV     R6,A
+    340            //  P2: 1 2 3 4 ; P1: 2 3 4 5 6 7
+    341            //-----------------------------------
+    342            //port: 0 1 2 3       4 5 6 7 8 9
+    343              if(port < KEY_NUM_MAX)
+   \   000021   C3           CLR     C
+   \   000022   940A         SUBB    A,#0xa
+   \   000024   4003         JC      $+5
+   \   000026   02....       LJMP    ??KeyAction_2 & 0xFFFF
+    344              {
+    345                  if(port < P2_KEY_MAX)
+   \   000029   EE           MOV     A,R6
+   \   00002A   C3           CLR     C
+   \   00002B   9404         SUBB    A,#0x4
+   \   00002D   75..01       MOV     ?V0 + 0,#0x1
+   \   000030   75..00       MOV     ?V0 + 1,#0x0
+   \   000033   5018         JNC     ??KeyAction_3
+    346                  {
+    347                      P2SEL &= ~(0x01 << (port + 1));
+   \   000035   7401         MOV     A,#0x1
+   \   000037   2E           ADD     A,R6
+   \   000038   78..         MOV     R0,#?V0 + 0
+   \   00003A   12....       LCALL   ?S_SHL
+   \   00003D   A8..         MOV     R0,?V0 + 0
+   \   00003F   E8           MOV     A,R0
+   \   000040   F4           CPL     A
+   \   000041   52F5         ANL     0xf5,A
+    348                      P2DIR &= ~(0x01 << (port + 1));
+   \   000043   52FF         ANL     0xff,A
+    349                      P2IEN |= 0x01 << (port + 1);
+   \   000045   E8           MOV     A,R0
+   \   000046   42AC         ORL     0xac,A
+    350                      P2IFG = 0;
+   \   000048   758B00       MOV     0x8b,#0x0
+   \   00004B   8016         SJMP    ??KeyAction_4
+    351                  }
+    352                  else
+    353                  {
+    354                      P1SEL &= ~(0x01 << (port - 2));
    \                     ??KeyAction_3:
-   \   000050   74FE         MOV     A,#-0x2
-   \   000052   2E           ADD     A,R6
-   \   000053   78..         MOV     R0,#?V0 + 0
-   \   000055   12....       LCALL   ?S_SHL
-   \   000058   A8..         MOV     R0,?V0 + 0
-   \   00005A   E8           MOV     A,R0
-   \   00005B   F4           CPL     A
-   \   00005C   52F4         ANL     0xf4,A
-    380                      P1DIR &= ~(0x01 << (port - 2));
-   \   00005E   52FE         ANL     0xfe,A
-    381                      P1IEN |= 0x01 << (port - 2);
-   \   000060   E8           MOV     A,R0
-   \   000061   428D         ORL     0x8d,A
-    382                      P1IFG = 0;
-   \   000063   758A00       MOV     0x8a,#0x0
-    383                  }
-    384                  if(KeyObserve == NULL)
+   \   00004D   74FE         MOV     A,#-0x2
+   \   00004F   2E           ADD     A,R6
+   \   000050   78..         MOV     R0,#?V0 + 0
+   \   000052   12....       LCALL   ?S_SHL
+   \   000055   A8..         MOV     R0,?V0 + 0
+   \   000057   E8           MOV     A,R0
+   \   000058   F4           CPL     A
+   \   000059   52F4         ANL     0xf4,A
+    355                      P1DIR &= ~(0x01 << (port - 2));
+   \   00005B   52FE         ANL     0xfe,A
+    356                      P1IEN |= 0x01 << (port - 2);
+   \   00005D   E8           MOV     A,R0
+   \   00005E   428D         ORL     0x8d,A
+    357                      P1IFG = 0;
+   \   000060   758A00       MOV     0x8a,#0x0
+    358                  }
+    359                  if(KeyObserve == NULL)
    \                     ??KeyAction_4:
-   \   000066   90....       MOV     DPTR,#KeyObserve
+   \   000063   90....       MOV     DPTR,#KeyObserve
+   \   000066   E0           MOVX    A,@DPTR
+   \   000067   F8           MOV     R0,A
+   \   000068   A3           INC     DPTR
    \   000069   E0           MOVX    A,@DPTR
-   \   00006A   F8           MOV     R0,A
-   \   00006B   A3           INC     DPTR
-   \   00006C   E0           MOVX    A,@DPTR
-   \   00006D   F9           MOV     R1,A
-   \   00006E   E8           MOV     A,R0
-   \   00006F   49           ORL     A,R1
-   \   000070   701E         JNZ     ??KeyAction_5
-    385                  {
-    386                    KeyObserve = (SensorObserve_t *)osal_mem_alloc(sizeof(SensorObserve_t));
-   \   000072                ; Setup parameters for call to function osal_mem_alloc
-   \   000072   7A03         MOV     R2,#0x3
-   \   000074   7B00         MOV     R3,#0x0
-   \   000076   12....       LCALL   ??osal_mem_alloc?relay
-   \   000079   90....       MOV     DPTR,#KeyObserve
-   \   00007C   EA           MOV     A,R2
-   \   00007D   F0           MOVX    @DPTR,A
-   \   00007E   A3           INC     DPTR
-   \   00007F   EB           MOV     A,R3
-   \   000080   12....       LCALL   ?Subroutine2 & 0xFFFF
-    387                    KeyObserve->port = port;
-    388                    KeyObserve->next = NULL;
-    389                  }
-   \                     ??CrossCallReturnLabel_0:
-   \   000083   A3           INC     DPTR
-   \   000084   A3           INC     DPTR
-   \   000085   EE           MOV     A,R6
-   \   000086   12....       LCALL   ?Subroutine2 & 0xFFFF
-   \                     ??CrossCallReturnLabel_1:
-   \   000089   E4           CLR     A
-   \   00008A   F0           MOVX    @DPTR,A
-   \   00008B   A3           INC     DPTR
-   \   00008C   F0           MOVX    @DPTR,A
-   \   00008D   02....       LJMP    ??KeyAction_2 & 0xFFFF
-    390                  else
-    391                      ss_AddObserveList(KeyObserve, port);
+   \   00006A   F9           MOV     R1,A
+   \   00006B   E8           MOV     A,R0
+   \   00006C   49           ORL     A,R1
+   \   00006D   701E         JNZ     ??KeyAction_5
+    360                  {
+    361                    KeyObserve = (SensorObserve_t *)osal_mem_alloc(sizeof(SensorObserve_t));
+   \   00006F                ; Setup parameters for call to function osal_mem_alloc
+   \   00006F   7A03         MOV     R2,#0x3
+   \   000071   7B00         MOV     R3,#0x0
+   \   000073   12....       LCALL   ??osal_mem_alloc?relay
+   \   000076   90....       MOV     DPTR,#KeyObserve
+   \   000079   EA           MOV     A,R2
+   \   00007A   F0           MOVX    @DPTR,A
+   \   00007B   A3           INC     DPTR
+   \   00007C   EB           MOV     A,R3
+   \   00007D   12....       LCALL   ?Subroutine3 & 0xFFFF
+    362                    KeyObserve->port = port;
+    363                    KeyObserve->next = NULL;
+    364                  }
+   \                     ??CrossCallReturnLabel_2:
+   \   000080   A3           INC     DPTR
+   \   000081   A3           INC     DPTR
+   \   000082   EE           MOV     A,R6
+   \   000083   12....       LCALL   ?Subroutine3 & 0xFFFF
+   \                     ??CrossCallReturnLabel_3:
+   \   000086   E4           CLR     A
+   \   000087   F0           MOVX    @DPTR,A
+   \   000088   A3           INC     DPTR
+   \   000089   F0           MOVX    @DPTR,A
+   \   00008A   02....       LJMP    ??KeyAction_2 & 0xFFFF
+    365                  else
+    366                      ss_AddObserveList(KeyObserve, port);
    \                     ??KeyAction_5:
-   \   000090                ; Setup parameters for call to function ss_AddObserveList
-   \   000090   EE           MOV     A,R6
-   \   000091   F9           MOV     R1,A
-   \   000092   90....       MOV     DPTR,#KeyObserve
-   \   000095   E0           MOVX    A,@DPTR
-   \   000096   FA           MOV     R2,A
-   \   000097   A3           INC     DPTR
-   \   000098   E0           MOVX    A,@DPTR
-   \   000099   FB           MOV     R3,A
-   \   00009A   12....       LCALL   ??ss_AddObserveList?relay
-   \   00009D   8074         SJMP    ??KeyAction_2
-    392                  return;
-    393              }
-    394              else
-    395              {
-    396                  // send error back
-    397                  return;
-    398              }
-    399            }
-    400            if(command == TOGGLE_INIT_CLUSTER)
+   \   00008D                ; Setup parameters for call to function ss_AddObserveList
+   \   00008D   EE           MOV     A,R6
+   \   00008E   F9           MOV     R1,A
+   \   00008F   90....       MOV     DPTR,#KeyObserve
+   \   000092   12....       LCALL   ??Subroutine11_0 & 0xFFFF
+    367                  return;
+    368              }
+    369              else
+    370              {
+    371                  // send error back
+    372                  return;
+    373              }
+    374            }
+   \                     ??CrossCallReturnLabel_18:
+   \   000095   12....       LCALL   ??ss_AddObserveList?relay
+   \   000098   8074         SJMP    ??KeyAction_2
+    375            if(command == TOGGLE_INIT_CLUSTER)
    \                     ??KeyAction_1:
-   \   00009F   7405         MOV     A,#0x5
-   \   0000A1   6A           XRL     A,R2
-   \   0000A2   7001         JNZ     ??KeyAction_6
-   \   0000A4   EB           MOV     A,R3
+   \   00009A   7405         MOV     A,#0x5
+   \   00009C   6A           XRL     A,R2
+   \   00009D   7001         JNZ     ??KeyAction_6
+   \   00009F   EB           MOV     A,R3
    \                     ??KeyAction_6:
-   \   0000A5   706C         JNZ     ??KeyAction_2
-    401            {
-    402              uint8 i;
-    403              byte *data_p = NULL;
-    404              data_p = (byte *)osal_mem_alloc(sizeof(byte) * len);
-   \   0000A7                ; Setup parameters for call to function osal_mem_alloc
-   \   0000A7   AA..         MOV     R2,?V0 + 0
-   \   0000A9   AB..         MOV     R3,?V0 + 1
-   \   0000AB   12....       LCALL   ??osal_mem_alloc?relay
-   \   0000AE   8A..         MOV     ?V0 + 2,R2
-   \   0000B0   8B..         MOV     ?V0 + 3,R3
-   \   0000B2   A8..         MOV     R0,?V0 + 2
-   \   0000B4   A9..         MOV     R1,?V0 + 3
-    405              for(i=0; i<len; i++, pData++)
-   \   0000B6   7A00         MOV     R2,#0x0
-   \   0000B8   801E         SJMP    ??KeyAction_7
-    406              {
-    407                  data_p[i] = *pData;
+   \   0000A0   706C         JNZ     ??KeyAction_2
+    376            {
+    377              uint8 i;
+    378              byte *data_p = NULL;
+    379              data_p = (byte *)osal_mem_alloc(sizeof(byte) * len);
+   \   0000A2                ; Setup parameters for call to function osal_mem_alloc
+   \   0000A2   AA..         MOV     R2,?V0 + 0
+   \   0000A4   AB..         MOV     R3,?V0 + 1
+   \   0000A6   12....       LCALL   ??osal_mem_alloc?relay
+   \   0000A9   8A..         MOV     ?V0 + 2,R2
+   \   0000AB   8B..         MOV     ?V0 + 3,R3
+   \   0000AD   A8..         MOV     R0,?V0 + 2
+   \   0000AF   A9..         MOV     R1,?V0 + 3
+    380              for(i=0; i<len; i++, pData++)
+   \   0000B1   7A00         MOV     R2,#0x0
+   \   0000B3   801E         SJMP    ??KeyAction_7
+    381              {
+    382                  data_p[i] = *pData;
    \                     ??KeyAction_8:
-   \   0000BA   8E82         MOV     DPL,R6
-   \   0000BC   8F83         MOV     DPH,R7
-   \   0000BE   E0           MOVX    A,@DPTR
-   \   0000BF   C0E0         PUSH    A
-   \   0000C1   E8           MOV     A,R0
-   \   0000C2   25..         ADD     A,?V0 + 2
-   \   0000C4   F582         MOV     DPL,A
-   \   0000C6   E9           MOV     A,R1
-   \   0000C7   3400         ADDC    A,#0x0
-   \   0000C9   F583         MOV     DPH,A
-   \   0000CB   D0E0         POP     A
-   \   0000CD   F0           MOVX    @DPTR,A
-    408              }
-   \   0000CE   0A           INC     R2
-   \   0000CF   8E82         MOV     DPL,R6
-   \   0000D1   8F83         MOV     DPH,R7
-   \   0000D3   A3           INC     DPTR
-   \   0000D4   AE82         MOV     R6,DPL
-   \   0000D6   AF83         MOV     R7,DPH
+   \   0000B5   8E82         MOV     DPL,R6
+   \   0000B7   8F83         MOV     DPH,R7
+   \   0000B9   E0           MOVX    A,@DPTR
+   \   0000BA   C0E0         PUSH    A
+   \   0000BC   E8           MOV     A,R0
+   \   0000BD   25..         ADD     A,?V0 + 2
+   \   0000BF   F582         MOV     DPL,A
+   \   0000C1   E9           MOV     A,R1
+   \   0000C2   3400         ADDC    A,#0x0
+   \   0000C4   F583         MOV     DPH,A
+   \   0000C6   D0E0         POP     A
+   \   0000C8   F0           MOVX    @DPTR,A
+    383              }
+   \   0000C9   0A           INC     R2
+   \   0000CA   8E82         MOV     DPL,R6
+   \   0000CC   8F83         MOV     DPH,R7
+   \   0000CE   A3           INC     DPTR
+   \   0000CF   AE82         MOV     R6,DPL
+   \   0000D1   AF83         MOV     R7,DPH
    \                     ??KeyAction_7:
-   \   0000D8   8A..         MOV     ?V0 + 2,R2
-   \   0000DA   C3           CLR     C
-   \   0000DB   E5..         MOV     A,?V0 + 2
-   \   0000DD   95..         SUBB    A,?V0 + 0
-   \   0000DF   E4           CLR     A
-   \   0000E0   95..         SUBB    A,?V0 + 1
-   \   0000E2   40D6         JC      ??KeyAction_8
-    409              if(data_p[KEY_TOGGLE_PORT_BIT] > 3) // not exist
-   \   0000E4   8882         MOV     DPL,R0
-   \   0000E6   8983         MOV     DPH,R1
-   \   0000E8   E0           MOVX    A,@DPTR
-   \   0000E9   C3           CLR     C
-   \   0000EA   9404         SUBB    A,#0x4
-   \   0000EC   5025         JNC     ??KeyAction_2
-    410              {
-    411                  //send error
-    412                  return;
-    413              }
-    414              if(data_p[KEY_TOGGLE_EDGE_BIT] == KEY_RISE_EDGE)
-   \   0000EE   A3           INC     DPTR
-   \   0000EF   E0           MOVX    A,@DPTR
-   \   0000F0   75..01       MOV     ?V0 + 0,#0x1
-   \   0000F3   75..00       MOV     ?V0 + 1,#0x0
-   \   0000F6   8882         MOV     DPL,R0
-   \   0000F8   8983         MOV     DPH,R1
-   \   0000FA   700D         JNZ     ??KeyAction_9
-    415              {
-    416                  PICTL &= ~(0x01<<data_p[KEY_TOGGLE_PORT_BIT]);
-   \   0000FC   E0           MOVX    A,@DPTR
-   \   0000FD   78..         MOV     R0,#?V0 + 0
-   \   0000FF   12....       LCALL   ?S_SHL
-   \   000102   E5..         MOV     A,?V0 + 0
-   \   000104   F4           CPL     A
-   \   000105   528C         ANL     0x8c,A
-   \   000107   800A         SJMP    ??KeyAction_2
-    417              }
-    418              else
-    419              {
-    420                  PICTL |= 0x01<<data_p[KEY_TOGGLE_PORT_BIT];
+   \   0000D3   8A..         MOV     ?V0 + 2,R2
+   \   0000D5   C3           CLR     C
+   \   0000D6   E5..         MOV     A,?V0 + 2
+   \   0000D8   95..         SUBB    A,?V0 + 0
+   \   0000DA   E4           CLR     A
+   \   0000DB   95..         SUBB    A,?V0 + 1
+   \   0000DD   40D6         JC      ??KeyAction_8
+    384              if(data_p[KEY_TOGGLE_PORT_BIT] > 3) // not exist
+   \   0000DF   8882         MOV     DPL,R0
+   \   0000E1   8983         MOV     DPH,R1
+   \   0000E3   E0           MOVX    A,@DPTR
+   \   0000E4   C3           CLR     C
+   \   0000E5   9404         SUBB    A,#0x4
+   \   0000E7   5025         JNC     ??KeyAction_2
+    385              {
+    386                  //send error
+    387                  return;
+    388              }
+    389              if(data_p[KEY_TOGGLE_EDGE_BIT] == KEY_RISE_EDGE)
+   \   0000E9   A3           INC     DPTR
+   \   0000EA   E0           MOVX    A,@DPTR
+   \   0000EB   75..01       MOV     ?V0 + 0,#0x1
+   \   0000EE   75..00       MOV     ?V0 + 1,#0x0
+   \   0000F1   8882         MOV     DPL,R0
+   \   0000F3   8983         MOV     DPH,R1
+   \   0000F5   700D         JNZ     ??KeyAction_9
+    390              {
+    391                  PICTL &= ~(0x01<<data_p[KEY_TOGGLE_PORT_BIT]);
+   \   0000F7   E0           MOVX    A,@DPTR
+   \   0000F8   78..         MOV     R0,#?V0 + 0
+   \   0000FA   12....       LCALL   ?S_SHL
+   \   0000FD   E5..         MOV     A,?V0 + 0
+   \   0000FF   F4           CPL     A
+   \   000100   528C         ANL     0x8c,A
+   \   000102   800A         SJMP    ??KeyAction_2
+    392              }
+    393              else
+    394              {
+    395                  PICTL |= 0x01<<data_p[KEY_TOGGLE_PORT_BIT];
    \                     ??KeyAction_9:
-   \   000109   E0           MOVX    A,@DPTR
-   \   00010A   78..         MOV     R0,#?V0 + 0
-   \   00010C   12....       LCALL   ?S_SHL
-   \   00010F   E5..         MOV     A,?V0 + 0
-   \   000111   428C         ORL     0x8c,A
+   \   000104   E0           MOVX    A,@DPTR
+   \   000105   78..         MOV     R0,#?V0 + 0
+   \   000107   12....       LCALL   ?S_SHL
+   \   00010A   E5..         MOV     A,?V0 + 0
+   \   00010C   428C         ORL     0x8c,A
    \                     ??KeyAction_2:
-   \   000113   7F04         MOV     R7,#0x4
-   \   000115   02....       LJMP    ?BANKED_LEAVE_XDATA
-   \   000118                REQUIRE P2SEL
-   \   000118                REQUIRE P2DIR
-   \   000118                REQUIRE P2IEN
-   \   000118                REQUIRE P2IFG
-   \   000118                REQUIRE P1SEL
-   \   000118                REQUIRE P1DIR
-   \   000118                REQUIRE P1IEN
-   \   000118                REQUIRE P1IFG
-   \   000118                REQUIRE PICTL
-    421              }
-    422            }
-    423          }
+   \   00010E   7F04         MOV     R7,#0x4
+   \   000110   02....       LJMP    ?BANKED_LEAVE_XDATA
+   \   000113                REQUIRE P2SEL
+   \   000113                REQUIRE P2DIR
+   \   000113                REQUIRE P2IEN
+   \   000113                REQUIRE P2IFG
+   \   000113                REQUIRE P1SEL
+   \   000113                REQUIRE P1DIR
+   \   000113                REQUIRE P1IEN
+   \   000113                REQUIRE P1IFG
+   \   000113                REQUIRE PICTL
+    396              }
+    397            }
+    398          }
 
    \                                 In  segment BANKED_CODE, align 1, keep-with-next
-   \                     ?Subroutine2:
+   \                     ?Subroutine3:
    \   000000   F0           MOVX    @DPTR,A
    \   000001   90....       MOV     DPTR,#KeyObserve
-   \   000004   E0           MOVX    A,@DPTR
-   \   000005   F8           MOV     R0,A
-   \   000006   A3           INC     DPTR
-   \   000007   E0           MOVX    A,@DPTR
-   \   000008   F583         MOV     DPH,A
-   \   00000A   8882         MOV     DPL,R0
-   \   00000C   22           RET
-    424          
+   \   000004   12....       LCALL   ?Subroutine9 & 0xFFFF
+   \                     ??CrossCallReturnLabel_14:
+   \   000007   22           RET
 
    \                                 In  segment BANKED_CODE, align 1, keep-with-next
-    425          void KeySend2Coor(uint8 dev_num, uint16 commandId, uint8 *pData)
+   \                     ?Subroutine9:
+   \   000000   E0           MOVX    A,@DPTR
+   \   000001   F8           MOV     R0,A
+   \   000002   A3           INC     DPTR
+   \   000003   E0           MOVX    A,@DPTR
+   \   000004   F583         MOV     DPH,A
+   \   000006   8882         MOV     DPL,R0
+   \   000008   22           RET
+    399          
+
+   \                                 In  segment BANKED_CODE, align 1, keep-with-next
+    400          void KeySend2Coor(uint8 dev_num, uint16 commandId, uint8 *pData)
    \                     KeySend2Coor:
-    426          {
+    401          {
    \   000000   74F2         MOV     A,#-0xe
    \   000002   12....       LCALL   ?BANKED_ENTER_XDATA
    \   000005                ; Saved register size: 14
@@ -1138,11 +1041,11 @@ D:\ProgramData\Hardware\zigbee\Projects\zstack\Samples\SensorSys\Source\Key_End.
    \   000009   8B..         MOV     ?V0 + 1,R3
    \   00000B   8C..         MOV     ?V0 + 2,R4
    \   00000D   8D..         MOV     ?V0 + 3,R5
-    427              Sys_SendDataRequest( 0xFFFE, &Key_epDesc[dev_num], commandId, (uint8)osal_strlen( pData ),
-                                                                                                       ^
+    402              Sys_SendDataRequest( 0xFFFE, Key_epDesc[dev_num], commandId, (uint8)osal_strlen( pData ),
+                                                                                                      ^
 Warning[Pe167]: argument of type "unsigned char *" is incompatible with
           parameter of type "char *"
-    428                                     pData, sysSeqNumber, 0, 0 );
+    403                                     pData, sysSeqNumber, 0, 0 );
    \   00000F                ; Setup parameters for call to function osal_strlen
    \   00000F   AA..         MOV     R2,?V0 + 2
    \   000011   AB..         MOV     R3,?V0 + 3
@@ -1165,33 +1068,288 @@ Warning[Pe167]: argument of type "unsigned char *" is incompatible with
    \   000038   EA           MOV     A,R2
    \   000039   F9           MOV     R1,A
    \   00003A   EE           MOV     A,R6
-   \   00003B   75F006       MOV     B,#0x6
-   \   00003E   A4           MUL     AB
-   \   00003F   FA           MOV     R2,A
-   \   000040   ABF0         MOV     R3,B
-   \   000042   74..         MOV     A,#Key_epDesc & 0xff
-   \   000044   2A           ADD     A,R2
-   \   000045   FC           MOV     R4,A
-   \   000046   74..         MOV     A,#(Key_epDesc >> 8) & 0xff
-   \   000048   3B           ADDC    A,R3
-   \   000049   FD           MOV     R5,A
-   \   00004A   7AFE         MOV     R2,#-0x2
-   \   00004C   7BFF         MOV     R3,#-0x1
-   \   00004E   12....       LCALL   ??Sys_SendDataRequest?relay
-   \   000051   7407         MOV     A,#0x7
-   \   000053   12....       LCALL   ?DEALLOC_XSTACK8
-    429          }
-   \   000056   02....       LJMP    ?Subroutine1 & 0xFFFF
+   \   00003B   12....       LCALL   ?Subroutine10 & 0xFFFF
+   \                     ??CrossCallReturnLabel_16:
+   \   00003E   E0           MOVX    A,@DPTR
+   \   00003F   FC           MOV     R4,A
+   \   000040   A3           INC     DPTR
+   \   000041   E0           MOVX    A,@DPTR
+   \   000042   FD           MOV     R5,A
+   \   000043   7AFE         MOV     R2,#-0x2
+   \   000045   7BFF         MOV     R3,#-0x1
+   \   000047   12....       LCALL   ??Sys_SendDataRequest?relay
+   \   00004A   7407         MOV     A,#0x7
+   \   00004C   12....       LCALL   ?DEALLOC_XSTACK8
+    404          }
+   \   00004F   02....       LJMP    ?Subroutine1 & 0xFFFF
+
+   \                                 In  segment BANKED_CODE, align 1, keep-with-next
+   \                     ?Subroutine10:
+   \   000000   C3           CLR     C
+   \   000001   33           RLC     A
+   \   000002   FA           MOV     R2,A
+   \   000003   E4           CLR     A
+   \   000004   33           RLC     A
+   \   000005   FB           MOV     R3,A
+   \   000006   74..         MOV     A,#Key_epDesc & 0xff
+   \   000008   2A           ADD     A,R2
+   \   000009   F582         MOV     DPL,A
+   \   00000B   74..         MOV     A,#(Key_epDesc >> 8) & 0xff
+   \   00000D   3B           ADDC    A,R3
+   \   00000E   F583         MOV     DPH,A
+   \   000010   22           RET
+    405          
+    406          /******************************************************************************
+    407           * @fn          Key_AllowBindConfirm
+    408           *
+    409           * @brief       Indicates when another device attempted to bind to this device
+    410           *
+    411           * @param
+    412           *
+    413           * @return      none
+    414           */
+
+   \                                 In  segment BANKED_CODE, align 1, keep-with-next
+    415          void Key_AllowBindConfirm( uint16 source )
+   \                     Key_AllowBindConfirm:
+    416          {
+   \   000000   74F1         MOV     A,#-0xf
+   \   000002   12....       LCALL   ?BANKED_ENTER_XDATA
+   \   000005                ; Saved register size: 15
+   \   000005                ; Auto size: 12
+   \   000005   74F4         MOV     A,#-0xc
+   \   000007   12....       LCALL   ?ALLOC_XSTACK8
+   \   00000A   8A..         MOV     ?V0 + 0,R2
+   \   00000C   8B..         MOV     ?V0 + 1,R3
+    417              Key_epDesc[keyCnt] = (endPointDesc_t *)osal_mem_alloc(sizeof(endPointDesc_t));
+   \   00000E                ; Setup parameters for call to function osal_mem_alloc
+   \   00000E   7A06         MOV     R2,#0x6
+   \   000010   7B00         MOV     R3,#0x0
+   \   000012   12....       LCALL   ??osal_mem_alloc?relay
+   \   000015   8A..         MOV     ?V0 + 2,R2
+   \   000017   8B..         MOV     ?V0 + 3,R3
+   \   000019   12....       LCALL   ?Subroutine2 & 0xFFFF
+   \                     ??CrossCallReturnLabel_0:
+   \   00001C   E5..         MOV     A,?V0 + 2
+   \   00001E   F0           MOVX    @DPTR,A
+   \   00001F   A3           INC     DPTR
+   \   000020   E5..         MOV     A,?V0 + 3
+   \   000022   F0           MOVX    @DPTR,A
+    418              Key_SimpleDesc[keyCnt] = (SimpleDescriptionFormat_t *)osal_mem_alloc(sizeof(SimpleDescriptionFormat_t));
+   \   000023                ; Setup parameters for call to function osal_mem_alloc
+   \   000023   7A0C         MOV     R2,#0xc
+   \   000025   7B00         MOV     R3,#0x0
+   \   000027   12....       LCALL   ??osal_mem_alloc?relay
+   \   00002A   12....       LCALL   ?Subroutine6 & 0xFFFF
+   \                     ??CrossCallReturnLabel_6:
+   \   00002D   F582         MOV     DPL,A
+   \   00002F   74..         MOV     A,#(Key_SimpleDesc >> 8) & 0xff
+   \   000031   39           ADDC    A,R1
+   \   000032   F583         MOV     DPH,A
+   \   000034   EA           MOV     A,R2
+   \   000035   F0           MOVX    @DPTR,A
+   \   000036   A3           INC     DPTR
+   \   000037   EB           MOV     A,R3
+   \   000038   12....       LCALL   ?Subroutine4 & 0xFFFF
+    419              SimpleDescriptionFormat_t simpleDesc_temp =
+    420              {
+    421                      KEY_ENDPOINT,           //  int Endpoint;
+    422                      SYS_PROFID,                //  uint16 AppProfId[2];
+    423                      SYS_DEVICEID,              //  uint16 AppDeviceId[2];
+    424                      SYS_DEVICE_VERSION,        //  int   AppDevVer:4;
+    425                      SYS_FLAGS,                 //  int   AppFlags:4;
+    426                      KEY_MAX_CLUSTERS,          //  byte  AppNumInClusters;
+    427                      (cId_t *)Key_ClusterList,  //  byte *pAppInClusterList;
+    428                      KEY_MAX_CLUSTERS,          //  byte  AppNumInClusters;
+    429                      (cId_t *)Key_ClusterList   //  byte *pAppInClusterList;
+    430              };
+   \                     ??CrossCallReturnLabel_4:
+   \   00003B   7583..       MOV     DPH,#(`?<Constant {10, 3844, 1, 0, 0, 4, (cId_t *)Key` >> 8) & 0xff
+   \   00003E   7582..       MOV     DPL,#`?<Constant {10, 3844, 1, 0, 0, 4, (cId_t *)Key` & 0xff
+   \   000041   740C         MOV     A,#0xc
+   \   000043   12....       LCALL   ?MOVE_LONG8_XDATA_XDATA
+    431              
+    432              // Fill out the endpoint description.
+    433              Key_epDesc[keyCnt]->endPoint = KEY_ENDPOINT+keyCnt;
+   \   000046   90....       MOV     DPTR,#keyCnt
+   \   000049   E0           MOVX    A,@DPTR
+   \   00004A   240A         ADD     A,#0xa
+   \   00004C   C0E0         PUSH    A
+   \   00004E   12....       LCALL   ?Subroutine8 & 0xFFFF
+   \                     ??CrossCallReturnLabel_10:
+   \   000051   12....       LCALL   ?Subroutine9 & 0xFFFF
+   \                     ??CrossCallReturnLabel_13:
+   \   000054   D0E0         POP     A
+   \   000056   F0           MOVX    @DPTR,A
+    434              Key_epDesc[keyCnt]->task_id = &Key_TaskID;
+   \   000057   12....       LCALL   ?Subroutine2 & 0xFFFF
+   \                     ??CrossCallReturnLabel_1:
+   \   00005A   12....       LCALL   ?Subroutine7 & 0xFFFF
+   \                     ??CrossCallReturnLabel_8:
+   \   00005D   74..         MOV     A,#Key_TaskID & 0xff
+   \   00005F   F0           MOVX    @DPTR,A
+   \   000060   A3           INC     DPTR
+   \   000061   74..         MOV     A,#(Key_TaskID >> 8) & 0xff
+   \   000063   12....       LCALL   ?Subroutine4 & 0xFFFF
+    435          
+    436              osal_memcpy(Key_SimpleDesc[keyCnt], &simpleDesc_temp, sizeof(SimpleDescriptionFormat_t));
+   \                     ??CrossCallReturnLabel_5:
+   \   000066   8C..         MOV     ?V0 + 4,R4
+   \   000068   8D..         MOV     ?V0 + 5,R5
+   \   00006A   75..00       MOV     ?V0 + 6,#0x0
+   \   00006D   78..         MOV     R0,#?V0 + 4
+   \   00006F   12....       LCALL   ?PUSH_XSTACK_I_THREE
+   \   000072   7C0C         MOV     R4,#0xc
+   \   000074   7D00         MOV     R5,#0x0
+   \   000076   74..         MOV     A,#Key_SimpleDesc & 0xff
+   \   000078   2A           ADD     A,R2
+   \   000079   F582         MOV     DPL,A
+   \   00007B   74..         MOV     A,#(Key_SimpleDesc >> 8) & 0xff
+   \   00007D   3B           ADDC    A,R3
+   \   00007E   F583         MOV     DPH,A
+   \   000080   12....       LCALL   ??Subroutine11_0 & 0xFFFF
+   \                     ??CrossCallReturnLabel_19:
+   \   000083   12....       LCALL   ??osal_memcpy?relay
+   \   000086   7403         MOV     A,#0x3
+   \   000088   12....       LCALL   ?DEALLOC_XSTACK8
+    437              
+    438              Key_epDesc[keyCnt]->simpleDesc
+    439                                                  = (SimpleDescriptionFormat_t *)(Key_SimpleDesc[keyCnt]);
+   \   00008B   12....       LCALL   ?Subroutine6 & 0xFFFF
+   \                     ??CrossCallReturnLabel_7:
+   \   00008E   FA           MOV     R2,A
+   \   00008F   74..         MOV     A,#(Key_SimpleDesc >> 8) & 0xff
+   \   000091   39           ADDC    A,R1
+   \   000092   FB           MOV     R3,A
+   \   000093   8A82         MOV     DPL,R2
+   \   000095   8B83         MOV     DPH,R3
+   \   000097   E0           MOVX    A,@DPTR
+   \   000098   FC           MOV     R4,A
+   \   000099   A3           INC     DPTR
+   \   00009A   E0           MOVX    A,@DPTR
+   \   00009B   FD           MOV     R5,A
+   \   00009C   12....       LCALL   ?Subroutine8 & 0xFFFF
+   \                     ??CrossCallReturnLabel_11:
+   \   00009F   12....       LCALL   ?Subroutine7 & 0xFFFF
+   \                     ??CrossCallReturnLabel_9:
+   \   0000A2   A3           INC     DPTR
+   \   0000A3   A3           INC     DPTR
+   \   0000A4   EC           MOV     A,R4
+   \   0000A5   F0           MOVX    @DPTR,A
+   \   0000A6   A3           INC     DPTR
+   \   0000A7   ED           MOV     A,R5
+   \   0000A8   F0           MOVX    @DPTR,A
+    440              Key_SimpleDesc[keyCnt]->EndPoint += keyCnt;
+   \   0000A9   90....       MOV     DPTR,#keyCnt
+   \   0000AC   E0           MOVX    A,@DPTR
+   \   0000AD   F8           MOV     R0,A
+   \   0000AE   8A82         MOV     DPL,R2
+   \   0000B0   8B83         MOV     DPH,R3
+   \   0000B2   E0           MOVX    A,@DPTR
+   \   0000B3   F9           MOV     R1,A
+   \   0000B4   A3           INC     DPTR
+   \   0000B5   E0           MOVX    A,@DPTR
+   \   0000B6   F583         MOV     DPH,A
+   \   0000B8   8982         MOV     DPL,R1
+   \   0000BA   E0           MOVX    A,@DPTR
+   \   0000BB   28           ADD     A,R0
+   \   0000BC   F0           MOVX    @DPTR,A
+    441              Key_epDesc[keyCnt]->latencyReq = noLatencyReqs;
+   \   0000BD   90....       MOV     DPTR,#keyCnt
+   \   0000C0   E0           MOVX    A,@DPTR
+   \   0000C1   C3           CLR     C
+   \   0000C2   33           RLC     A
+   \   0000C3   F8           MOV     R0,A
+   \   0000C4   E4           CLR     A
+   \   0000C5   33           RLC     A
+   \   0000C6   F9           MOV     R1,A
+   \   0000C7   12....       LCALL   ?Subroutine8 & 0xFFFF
+   \                     ??CrossCallReturnLabel_12:
+   \   0000CA   12....       LCALL   ??Subroutine11_0 & 0xFFFF
+   \                     ??CrossCallReturnLabel_20:
+   \   0000CD   8A82         MOV     DPL,R2
+   \   0000CF   8B83         MOV     DPH,R3
+   \   0000D1   A3           INC     DPTR
+   \   0000D2   A3           INC     DPTR
+   \   0000D3   A3           INC     DPTR
+   \   0000D4   A3           INC     DPTR
+   \   0000D5   A3           INC     DPTR
+   \   0000D6   E4           CLR     A
+   \   0000D7   F0           MOVX    @DPTR,A
+    442              
+    443              // Register the endpoint description with the AF
+    444              afRegister( Key_epDesc[keyCnt] );
+   \   0000D8                ; Setup parameters for call to function afRegister
+   \   0000D8   12....       LCALL   ??afRegister?relay
+    445              
+    446              keyCnt++;
+   \   0000DB   90....       MOV     DPTR,#keyCnt
+   \   0000DE   E0           MOVX    A,@DPTR
+   \   0000DF   04           INC     A
+   \   0000E0   F0           MOVX    @DPTR,A
+    447              
+    448              Sys_AllowBindConfirm(source);
+   \   0000E1                ; Setup parameters for call to function Sys_AllowBindConfirm
+   \   0000E1   AA..         MOV     R2,?V0 + 0
+   \   0000E3   AB..         MOV     R3,?V0 + 1
+   \   0000E5   12....       LCALL   ??Sys_AllowBindConfirm?relay
+    449          }
+   \   0000E8   740C         MOV     A,#0xc
+   \   0000EA   12....       LCALL   ?DEALLOC_XSTACK8
+   \   0000ED   7F07         MOV     R7,#0x7
+   \   0000EF   02....       LJMP    ?BANKED_LEAVE_XDATA
+
+   \                                 In  segment BANKED_CODE, align 1, keep-with-next
+   \                     ?Subroutine8:
+   \   000000   74..         MOV     A,#Key_epDesc & 0xff
+   \   000002   28           ADD     A,R0
+   \   000003   F582         MOV     DPL,A
+   \   000005   74..         MOV     A,#(Key_epDesc >> 8) & 0xff
+   \   000007   39           ADDC    A,R1
+   \   000008   F583         MOV     DPH,A
+   \   00000A   22           RET
+
+   \                                 In  segment BANKED_CODE, align 1, keep-with-next
+   \                     ?Subroutine7:
+   \   000000   12....       LCALL   ?Subroutine9 & 0xFFFF
+   \                     ??CrossCallReturnLabel_15:
+   \   000003   A3           INC     DPTR
+   \   000004   22           RET
+
+   \                                 In  segment BANKED_CODE, align 1, keep-with-next
+   \                     ?Subroutine6:
+   \   000000   90....       MOV     DPTR,#keyCnt
+   \   000003   E0           MOVX    A,@DPTR
+   \   000004   C3           CLR     C
+   \   000005   33           RLC     A
+   \   000006   F8           MOV     R0,A
+   \   000007   E4           CLR     A
+   \   000008   33           RLC     A
+   \   000009   F9           MOV     R1,A
+   \   00000A   74..         MOV     A,#Key_SimpleDesc & 0xff
+   \   00000C   28           ADD     A,R0
+   \   00000D   22           RET
+
+   \                                 In  segment BANKED_CODE, align 1, keep-with-next
+   \                     ?Subroutine4:
+   \   000000   F0           MOVX    @DPTR,A
+   \   000001                ; Setup parameters for call to function osal_memcpy
+   \   000001   85..82       MOV     DPL,?XSP + 0
+   \   000004   85..83       MOV     DPH,?XSP + 1
+   \   000007   AC82         MOV     R4,DPL
+   \   000009   AD83         MOV     R5,DPH
+   \   00000B   22           RET
+
+   \                                 In  segment BANKED_CODE, align 1, keep-with-next
+   \                     ?Subroutine2:
+   \   000000   90....       MOV     DPTR,#keyCnt
+   \   000003   E0           MOVX    A,@DPTR
+   \   000004   12....       LCALL   ?Subroutine10 & 0xFFFF
+   \                     ??CrossCallReturnLabel_17:
+   \   000007   22           RET
 
    \                                 In  segment XDATA_ID, align 1, keep-with-next
-   \                     `?<Initializer for Key_ClusterList>`:
-   \   000000   0100         DW 1
-   \   000002   0500         DW 5
-   \   000004   0200         DW 2
-   \   000006   0400         DW 4
-
-   \                                 In  segment XDATA_ID, align 1, keep-with-next
-   \                     `?<Initializer for Key_SimpleDesc>`:
+   \                     `?<Initializer for <Constant {10, 3844, 1, 0, 0`:
    \   000000   0A           DB 10
    \   000001   040F         DW 3844
    \   000003   0100         DW 1
@@ -1200,33 +1358,13 @@ Warning[Pe167]: argument of type "unsigned char *" is incompatible with
    \   000007   ....         DW Key_ClusterList
    \   000009   04           DB 4
    \   00000A   ....         DW Key_ClusterList
-   \   00000C   00000000     DB 0, 0, 0, 0, 0, 0, 0, 0
-   \            00000000
-   \   000014   00000000     DB 0, 0, 0, 0, 0, 0, 0, 0
-   \            00000000
-   \   00001C   00000000     DB 0, 0, 0, 0, 0, 0, 0, 0
-   \            00000000
-   \   000024   00000000     DB 0, 0, 0, 0, 0, 0, 0, 0
-   \            00000000
-   \   00002C   00000000     DB 0, 0, 0, 0, 0, 0, 0, 0
-   \            00000000
-   \   000034   00000000     DB 0, 0, 0, 0, 0, 0, 0, 0
-   \            00000000
-   \   00003C   00000000     DB 0, 0, 0, 0, 0, 0, 0, 0
-   \            00000000
-   \   000044   00000000     DB 0, 0, 0, 0, 0, 0, 0, 0
-   \            00000000
-   \   00004C   00000000     DB 0, 0, 0, 0, 0, 0, 0, 0
-   \            00000000
-   \   000054   00000000     DB 0, 0, 0, 0, 0, 0, 0, 0
-   \            00000000
-   \   00005C   00000000     DB 0, 0, 0, 0, 0, 0, 0, 0
-   \            00000000
-   \   000064   00000000     DB 0, 0, 0, 0, 0, 0, 0, 0
-   \            00000000
-   \   00006C   00000000     DB 0, 0, 0, 0, 0, 0, 0, 0
-   \            00000000
-   \   000074   00000000     DB 0, 0, 0, 0
+
+   \                                 In  segment XDATA_ID, align 1, keep-with-next
+   \                     `?<Initializer for Key_ClusterList>`:
+   \   000000   0100         DW 1
+   \   000002   0500         DW 5
+   \   000004   0200         DW 2
+   \   000006   0400         DW 4
 
    \                                 In  segment BANK_RELAYS, align 1
    \                     ??Key_Init?relay:
@@ -1252,22 +1390,19 @@ Warning[Pe167]: argument of type "unsigned char *" is incompatible with
    \                     ??KeySend2Coor?relay:
    \   000000   12....       LCALL   ?BDISPATCH
    \   000003   ......       DC24    KeySend2Coor
-    430          
-    431          /******************************************************************************
-    432           * @fn          Key_AllowBindConfirm
-    433           *
-    434           * @brief       Indicates when another device attempted to bind to this device
-    435           *
-    436           * @param
-    437           *
-    438           * @return      none
-    439           */
-    440          void Key_AllowBindConfirm( uint16 source )
-    441          {
-    442              Sys_AllowBindConfirm(source);
-    443          }
-    444          
-    445          
+
+   \                                 In  segment BANK_RELAYS, align 1
+   \                     ??Key_AllowBindConfirm?relay:
+   \   000000   12....       LCALL   ?BDISPATCH
+   \   000003   ......       DC24    Key_AllowBindConfirm
+
+   \                                 In  segment XDATA_I, align 1, keep-with-next
+   \                     `?<Constant {10, 3844, 1, 0, 0, 4, (cId_t *)Key`:
+   \   000000                DS 12
+   \   00000C                REQUIRE `?<Initializer for <Constant {10, 3844, 1, 0, 0`
+   \   00000C                REQUIRE __INIT_XDATA_I
+    450          
+    451          
 
    Maximum stack usage in bytes:
 
@@ -1280,18 +1415,23 @@ Warning[Pe167]: argument of type "unsigned char *" is incompatible with
      KeySend2Coor                   0      0     21
        -> osal_strlen               0      0     28
        -> Sys_SendDataRequest       0      0     42
+     Key_AllowBindConfirm           2      0     44
+       -> osal_mem_alloc            0      0     54
+       -> osal_mem_alloc            0      0     54
+       -> osal_memcpy               0      0     60
+       -> afRegister                0      0     54
+       -> Sys_AllowBindConfirm      0      0     54
      Key_HandleKeys                 0      0     23
        -> zb_SystemReset            0      0     18
        -> zb_SystemReset            0      0     18
        -> zb_SystemReset            0      0     18
        -> Sys_AllowBind             0      0     18
-     Key_Init                       1      0      9
-       -> afRegister                0      0     18
+     Key_Init                       0      0      9
        -> RegisterForKeys           0      0     18
        -> ZDO_RegisterForZDOMsg     0      0     18
      Key_ProcessEvent               0      0     16
        -> osal_msg_receive          0      0     28
-       -> Sys_AllowBindConfirm      0      0     28
+       -> Key_AllowBindConfirm      0      0     28
        -> osal_msg_deallocate       0      0     28
        -> osal_msg_receive          0      0     28
        -> Key_HandleKeys            0      0     28
@@ -1300,51 +1440,63 @@ Warning[Pe167]: argument of type "unsigned char *" is incompatible with
 
    Segment part sizes:
 
-     Function/Label                     Bytes
-     --------------                     -----
-     P1IFG                                 1
-     P2IFG                                 1
-     PICTL                                 1
-     P1IEN                                 1
-     P2IEN                                 1
-     P1SEL                                 1
-     P2SEL                                 1
-     P1DIR                                 1
-     P2DIR                                 1
-     keyCnt                                1
-     Key_ClusterList                       8
-     Key_SimpleDesc                      120
-     Key_epDesc                           60
-     KeyObserve                            2
-     Key_TaskID                            1
-     Key_DstAddr                          12
-     Key_Init                            155
-     ?Subroutine0                          5
-     Key_ProcessEvent                    172
-     ?Subroutine1                          5
-     Key_HandleKeys                       68
-     KeyAction                           280
-     ?Subroutine2                         13
-     KeySend2Coor                         89
-     ?<Initializer for Key_ClusterList>    8
-     ?<Initializer for Key_SimpleDesc>   120
-     ??Key_Init?relay                      6
-     ??Key_ProcessEvent?relay              6
-     ??Key_HandleKeys?relay                6
-     ??KeyAction?relay                     6
-     ??KeySend2Coor?relay                  6
+     Function/Label                                 Bytes
+     --------------                                 -----
+     P1IFG                                             1
+     P2IFG                                             1
+     PICTL                                             1
+     P1IEN                                             1
+     P2IEN                                             1
+     P1SEL                                             1
+     P2SEL                                             1
+     P1DIR                                             1
+     P2DIR                                             1
+     keyCnt                                            1
+     Key_ClusterList                                   8
+     Key_SimpleDesc                                   20
+     Key_epDesc                                       20
+     KeyObserve                                        2
+     Key_TaskID                                        1
+     Key_DstAddr                                      12
+     Key_Init                                         44
+     ?Subroutine0                                      5
+     Key_ProcessEvent                                163
+     ?Subroutine1                                      5
+     ?Subroutine5                                      2
+     ??Subroutine11_0                                  6
+     Key_HandleKeys                                   68
+     KeyAction                                       275
+     ?Subroutine3                                      8
+     ?Subroutine9                                      9
+     KeySend2Coor                                     82
+     ?Subroutine10                                    17
+     Key_AllowBindConfirm                            242
+     ?Subroutine8                                     11
+     ?Subroutine7                                      5
+     ?Subroutine6                                     14
+     ?Subroutine4                                     12
+     ?Subroutine2                                      8
+     ?<Initializer for <Constant {10, 3844, 1, 0, 0   12
+     ?<Initializer for Key_ClusterList>                8
+     ??Key_Init?relay                                  6
+     ??Key_ProcessEvent?relay                          6
+     ??Key_HandleKeys?relay                            6
+     ??KeyAction?relay                                 6
+     ??KeySend2Coor?relay                              6
+     ??Key_AllowBindConfirm?relay                      6
+     ?<Constant {10, 3844, 1, 0, 0, 4, (cId_t *)Key   12
 
  
- 787 bytes in segment BANKED_CODE
-  30 bytes in segment BANK_RELAYS
+ 976 bytes in segment BANKED_CODE
+  36 bytes in segment BANK_RELAYS
    9 bytes in segment SFR_AN
- 128 bytes in segment XDATA_I
- 128 bytes in segment XDATA_ID
-  76 bytes in segment XDATA_Z
+  20 bytes in segment XDATA_I
+  20 bytes in segment XDATA_ID
+  56 bytes in segment XDATA_Z
  
- 945 bytes of CODE  memory
-   0 bytes of DATA  memory (+ 9 bytes shared)
- 204 bytes of XDATA memory
+ 1 032 bytes of CODE  memory
+     0 bytes of DATA  memory (+ 9 bytes shared)
+    76 bytes of XDATA memory
 
 Errors: none
 Warnings: 1

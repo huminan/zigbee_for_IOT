@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //                                                                            /
-// IAR C/C++ Compiler V8.10.3.10338/W32 for 8051        11/Apr/2018  15:58:13 /
+// IAR C/C++ Compiler V8.10.3.10338/W32 for 8051        15/Apr/2018  22:57:36 /
 // Copyright 2004-2011 IAR Systems AB.                                        /
 //                                                                            /
 //    Core               =  plain                                             /
@@ -563,17 +563,6 @@ Bluetooth_Handle:
         ARGFRAME XSTACK, 21, STACK
         ARGFRAME IOVERLAY, 0, STATIC
         ARGFRAME DOVERLAY, 0, STATIC
-        FUNCALL Bluetooth_Handle, osal_mem_free
-        LOCFRAME ISTACK, 0, STACK
-        LOCFRAME PSTACK, 0, STACK
-        LOCFRAME XSTACK, 14, STACK
-        LOCFRAME IOVERLAY, 0, STATIC
-        LOCFRAME DOVERLAY, 0, STATIC
-        ARGFRAME ISTACK, 0, STACK
-        ARGFRAME PSTACK, 0, STACK
-        ARGFRAME XSTACK, 14, STACK
-        ARGFRAME IOVERLAY, 0, STATIC
-        ARGFRAME DOVERLAY, 0, STATIC
         FUNCALL Bluetooth_Handle, osal_mem_alloc
         LOCFRAME ISTACK, 0, STACK
         LOCFRAME PSTACK, 0, STACK
@@ -694,24 +683,24 @@ Bluetooth_Handle:
         MOV     DPL,R6
         MOV     DPH,R7
         MOVX    A,@DPTR
-        MOV     ?V0 + 4,A
+        MOV     ?V0 + 2,A
 //   84        data_p = (byte *)osal_mem_alloc(sizeof(byte) * len_t);
         ; Setup parameters for call to function osal_mem_alloc
-        LCALL   ?Subroutine3 & 0xFFFF
+        LCALL   ?Subroutine2 & 0xFFFF
 //   85        for(uint8 i = 0; i<len_t; i++)
-??CrossCallReturnLabel_10:
+??CrossCallReturnLabel_5:
         SJMP    ??Bluetooth_Handle_3
 //   86        {
 //   87             data_p[i] = msg[MT_RPC_FRAME_HDR_SZ+i];
 ??Bluetooth_Handle_4:
         LCALL   ?Subroutine1 & 0xFFFF
 //   88        }
-??CrossCallReturnLabel_4:
+??CrossCallReturnLabel_3:
         MOVX    A,@DPTR
         PUSH    A
         CFI CFA_SP SP+-1
-        LCALL   ?Subroutine4 & 0xFFFF
-??CrossCallReturnLabel_12:
+        LCALL   ?Subroutine3 & 0xFFFF
+??CrossCallReturnLabel_7:
         POP     A
         CFI CFA_SP SP+0
         MOVX    @DPTR,A
@@ -719,10 +708,114 @@ Bluetooth_Handle:
 ??Bluetooth_Handle_3:
         MOV     A,R2
         CLR     C
-        SUBB    A,?V0 + 4
+        SUBB    A,?V0 + 2
         JC      ??Bluetooth_Handle_4
-//   89        Sys_SendDataRequest( 0xFFFE, &Key_epDesc[0], msg[MT_RPC_POS_CMD0], len_t,
-//   90                            data_p, sysSeqNumber, 0, 0 );   // 端点默认第一个，无所谓
+//   89        Sys_SendDataRequest( 0xFFFE, Key_epDesc[0], msg[MT_RPC_POS_CMD0], len_t,
+//   90                            data_p, sysSeqNumber, 0, 0 );   // 端点默认第一个，无所�?       osal_mem_free(data_p);
+        ; Setup parameters for call to function Sys_SendDataRequest
+        MOV     ?V0 + 3,#0x0
+        MOV     R0,#?V0 + 3
+        LCALL   ?PUSH_XSTACK_I_ONE
+        CFI CFA_XSP16 add(XSP16, 15)
+        MOV     R0,#?V0 + 3
+        LCALL   ?PUSH_XSTACK_I_ONE
+        CFI CFA_XSP16 add(XSP16, 16)
+        MOV     DPTR,#sysSeqNumber
+        MOVX    A,@DPTR
+        MOV     ?V0 + 3,A
+        MOV     R0,#?V0 + 3
+        LCALL   ?PUSH_XSTACK_I_ONE
+        CFI CFA_XSP16 add(XSP16, 17)
+        MOV     R0,#?V0 + 0
+        LCALL   ?PUSH_XSTACK_I_TWO
+        CFI CFA_XSP16 add(XSP16, 19)
+        MOV     DPL,R6
+        MOV     DPH,R7
+        INC     DPTR
+        MOVX    A,@DPTR
+        MOV     ?V0 + 0,A
+        MOV     ?V0 + 1,#0x0
+        MOV     R0,#?V0 + 0
+        LCALL   ?PUSH_XSTACK_I_TWO
+        CFI CFA_XSP16 add(XSP16, 21)
+        MOV     R1,?V0 + 2
+        MOV     DPTR,#Key_epDesc
+        MOVX    A,@DPTR
+        MOV     R4,A
+        INC     DPTR
+        MOVX    A,@DPTR
+        MOV     R5,A
+        MOV     R2,#-0x2
+        MOV     R3,#-0x1
+        LCALL   ??Sys_SendDataRequest?relay
+        MOV     A,#0x7
+        LCALL   ?DEALLOC_XSTACK8
+        CFI CFA_XSP16 add(XSP16, 14)
+        LJMP    ??Bluetooth_Handle_1 & 0xFFFF
+//   91     }
+//   92     else
+//   93     {
+//   94        // CMDs
+//   95        byte dev_num;           
+//   96        dev_num = msg[MT_RPC_FRAME_HDR_SZ];
+??Bluetooth_Handle_2:
+        INC     DPTR
+        MOVX    A,@DPTR
+        MOV     ?V0 + 4,A
+//   97        
+//   98        // DATAs
+//   99        byte *data_p = NULL;
+//  100        uint8 len_t = msg[MT_RPC_POS_LEN]-1;
+        MOV     DPL,R6
+        MOV     DPH,R7
+        MOVX    A,@DPTR
+        DEC     A
+        MOV     ?V0 + 5,A
+//  101        data_p = (byte *)osal_mem_alloc(sizeof(byte) * len_t);
+        ; Setup parameters for call to function osal_mem_alloc
+        LCALL   ?Subroutine2 & 0xFFFF
+//  102        for(uint8 i = 0; i<len_t; i++)
+??CrossCallReturnLabel_6:
+        SJMP    ??Bluetooth_Handle_5
+//  103        {
+//  104             data_p[i] = msg[MT_RPC_FRAME_HDR_SZ+i+1];
+??Bluetooth_Handle_6:
+        LCALL   ?Subroutine1 & 0xFFFF
+//  105        }
+??CrossCallReturnLabel_4:
+        INC     DPTR
+        MOVX    A,@DPTR
+        PUSH    A
+        CFI CFA_SP SP+-1
+        LCALL   ?Subroutine3 & 0xFFFF
+??CrossCallReturnLabel_8:
+        POP     A
+        CFI CFA_SP SP+0
+        MOVX    @DPTR,A
+        INC     R2
+??Bluetooth_Handle_5:
+        MOV     A,R2
+        CLR     C
+        SUBB    A,?V0 + 5
+        JC      ??Bluetooth_Handle_6
+//  106        switch(msg[MT_RPC_POS_CMD1])
+        MOV     DPL,R6
+        MOV     DPH,R7
+        INC     DPTR
+        INC     DPTR
+        MOVX    A,@DPTR
+        DEC     A
+        JZ      ??Bluetooth_Handle_7
+        DEC     A
+        JZ      ??Bluetooth_Handle_8
+        ADD     A,#-0x2
+        JZ      ??Bluetooth_Handle_9
+        LJMP    ??Bluetooth_Handle_10 & 0xFFFF
+//  107        {
+//  108            case KEY_TYPE_ID:
+//  109              Sys_SendDataRequest( 0xFFFE, Key_epDesc[dev_num], msg[MT_RPC_POS_CMD0], len_t,
+//  110                            data_p, sysSeqNumber, 0, 0 );
+??Bluetooth_Handle_7:
         ; Setup parameters for call to function Sys_SendDataRequest
         MOV     ?V0 + 2,#0x0
         MOV     R0,#?V0 + 2
@@ -731,10 +824,10 @@ Bluetooth_Handle:
         MOV     R0,#?V0 + 2
         LCALL   ?PUSH_XSTACK_I_ONE
         CFI CFA_XSP16 add(XSP16, 16)
-        LCALL   ?Subroutine2 & 0xFFFF
-//   91        osal_mem_free(data_p);
-//   92     }
-??CrossCallReturnLabel_6:
+        MOV     DPTR,#sysSeqNumber
+        MOVX    A,@DPTR
+        MOV     ?V0 + 2,A
+        MOV     R0,#?V0 + 2
         LCALL   ?PUSH_XSTACK_I_ONE
         CFI CFA_XSP16 add(XSP16, 17)
         MOV     R0,#?V0 + 0
@@ -744,74 +837,31 @@ Bluetooth_Handle:
 ??CrossCallReturnLabel_0:
         LCALL   ?PUSH_XSTACK_I_TWO
         CFI CFA_XSP16 add(XSP16, 21)
-        MOV     R1,?V0 + 4
-        MOV     R4,#Key_epDesc & 0xff
-        MOV     R5,#(Key_epDesc >> 8) & 0xff
-        LJMP    ??Bluetooth_Handle_5 & 0xFFFF
-        CFI CFA_XSP16 add(XSP16, 14)
-        ; Setup parameters for call to function osal_mem_free
-//   93     else
-//   94     {
-//   95        // CMDs
-//   96        byte dev_num;           
-//   97        dev_num = msg[MT_RPC_FRAME_HDR_SZ];
-??Bluetooth_Handle_2:
-        INC     DPTR
-        MOVX    A,@DPTR
-        MOV     ?V0 + 4,A
-//   98        
-//   99        // DATAs
-//  100        byte *data_p = NULL;
-//  101        uint8 len_t = msg[MT_RPC_POS_LEN]-1;
-        MOV     DPL,R6
-        MOV     DPH,R7
-        MOVX    A,@DPTR
-        DEC     A
-        MOV     ?V0 + 5,A
-//  102        data_p = (byte *)osal_mem_alloc(sizeof(byte) * len_t);
-        ; Setup parameters for call to function osal_mem_alloc
-        LCALL   ?Subroutine3 & 0xFFFF
-//  103        for(uint8 i = 0; i<len_t; i++)
-??CrossCallReturnLabel_11:
-        SJMP    ??Bluetooth_Handle_6
-//  104        {
-//  105             data_p[i] = msg[MT_RPC_FRAME_HDR_SZ+i+1];
-??Bluetooth_Handle_7:
-        LCALL   ?Subroutine1 & 0xFFFF
-//  106        }
-??CrossCallReturnLabel_5:
-        INC     DPTR
-        MOVX    A,@DPTR
-        PUSH    A
-        CFI CFA_SP SP+-1
-        LCALL   ?Subroutine4 & 0xFFFF
-??CrossCallReturnLabel_13:
-        POP     A
-        CFI CFA_SP SP+0
-        MOVX    @DPTR,A
-        INC     R2
-??Bluetooth_Handle_6:
-        MOV     A,R2
+        MOV     R1,?V0 + 5
+        MOV     A,?V0 + 4
         CLR     C
-        SUBB    A,?V0 + 5
-        JC      ??Bluetooth_Handle_7
-//  107        switch(msg[MT_RPC_POS_CMD1])
-        MOV     DPL,R6
-        MOV     DPH,R7
-        INC     DPTR
+        RLC     A
+        MOV     R2,A
+        CLR     A
+        RLC     A
+        MOV     R3,A
+        MOV     A,#Key_epDesc & 0xff
+        ADD     A,R2
+        MOV     DPL,A
+        MOV     A,#(Key_epDesc >> 8) & 0xff
+        ADDC    A,R3
+        MOV     DPH,A
+        MOVX    A,@DPTR
+        MOV     R4,A
         INC     DPTR
         MOVX    A,@DPTR
-        DEC     A
-        JZ      ??Bluetooth_Handle_8
-        DEC     A
-        JZ      ??Bluetooth_Handle_9
-        ADD     A,#-0x2
-        JZ      ??Bluetooth_Handle_10
-        LJMP    ??Bluetooth_Handle_11 & 0xFFFF
-//  108        {
-//  109            case KEY_TYPE_ID:
-//  110              Sys_SendDataRequest( 0xFFFE, &Key_epDesc[dev_num], msg[MT_RPC_POS_CMD0], len_t,
-//  111                            data_p, sysSeqNumber, 0, 0 );
+        SJMP    ??Bluetooth_Handle_11
+        CFI CFA_XSP16 add(XSP16, 14)
+//  111              break;
+//  112              
+//  113            case MOTOR_TYPE_ID:
+//  114              Sys_SendDataRequest( 0xFFFE, &Motor_epDesc[dev_num], msg[MT_RPC_POS_CMD0], len_t,
+//  115                            data_p, sysSeqNumber, 0, 0 );
 ??Bluetooth_Handle_8:
         ; Setup parameters for call to function Sys_SendDataRequest
         MOV     ?V0 + 2,#0x0
@@ -821,8 +871,10 @@ Bluetooth_Handle:
         MOV     R0,#?V0 + 2
         LCALL   ?PUSH_XSTACK_I_ONE
         CFI CFA_XSP16 add(XSP16, 16)
-        LCALL   ?Subroutine2 & 0xFFFF
-??CrossCallReturnLabel_7:
+        MOV     DPTR,#sysSeqNumber
+        MOVX    A,@DPTR
+        MOV     ?V0 + 2,A
+        MOV     R0,#?V0 + 2
         LCALL   ?PUSH_XSTACK_I_ONE
         CFI CFA_XSP16 add(XSP16, 17)
         MOV     R0,#?V0 + 0
@@ -838,17 +890,17 @@ Bluetooth_Handle:
         MUL     AB
         MOV     R2,A
         MOV     R3,B
-        MOV     A,#Key_epDesc & 0xff
+        MOV     A,#Motor_epDesc & 0xff
         ADD     A,R2
         MOV     R4,A
-        MOV     A,#(Key_epDesc >> 8) & 0xff
+        MOV     A,#(Motor_epDesc >> 8) & 0xff
         SJMP    ??Bluetooth_Handle_12
         CFI CFA_XSP16 add(XSP16, 14)
-//  112              break;
-//  113              
-//  114            case MOTOR_TYPE_ID:
-//  115              Sys_SendDataRequest( 0xFFFE, &Motor_epDesc[dev_num], msg[MT_RPC_POS_CMD0], len_t,
-//  116                            data_p, sysSeqNumber, 0, 0 );
+//  116              break;
+//  117              
+//  118            case SWITCH_TYPE_ID:
+//  119              Sys_SendDataRequest( 0xFFFE, &Switch_epDesc[dev_num], msg[MT_RPC_POS_CMD0], len_t,
+//  120                            data_p, sysSeqNumber, 0, 0 );
 ??Bluetooth_Handle_9:
         ; Setup parameters for call to function Sys_SendDataRequest
         MOV     ?V0 + 2,#0x0
@@ -858,8 +910,10 @@ Bluetooth_Handle:
         MOV     R0,#?V0 + 2
         LCALL   ?PUSH_XSTACK_I_ONE
         CFI CFA_XSP16 add(XSP16, 16)
-        LCALL   ?Subroutine2 & 0xFFFF
-??CrossCallReturnLabel_8:
+        MOV     DPTR,#sysSeqNumber
+        MOVX    A,@DPTR
+        MOV     ?V0 + 2,A
+        MOV     R0,#?V0 + 2
         LCALL   ?PUSH_XSTACK_I_ONE
         CFI CFA_XSP16 add(XSP16, 17)
         MOV     R0,#?V0 + 0
@@ -875,61 +929,24 @@ Bluetooth_Handle:
         MUL     AB
         MOV     R2,A
         MOV     R3,B
-        MOV     A,#Motor_epDesc & 0xff
-        ADD     A,R2
-        MOV     R4,A
-        MOV     A,#(Motor_epDesc >> 8) & 0xff
-        SJMP    ??Bluetooth_Handle_12
-        CFI CFA_XSP16 add(XSP16, 14)
-//  117              break;
-//  118              
-//  119            case SWITCH_TYPE_ID:
-//  120              Sys_SendDataRequest( 0xFFFE, &Switch_epDesc[dev_num], msg[MT_RPC_POS_CMD0], len_t,
-//  121                            data_p, sysSeqNumber, 0, 0 );
-??Bluetooth_Handle_10:
-        ; Setup parameters for call to function Sys_SendDataRequest
-        MOV     ?V0 + 2,#0x0
-        MOV     R0,#?V0 + 2
-        LCALL   ?PUSH_XSTACK_I_ONE
-        CFI CFA_XSP16 add(XSP16, 15)
-        MOV     R0,#?V0 + 2
-        LCALL   ?PUSH_XSTACK_I_ONE
-        CFI CFA_XSP16 add(XSP16, 16)
-        LCALL   ?Subroutine2 & 0xFFFF
-??CrossCallReturnLabel_9:
-        LCALL   ?PUSH_XSTACK_I_ONE
-        CFI CFA_XSP16 add(XSP16, 17)
-        MOV     R0,#?V0 + 0
-        LCALL   ?PUSH_XSTACK_I_TWO
-        CFI CFA_XSP16 add(XSP16, 19)
-        LCALL   ?Subroutine0 & 0xFFFF
-??CrossCallReturnLabel_3:
-        LCALL   ?PUSH_XSTACK_I_TWO
-        CFI CFA_XSP16 add(XSP16, 21)
-        MOV     R1,?V0 + 5
-        MOV     A,?V0 + 4
-        MOV     B,#0x6
-        MUL     AB
-        MOV     R2,A
-        MOV     R3,B
         MOV     A,#Switch_epDesc & 0xff
         ADD     A,R2
         MOV     R4,A
         MOV     A,#(Switch_epDesc >> 8) & 0xff
 ??Bluetooth_Handle_12:
         ADDC    A,R3
+??Bluetooth_Handle_11:
         MOV     R5,A
-??Bluetooth_Handle_5:
         MOV     R2,#-0x2
         MOV     R3,#-0x1
         LCALL   ??Sys_SendDataRequest?relay
         MOV     A,#0x7
         LCALL   ?DEALLOC_XSTACK8
         CFI CFA_XSP16 add(XSP16, 14)
-//  122              break;
-//  123        }
-//  124        osal_mem_free(data_p);
-??Bluetooth_Handle_11:
+//  121              break;
+//  122        }
+//  123        osal_mem_free(data_p);
+??Bluetooth_Handle_10:
         ; Setup parameters for call to function osal_mem_free
         MOV     R2,?V0 + 0
         MOV     R3,?V0 + 1
@@ -938,14 +955,14 @@ Bluetooth_Handle:
         MOV     R7,#0x6
         LJMP    ?BANKED_LEAVE_XDATA
         CFI EndBlock cfiBlock1
-//  125     }
-//  126 }
+//  124     }
+//  125 }
 
         RSEG BANKED_CODE:CODE:NOROOT(0)
-?Subroutine4:
+?Subroutine3:
         CFI Block cfiCond2 Using cfiCommon0
         CFI NoFunction
-        CFI Conditional ??CrossCallReturnLabel_12
+        CFI Conditional ??CrossCallReturnLabel_7
         CFI R6 load(1, XDATA, add(CFA_XSP16, literal(-14)))
         CFI VB load(1, XDATA, add(CFA_XSP16, literal(-13)))
         CFI V0 load(1, XDATA, add(CFA_XSP16, literal(-12)))
@@ -964,7 +981,7 @@ Bluetooth_Handle:
         CFI CFA_XSP16 add(XSP16, 14)
         CFI Block cfiCond3 Using cfiCommon0
         CFI (cfiCond3) NoFunction
-        CFI (cfiCond3) Conditional ??CrossCallReturnLabel_13
+        CFI (cfiCond3) Conditional ??CrossCallReturnLabel_8
         CFI (cfiCond3) R6 load(1, XDATA, add(CFA_XSP16, literal(-14)))
         CFI (cfiCond3) VB load(1, XDATA, add(CFA_XSP16, literal(-13)))
         CFI (cfiCond3) V0 load(1, XDATA, add(CFA_XSP16, literal(-12)))
@@ -996,10 +1013,10 @@ Bluetooth_Handle:
         CFI EndBlock cfiPicker4
 
         RSEG BANKED_CODE:CODE:NOROOT(0)
-?Subroutine3:
+?Subroutine2:
         CFI Block cfiCond5 Using cfiCommon0
         CFI NoFunction
-        CFI Conditional ??CrossCallReturnLabel_10
+        CFI Conditional ??CrossCallReturnLabel_5
         CFI R6 load(1, XDATA, add(CFA_XSP16, literal(-14)))
         CFI VB load(1, XDATA, add(CFA_XSP16, literal(-13)))
         CFI V0 load(1, XDATA, add(CFA_XSP16, literal(-12)))
@@ -1018,7 +1035,7 @@ Bluetooth_Handle:
         CFI CFA_XSP16 add(XSP16, 14)
         CFI Block cfiCond6 Using cfiCommon0
         CFI (cfiCond6) NoFunction
-        CFI (cfiCond6) Conditional ??CrossCallReturnLabel_11
+        CFI (cfiCond6) Conditional ??CrossCallReturnLabel_6
         CFI (cfiCond6) R6 load(1, XDATA, add(CFA_XSP16, literal(-14)))
         CFI (cfiCond6) VB load(1, XDATA, add(CFA_XSP16, literal(-13)))
         CFI (cfiCond6) V0 load(1, XDATA, add(CFA_XSP16, literal(-12)))
@@ -1050,102 +1067,10 @@ Bluetooth_Handle:
         CFI EndBlock cfiPicker7
 
         RSEG BANKED_CODE:CODE:NOROOT(0)
-?Subroutine2:
+?Subroutine1:
         CFI Block cfiCond8 Using cfiCommon0
         CFI NoFunction
-        CFI Conditional ??CrossCallReturnLabel_6
-        CFI R6 load(1, XDATA, add(CFA_XSP16, literal(-14)))
-        CFI VB load(1, XDATA, add(CFA_XSP16, literal(-13)))
-        CFI V0 load(1, XDATA, add(CFA_XSP16, literal(-12)))
-        CFI V1 load(1, XDATA, add(CFA_XSP16, literal(-11)))
-        CFI V2 load(1, XDATA, add(CFA_XSP16, literal(-10)))
-        CFI V3 load(1, XDATA, add(CFA_XSP16, literal(-9)))
-        CFI V4 load(1, XDATA, add(CFA_XSP16, literal(-8)))
-        CFI V5 load(1, XDATA, add(CFA_XSP16, literal(-7)))
-        CFI R7 load(1, XDATA, add(CFA_XSP16, literal(-6)))
-        CFI ?RET_LOW load(1, XDATA, add(CFA_XSP16, literal(-5)))
-        CFI ?RET_HIGH load(1, XDATA, add(CFA_XSP16, literal(-4)))
-        CFI ?BRET_EXT load(1, XDATA, add(CFA_XSP16, literal(-3)))
-        CFI DPL0 load(1, XDATA, add(CFA_XSP16, literal(-2)))
-        CFI DPH0 load(1, XDATA, add(CFA_XSP16, literal(-1)))
-        CFI CFA_SP SP+0
-        CFI CFA_XSP16 add(XSP16, 16)
-        CFI Block cfiCond9 Using cfiCommon0
-        CFI (cfiCond9) NoFunction
-        CFI (cfiCond9) Conditional ??CrossCallReturnLabel_7
-        CFI (cfiCond9) R6 load(1, XDATA, add(CFA_XSP16, literal(-14)))
-        CFI (cfiCond9) VB load(1, XDATA, add(CFA_XSP16, literal(-13)))
-        CFI (cfiCond9) V0 load(1, XDATA, add(CFA_XSP16, literal(-12)))
-        CFI (cfiCond9) V1 load(1, XDATA, add(CFA_XSP16, literal(-11)))
-        CFI (cfiCond9) V2 load(1, XDATA, add(CFA_XSP16, literal(-10)))
-        CFI (cfiCond9) V3 load(1, XDATA, add(CFA_XSP16, literal(-9)))
-        CFI (cfiCond9) V4 load(1, XDATA, add(CFA_XSP16, literal(-8)))
-        CFI (cfiCond9) V5 load(1, XDATA, add(CFA_XSP16, literal(-7)))
-        CFI (cfiCond9) R7 load(1, XDATA, add(CFA_XSP16, literal(-6)))
-        CFI (cfiCond9) ?RET_LOW load(1, XDATA, add(CFA_XSP16, literal(-5)))
-        CFI (cfiCond9) ?RET_HIGH load(1, XDATA, add(CFA_XSP16, literal(-4)))
-        CFI (cfiCond9) ?BRET_EXT load(1, XDATA, add(CFA_XSP16, literal(-3)))
-        CFI (cfiCond9) DPL0 load(1, XDATA, add(CFA_XSP16, literal(-2)))
-        CFI (cfiCond9) DPH0 load(1, XDATA, add(CFA_XSP16, literal(-1)))
-        CFI (cfiCond9) CFA_SP SP+0
-        CFI (cfiCond9) CFA_XSP16 add(XSP16, 16)
-        CFI Block cfiCond10 Using cfiCommon0
-        CFI (cfiCond10) NoFunction
-        CFI (cfiCond10) Conditional ??CrossCallReturnLabel_8
-        CFI (cfiCond10) R6 load(1, XDATA, add(CFA_XSP16, literal(-14)))
-        CFI (cfiCond10) VB load(1, XDATA, add(CFA_XSP16, literal(-13)))
-        CFI (cfiCond10) V0 load(1, XDATA, add(CFA_XSP16, literal(-12)))
-        CFI (cfiCond10) V1 load(1, XDATA, add(CFA_XSP16, literal(-11)))
-        CFI (cfiCond10) V2 load(1, XDATA, add(CFA_XSP16, literal(-10)))
-        CFI (cfiCond10) V3 load(1, XDATA, add(CFA_XSP16, literal(-9)))
-        CFI (cfiCond10) V4 load(1, XDATA, add(CFA_XSP16, literal(-8)))
-        CFI (cfiCond10) V5 load(1, XDATA, add(CFA_XSP16, literal(-7)))
-        CFI (cfiCond10) R7 load(1, XDATA, add(CFA_XSP16, literal(-6)))
-        CFI (cfiCond10) ?RET_LOW load(1, XDATA, add(CFA_XSP16, literal(-5)))
-        CFI (cfiCond10) ?RET_HIGH load(1, XDATA, add(CFA_XSP16, literal(-4)))
-        CFI (cfiCond10) ?BRET_EXT load(1, XDATA, add(CFA_XSP16, literal(-3)))
-        CFI (cfiCond10) DPL0 load(1, XDATA, add(CFA_XSP16, literal(-2)))
-        CFI (cfiCond10) DPH0 load(1, XDATA, add(CFA_XSP16, literal(-1)))
-        CFI (cfiCond10) CFA_SP SP+0
-        CFI (cfiCond10) CFA_XSP16 add(XSP16, 16)
-        CFI Block cfiCond11 Using cfiCommon0
-        CFI (cfiCond11) NoFunction
-        CFI (cfiCond11) Conditional ??CrossCallReturnLabel_9
-        CFI (cfiCond11) R6 load(1, XDATA, add(CFA_XSP16, literal(-14)))
-        CFI (cfiCond11) VB load(1, XDATA, add(CFA_XSP16, literal(-13)))
-        CFI (cfiCond11) V0 load(1, XDATA, add(CFA_XSP16, literal(-12)))
-        CFI (cfiCond11) V1 load(1, XDATA, add(CFA_XSP16, literal(-11)))
-        CFI (cfiCond11) V2 load(1, XDATA, add(CFA_XSP16, literal(-10)))
-        CFI (cfiCond11) V3 load(1, XDATA, add(CFA_XSP16, literal(-9)))
-        CFI (cfiCond11) V4 load(1, XDATA, add(CFA_XSP16, literal(-8)))
-        CFI (cfiCond11) V5 load(1, XDATA, add(CFA_XSP16, literal(-7)))
-        CFI (cfiCond11) R7 load(1, XDATA, add(CFA_XSP16, literal(-6)))
-        CFI (cfiCond11) ?RET_LOW load(1, XDATA, add(CFA_XSP16, literal(-5)))
-        CFI (cfiCond11) ?RET_HIGH load(1, XDATA, add(CFA_XSP16, literal(-4)))
-        CFI (cfiCond11) ?BRET_EXT load(1, XDATA, add(CFA_XSP16, literal(-3)))
-        CFI (cfiCond11) DPL0 load(1, XDATA, add(CFA_XSP16, literal(-2)))
-        CFI (cfiCond11) DPH0 load(1, XDATA, add(CFA_XSP16, literal(-1)))
-        CFI (cfiCond11) CFA_SP SP+0
-        CFI (cfiCond11) CFA_XSP16 add(XSP16, 16)
-        CFI Block cfiPicker12 Using cfiCommon1
-        CFI (cfiPicker12) NoFunction
-        CFI (cfiPicker12) Picker
-        MOV     DPTR,#sysSeqNumber
-        MOVX    A,@DPTR
-        MOV     ?V0 + 2,A
-        MOV     R0,#?V0 + 2
-        RET
-        CFI EndBlock cfiCond8
-        CFI EndBlock cfiCond9
-        CFI EndBlock cfiCond10
-        CFI EndBlock cfiCond11
-        CFI EndBlock cfiPicker12
-
-        RSEG BANKED_CODE:CODE:NOROOT(0)
-?Subroutine1:
-        CFI Block cfiCond13 Using cfiCommon0
-        CFI NoFunction
-        CFI Conditional ??CrossCallReturnLabel_4
+        CFI Conditional ??CrossCallReturnLabel_3
         CFI R6 load(1, XDATA, add(CFA_XSP16, literal(-14)))
         CFI VB load(1, XDATA, add(CFA_XSP16, literal(-13)))
         CFI V0 load(1, XDATA, add(CFA_XSP16, literal(-12)))
@@ -1162,28 +1087,28 @@ Bluetooth_Handle:
         CFI DPH0 load(1, XDATA, add(CFA_XSP16, literal(-1)))
         CFI CFA_SP SP+0
         CFI CFA_XSP16 add(XSP16, 14)
-        CFI Block cfiCond14 Using cfiCommon0
-        CFI (cfiCond14) NoFunction
-        CFI (cfiCond14) Conditional ??CrossCallReturnLabel_5
-        CFI (cfiCond14) R6 load(1, XDATA, add(CFA_XSP16, literal(-14)))
-        CFI (cfiCond14) VB load(1, XDATA, add(CFA_XSP16, literal(-13)))
-        CFI (cfiCond14) V0 load(1, XDATA, add(CFA_XSP16, literal(-12)))
-        CFI (cfiCond14) V1 load(1, XDATA, add(CFA_XSP16, literal(-11)))
-        CFI (cfiCond14) V2 load(1, XDATA, add(CFA_XSP16, literal(-10)))
-        CFI (cfiCond14) V3 load(1, XDATA, add(CFA_XSP16, literal(-9)))
-        CFI (cfiCond14) V4 load(1, XDATA, add(CFA_XSP16, literal(-8)))
-        CFI (cfiCond14) V5 load(1, XDATA, add(CFA_XSP16, literal(-7)))
-        CFI (cfiCond14) R7 load(1, XDATA, add(CFA_XSP16, literal(-6)))
-        CFI (cfiCond14) ?RET_LOW load(1, XDATA, add(CFA_XSP16, literal(-5)))
-        CFI (cfiCond14) ?RET_HIGH load(1, XDATA, add(CFA_XSP16, literal(-4)))
-        CFI (cfiCond14) ?BRET_EXT load(1, XDATA, add(CFA_XSP16, literal(-3)))
-        CFI (cfiCond14) DPL0 load(1, XDATA, add(CFA_XSP16, literal(-2)))
-        CFI (cfiCond14) DPH0 load(1, XDATA, add(CFA_XSP16, literal(-1)))
-        CFI (cfiCond14) CFA_SP SP+0
-        CFI (cfiCond14) CFA_XSP16 add(XSP16, 14)
-        CFI Block cfiPicker15 Using cfiCommon1
-        CFI (cfiPicker15) NoFunction
-        CFI (cfiPicker15) Picker
+        CFI Block cfiCond9 Using cfiCommon0
+        CFI (cfiCond9) NoFunction
+        CFI (cfiCond9) Conditional ??CrossCallReturnLabel_4
+        CFI (cfiCond9) R6 load(1, XDATA, add(CFA_XSP16, literal(-14)))
+        CFI (cfiCond9) VB load(1, XDATA, add(CFA_XSP16, literal(-13)))
+        CFI (cfiCond9) V0 load(1, XDATA, add(CFA_XSP16, literal(-12)))
+        CFI (cfiCond9) V1 load(1, XDATA, add(CFA_XSP16, literal(-11)))
+        CFI (cfiCond9) V2 load(1, XDATA, add(CFA_XSP16, literal(-10)))
+        CFI (cfiCond9) V3 load(1, XDATA, add(CFA_XSP16, literal(-9)))
+        CFI (cfiCond9) V4 load(1, XDATA, add(CFA_XSP16, literal(-8)))
+        CFI (cfiCond9) V5 load(1, XDATA, add(CFA_XSP16, literal(-7)))
+        CFI (cfiCond9) R7 load(1, XDATA, add(CFA_XSP16, literal(-6)))
+        CFI (cfiCond9) ?RET_LOW load(1, XDATA, add(CFA_XSP16, literal(-5)))
+        CFI (cfiCond9) ?RET_HIGH load(1, XDATA, add(CFA_XSP16, literal(-4)))
+        CFI (cfiCond9) ?BRET_EXT load(1, XDATA, add(CFA_XSP16, literal(-3)))
+        CFI (cfiCond9) DPL0 load(1, XDATA, add(CFA_XSP16, literal(-2)))
+        CFI (cfiCond9) DPH0 load(1, XDATA, add(CFA_XSP16, literal(-1)))
+        CFI (cfiCond9) CFA_SP SP+0
+        CFI (cfiCond9) CFA_XSP16 add(XSP16, 14)
+        CFI Block cfiPicker10 Using cfiCommon1
+        CFI (cfiPicker10) NoFunction
+        CFI (cfiPicker10) Picker
         MOV     DPL,R2
         MOV     R0,DPL
         MOV     A,R6
@@ -1196,13 +1121,13 @@ Bluetooth_Handle:
         INC     DPTR
         INC     DPTR
         RET
-        CFI EndBlock cfiCond13
-        CFI EndBlock cfiCond14
-        CFI EndBlock cfiPicker15
+        CFI EndBlock cfiCond8
+        CFI EndBlock cfiCond9
+        CFI EndBlock cfiPicker10
 
         RSEG BANKED_CODE:CODE:NOROOT(0)
 ?Subroutine0:
-        CFI Block cfiCond16 Using cfiCommon0
+        CFI Block cfiCond11 Using cfiCommon0
         CFI NoFunction
         CFI Conditional ??CrossCallReturnLabel_0
         CFI R6 load(1, XDATA, add(CFA_XSP16, literal(-14)))
@@ -1221,66 +1146,47 @@ Bluetooth_Handle:
         CFI DPH0 load(1, XDATA, add(CFA_XSP16, literal(-1)))
         CFI CFA_SP SP+0
         CFI CFA_XSP16 add(XSP16, 19)
-        CFI Block cfiCond17 Using cfiCommon0
-        CFI (cfiCond17) NoFunction
-        CFI (cfiCond17) Conditional ??CrossCallReturnLabel_1
-        CFI (cfiCond17) R6 load(1, XDATA, add(CFA_XSP16, literal(-14)))
-        CFI (cfiCond17) VB load(1, XDATA, add(CFA_XSP16, literal(-13)))
-        CFI (cfiCond17) V0 load(1, XDATA, add(CFA_XSP16, literal(-12)))
-        CFI (cfiCond17) V1 load(1, XDATA, add(CFA_XSP16, literal(-11)))
-        CFI (cfiCond17) V2 load(1, XDATA, add(CFA_XSP16, literal(-10)))
-        CFI (cfiCond17) V3 load(1, XDATA, add(CFA_XSP16, literal(-9)))
-        CFI (cfiCond17) V4 load(1, XDATA, add(CFA_XSP16, literal(-8)))
-        CFI (cfiCond17) V5 load(1, XDATA, add(CFA_XSP16, literal(-7)))
-        CFI (cfiCond17) R7 load(1, XDATA, add(CFA_XSP16, literal(-6)))
-        CFI (cfiCond17) ?RET_LOW load(1, XDATA, add(CFA_XSP16, literal(-5)))
-        CFI (cfiCond17) ?RET_HIGH load(1, XDATA, add(CFA_XSP16, literal(-4)))
-        CFI (cfiCond17) ?BRET_EXT load(1, XDATA, add(CFA_XSP16, literal(-3)))
-        CFI (cfiCond17) DPL0 load(1, XDATA, add(CFA_XSP16, literal(-2)))
-        CFI (cfiCond17) DPH0 load(1, XDATA, add(CFA_XSP16, literal(-1)))
-        CFI (cfiCond17) CFA_SP SP+0
-        CFI (cfiCond17) CFA_XSP16 add(XSP16, 19)
-        CFI Block cfiCond18 Using cfiCommon0
-        CFI (cfiCond18) NoFunction
-        CFI (cfiCond18) Conditional ??CrossCallReturnLabel_2
-        CFI (cfiCond18) R6 load(1, XDATA, add(CFA_XSP16, literal(-14)))
-        CFI (cfiCond18) VB load(1, XDATA, add(CFA_XSP16, literal(-13)))
-        CFI (cfiCond18) V0 load(1, XDATA, add(CFA_XSP16, literal(-12)))
-        CFI (cfiCond18) V1 load(1, XDATA, add(CFA_XSP16, literal(-11)))
-        CFI (cfiCond18) V2 load(1, XDATA, add(CFA_XSP16, literal(-10)))
-        CFI (cfiCond18) V3 load(1, XDATA, add(CFA_XSP16, literal(-9)))
-        CFI (cfiCond18) V4 load(1, XDATA, add(CFA_XSP16, literal(-8)))
-        CFI (cfiCond18) V5 load(1, XDATA, add(CFA_XSP16, literal(-7)))
-        CFI (cfiCond18) R7 load(1, XDATA, add(CFA_XSP16, literal(-6)))
-        CFI (cfiCond18) ?RET_LOW load(1, XDATA, add(CFA_XSP16, literal(-5)))
-        CFI (cfiCond18) ?RET_HIGH load(1, XDATA, add(CFA_XSP16, literal(-4)))
-        CFI (cfiCond18) ?BRET_EXT load(1, XDATA, add(CFA_XSP16, literal(-3)))
-        CFI (cfiCond18) DPL0 load(1, XDATA, add(CFA_XSP16, literal(-2)))
-        CFI (cfiCond18) DPH0 load(1, XDATA, add(CFA_XSP16, literal(-1)))
-        CFI (cfiCond18) CFA_SP SP+0
-        CFI (cfiCond18) CFA_XSP16 add(XSP16, 19)
-        CFI Block cfiCond19 Using cfiCommon0
-        CFI (cfiCond19) NoFunction
-        CFI (cfiCond19) Conditional ??CrossCallReturnLabel_3
-        CFI (cfiCond19) R6 load(1, XDATA, add(CFA_XSP16, literal(-14)))
-        CFI (cfiCond19) VB load(1, XDATA, add(CFA_XSP16, literal(-13)))
-        CFI (cfiCond19) V0 load(1, XDATA, add(CFA_XSP16, literal(-12)))
-        CFI (cfiCond19) V1 load(1, XDATA, add(CFA_XSP16, literal(-11)))
-        CFI (cfiCond19) V2 load(1, XDATA, add(CFA_XSP16, literal(-10)))
-        CFI (cfiCond19) V3 load(1, XDATA, add(CFA_XSP16, literal(-9)))
-        CFI (cfiCond19) V4 load(1, XDATA, add(CFA_XSP16, literal(-8)))
-        CFI (cfiCond19) V5 load(1, XDATA, add(CFA_XSP16, literal(-7)))
-        CFI (cfiCond19) R7 load(1, XDATA, add(CFA_XSP16, literal(-6)))
-        CFI (cfiCond19) ?RET_LOW load(1, XDATA, add(CFA_XSP16, literal(-5)))
-        CFI (cfiCond19) ?RET_HIGH load(1, XDATA, add(CFA_XSP16, literal(-4)))
-        CFI (cfiCond19) ?BRET_EXT load(1, XDATA, add(CFA_XSP16, literal(-3)))
-        CFI (cfiCond19) DPL0 load(1, XDATA, add(CFA_XSP16, literal(-2)))
-        CFI (cfiCond19) DPH0 load(1, XDATA, add(CFA_XSP16, literal(-1)))
-        CFI (cfiCond19) CFA_SP SP+0
-        CFI (cfiCond19) CFA_XSP16 add(XSP16, 19)
-        CFI Block cfiPicker20 Using cfiCommon1
-        CFI (cfiPicker20) NoFunction
-        CFI (cfiPicker20) Picker
+        CFI Block cfiCond12 Using cfiCommon0
+        CFI (cfiCond12) NoFunction
+        CFI (cfiCond12) Conditional ??CrossCallReturnLabel_1
+        CFI (cfiCond12) R6 load(1, XDATA, add(CFA_XSP16, literal(-14)))
+        CFI (cfiCond12) VB load(1, XDATA, add(CFA_XSP16, literal(-13)))
+        CFI (cfiCond12) V0 load(1, XDATA, add(CFA_XSP16, literal(-12)))
+        CFI (cfiCond12) V1 load(1, XDATA, add(CFA_XSP16, literal(-11)))
+        CFI (cfiCond12) V2 load(1, XDATA, add(CFA_XSP16, literal(-10)))
+        CFI (cfiCond12) V3 load(1, XDATA, add(CFA_XSP16, literal(-9)))
+        CFI (cfiCond12) V4 load(1, XDATA, add(CFA_XSP16, literal(-8)))
+        CFI (cfiCond12) V5 load(1, XDATA, add(CFA_XSP16, literal(-7)))
+        CFI (cfiCond12) R7 load(1, XDATA, add(CFA_XSP16, literal(-6)))
+        CFI (cfiCond12) ?RET_LOW load(1, XDATA, add(CFA_XSP16, literal(-5)))
+        CFI (cfiCond12) ?RET_HIGH load(1, XDATA, add(CFA_XSP16, literal(-4)))
+        CFI (cfiCond12) ?BRET_EXT load(1, XDATA, add(CFA_XSP16, literal(-3)))
+        CFI (cfiCond12) DPL0 load(1, XDATA, add(CFA_XSP16, literal(-2)))
+        CFI (cfiCond12) DPH0 load(1, XDATA, add(CFA_XSP16, literal(-1)))
+        CFI (cfiCond12) CFA_SP SP+0
+        CFI (cfiCond12) CFA_XSP16 add(XSP16, 19)
+        CFI Block cfiCond13 Using cfiCommon0
+        CFI (cfiCond13) NoFunction
+        CFI (cfiCond13) Conditional ??CrossCallReturnLabel_2
+        CFI (cfiCond13) R6 load(1, XDATA, add(CFA_XSP16, literal(-14)))
+        CFI (cfiCond13) VB load(1, XDATA, add(CFA_XSP16, literal(-13)))
+        CFI (cfiCond13) V0 load(1, XDATA, add(CFA_XSP16, literal(-12)))
+        CFI (cfiCond13) V1 load(1, XDATA, add(CFA_XSP16, literal(-11)))
+        CFI (cfiCond13) V2 load(1, XDATA, add(CFA_XSP16, literal(-10)))
+        CFI (cfiCond13) V3 load(1, XDATA, add(CFA_XSP16, literal(-9)))
+        CFI (cfiCond13) V4 load(1, XDATA, add(CFA_XSP16, literal(-8)))
+        CFI (cfiCond13) V5 load(1, XDATA, add(CFA_XSP16, literal(-7)))
+        CFI (cfiCond13) R7 load(1, XDATA, add(CFA_XSP16, literal(-6)))
+        CFI (cfiCond13) ?RET_LOW load(1, XDATA, add(CFA_XSP16, literal(-5)))
+        CFI (cfiCond13) ?RET_HIGH load(1, XDATA, add(CFA_XSP16, literal(-4)))
+        CFI (cfiCond13) ?BRET_EXT load(1, XDATA, add(CFA_XSP16, literal(-3)))
+        CFI (cfiCond13) DPL0 load(1, XDATA, add(CFA_XSP16, literal(-2)))
+        CFI (cfiCond13) DPH0 load(1, XDATA, add(CFA_XSP16, literal(-1)))
+        CFI (cfiCond13) CFA_SP SP+0
+        CFI (cfiCond13) CFA_XSP16 add(XSP16, 19)
+        CFI Block cfiPicker14 Using cfiCommon1
+        CFI (cfiPicker14) NoFunction
+        CFI (cfiPicker14) Picker
         MOV     DPL,R6
         MOV     DPH,R7
         INC     DPTR
@@ -1289,11 +1195,10 @@ Bluetooth_Handle:
         MOV     ?V0 + 3,#0x0
         MOV     R0,#?V0 + 2
         RET
-        CFI EndBlock cfiCond16
-        CFI EndBlock cfiCond17
-        CFI EndBlock cfiCond18
-        CFI EndBlock cfiCond19
-        CFI EndBlock cfiPicker20
+        CFI EndBlock cfiCond11
+        CFI EndBlock cfiCond12
+        CFI EndBlock cfiCond13
+        CFI EndBlock cfiPicker14
 
         RSEG BANK_RELAYS:CODE:REORDER:NOROOT(0)
 ??BluetoothInit?relay:
@@ -1309,11 +1214,11 @@ Bluetooth_Handle:
 
         END
 // 
-// 431 bytes in segment BANKED_CODE
+// 475 bytes in segment BANKED_CODE
 //  12 bytes in segment BANK_RELAYS
 //  20 bytes in segment XDATA_Z
 // 
-// 443 bytes of CODE  memory
+// 487 bytes of CODE  memory
 //  20 bytes of XDATA memory
 //
 //Errors: none

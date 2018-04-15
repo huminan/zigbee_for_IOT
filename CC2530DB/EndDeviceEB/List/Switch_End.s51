@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //                                                                            /
-// IAR C/C++ Compiler V8.10.3.10338/W32 for 8051        07/Apr/2018  16:26:45 /
+// IAR C/C++ Compiler V8.10.3.10338/W32 for 8051        15/Apr/2018  22:48:22 /
 // Copyright 2004-2011 IAR Systems AB.                                        /
 //                                                                            /
 //    Core               =  plain                                             /
@@ -998,7 +998,6 @@ Switch_ProcessEvent:
 //  176             case ZDO_MATCH_DESC_RSP_SENT:
 //  177                 Switch_AllowBindConfirm( ((ZDO_MatchDescRspSent_t *)MSGpkt)->nwkAddr );
 ??Switch_ProcessEvent_2:
-        ; Setup parameters for call to function Sys_AllowBindConfirm
         INC     DPTR
         INC     DPTR
         MOVX    A,@DPTR
@@ -1006,6 +1005,11 @@ Switch_ProcessEvent:
         INC     DPTR
         MOVX    A,@DPTR
         MOV     R3,A
+        MOV     DPTR,#swCnt
+        MOVX    A,@DPTR
+        INC     A
+        MOVX    @DPTR,A
+        ; Setup parameters for call to function Sys_AllowBindConfirm
         LCALL   ??Sys_AllowBindConfirm?relay
 //  178                 break;
 //  179           }
@@ -3520,23 +3524,24 @@ SwitchUpdate:
 //  394  */
 //  395 void Switch_AllowBindConfirm( uint16 source )
 //  396 {
-//  397      Sys_AllowBindConfirm(source);
-//  398 }
-//  399 
-//  400 void Send2Coor(uint8 dev_num, uint16 commandId, uint8 *pData)
-//  401 {
-//  402     Sys_SendDataRequest( 0xFFFE, &Switch_epDesc[dev_num], commandId, (uint8)osal_strlen( pData ),
-//  403                            pData, sysSeqNumber, 0, 0 );
-//  404 }
+//  397      swCnt++;
+//  398      Sys_AllowBindConfirm(source);
+//  399 }
+//  400 
+//  401 void Send2Coor(uint8 dev_num, uint16 commandId, uint8 *pData)
+//  402 {
+//  403     Sys_SendDataRequest( 0xFFFE, &Switch_epDesc[dev_num], commandId, (uint8)osal_strlen( pData ),
+//  404                            pData, sysSeqNumber, 0, 0 );
+//  405 }
 // 
-// 1 293 bytes in segment BANKED_CODE
+// 1 299 bytes in segment BANKED_CODE
 //    24 bytes in segment BANK_RELAYS
 //     6 bytes in segment SFR_AN
 //    68 bytes in segment XDATA_I
 //    68 bytes in segment XDATA_ID
 //    80 bytes in segment XDATA_Z
 // 
-// 1 385 bytes of CODE  memory
+// 1 391 bytes of CODE  memory
 //     0 bytes of DATA  memory (+ 6 bytes shared)
 //   148 bytes of XDATA memory
 //

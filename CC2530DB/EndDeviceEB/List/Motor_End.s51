@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //                                                                            /
-// IAR C/C++ Compiler V8.10.3.10338/W32 for 8051        07/Apr/2018  16:26:44 /
+// IAR C/C++ Compiler V8.10.3.10338/W32 for 8051        15/Apr/2018  22:48:21 /
 // Copyright 2004-2011 IAR Systems AB.                                        /
 //                                                                            /
 //    Core               =  plain                                             /
@@ -1107,9 +1107,13 @@ Motor_ProcessEvent:
 //  190             case ZDO_MATCH_DESC_RSP_SENT:
 //  191                 Motor_AllowBindConfirm( ((ZDO_MatchDescRspSent_t *)MSGpkt)->nwkAddr );
 ??Motor_ProcessEvent_2:
-        ; Setup parameters for call to function Sys_AllowBindConfirm
         LCALL   ?Subroutine22 & 0xFFFF
 ??CrossCallReturnLabel_54:
+        MOV     DPTR,#motorCnt
+        MOVX    A,@DPTR
+        INC     A
+        MOVX    @DPTR,A
+        ; Setup parameters for call to function Sys_AllowBindConfirm
         LCALL   ??Sys_AllowBindConfirm?relay
 //  192                 break;
 //  193           }
@@ -1858,26 +1862,27 @@ Motor_ProcessEvent:
 //  272  */
 //  273 void Motor_AllowBindConfirm( uint16 source )
 //  274 {
-//  275      Sys_AllowBindConfirm(source);
-//  276 }
-//  277 
-//  278 /******************************************************************************
-//  279  * @fn          MotorAction
-//  280  *
-//  281  * @brief       Motor Action Decide
-//  282  *
-//  283  * @param
-//  284  *
-//  285  * @return      none
-//  286  */
+//  275      motorCnt++;
+//  276      Sys_AllowBindConfirm(source);
+//  277 }
+//  278 
+//  279 /******************************************************************************
+//  280  * @fn          MotorAction
+//  281  *
+//  282  * @brief       Motor Action Decide
+//  283  *
+//  284  * @param
+//  285  *
+//  286  * @return      none
+//  287  */
 
         RSEG BANKED_CODE:CODE:NOROOT(0)
-//  287 void MotorAction( uint8 motor, uint16 command, uint16 len, uint8 *pData )
+//  288 void MotorAction( uint8 motor, uint16 command, uint16 len, uint8 *pData )
 MotorAction:
         CFI Block cfiBlock27 Using cfiCommon0
         CFI Function MotorAction
         CODE
-//  288 {
+//  289 {
         FUNCALL MotorAction, osal_mem_alloc
         LOCFRAME ISTACK, 0, STACK
         LOCFRAME PSTACK, 0, STACK
@@ -1958,28 +1963,28 @@ MotorAction:
         INC     DPTR
         MOVX    A,@DPTR
         MOV     R7,A
-//  289   // pData contains : " velocity(r/min), delay(0xffff: never)(sec), velocity, delay, ... "
-//  290   if(command == PORT_INIT_CLUSTER)
+//  290   // pData contains : " velocity(r/min), delay(0xffff: never)(sec), velocity, delay, ... "
+//  291   if(command == PORT_INIT_CLUSTER)
         MOV     A,#0x1
         XRL     A,?V0 + 0
         JNZ     ??MotorAction_0
         MOV     A,R3
 ??MotorAction_0:
         JNZ     ??MotorAction_1
-//  291   {
-//  292     uint8 port;
-//  293     port = *pData;
+//  292   {
+//  293     uint8 port;
+//  294     port = *pData;
         MOV     DPL,R6
         MOV     DPH,R7
         MOVX    A,@DPTR
         MOV     R1,A
-//  294     if(port < MOTOR_NUM_MAX)    // Port: 0, 1
+//  295     if(port < MOTOR_NUM_MAX)    // Port: 0, 1
         CLR     C
         SUBB    A,#0x2
         JC      $+5
         LJMP    ??MotorAction_2 & 0xFFFF
-//  295     {
-//  296         P1DIR |= 0x03 << (port*2);
+//  296     {
+//  297         P1DIR |= 0x03 << (port*2);
         MOV     ?V0 + 0,#0x3
         MOV     ?V0 + 1,#0x0
         MOV     A,R1
@@ -1989,7 +1994,7 @@ MotorAction:
         LCALL   ?S_SHL
         MOV     A,?V0 + 0
         ORL     0xfe,A
-//  297         MotorControl[motor].port = port;
+//  298         MotorControl[motor].port = port;
         MOV     A,R1
         PUSH    A
         CFI CFA_SP SP+-1
@@ -1999,25 +2004,25 @@ MotorAction:
         POP     A
         CFI CFA_SP SP+0
         MOVX    @DPTR,A
-//  298         return;
+//  299         return;
         LJMP    ??MotorAction_2 & 0xFFFF
-//  299     }
-//  300     else
-//  301     {
-//  302         // send error back
-//  303         return;
-//  304     }
-//  305   }
-//  306   
+//  300     }
+//  301     else
+//  302     {
+//  303         // send error back
+//  304         return;
+//  305     }
+//  306   }
 //  307   
-//  308   if(motor>=MOTOR_NUM_MAX)return;   // data error
+//  308   
+//  309   if(motor>=MOTOR_NUM_MAX)return;   // data error
 ??MotorAction_1:
         MOV     A,R1
         CLR     C
         SUBB    A,#0x2
         JC      $+5
         LJMP    ??MotorAction_2 & 0xFFFF
-//  309   if( len % OPERATE_MSG_NUM )return;  // data error: Must be 6 data each group
+//  310   if( len % OPERATE_MSG_NUM )return;  // data error: Must be 6 data each group
         MOV     A,R4
         MOV     R0,A
         MOV     A,R5
@@ -2030,10 +2035,10 @@ MotorAction:
         ORL     A,?V0 + 5
         JZ      $+5
         LJMP    ??MotorAction_2 & 0xFFFF
-//  310 
-//  311   uint16 len_t;
-//  312   sensor_msg_t *msg_t = NULL;
-//  313   len_t = len/OPERATE_MSG_NUM;
+//  311 
+//  312   uint16 len_t;
+//  313   sensor_msg_t *msg_t = NULL;
+//  314   len_t = len/OPERATE_MSG_NUM;
         MOV     A,R4
         MOV     R0,A
         MOV     A,R5
@@ -2043,7 +2048,7 @@ MotorAction:
         LCALL   ?US_DIV_MOD
         MOV     ?V0 + 4,R0
         MOV     ?V0 + 5,R1
-//  314   msg_t = (sensor_msg_t *)osal_mem_alloc(sizeof(sensor_msg_t) * len_t);
+//  315   msg_t = (sensor_msg_t *)osal_mem_alloc(sizeof(sensor_msg_t) * len_t);
         ; Setup parameters for call to function osal_mem_alloc
         MOV     A,R0
         MOV     B,#0x6
@@ -2060,16 +2065,16 @@ MotorAction:
         MOV     ?V0 + 7,R3
         MOV     R4,?V0 + 6
         MOV     R5,?V0 + 7
-//  315   uint16 v;
-//  316   uint8 i;
-//  317   for(i=0; i<len_t; i++)
+//  316   uint16 v;
+//  317   uint8 i;
+//  318   for(i=0; i<len_t; i++)
         MOV     ?V0 + 3,#0x0
         SJMP    ??MotorAction_3
-//  318   {
-//  319       if(pData[i*OPERATE_MSG_NUM] >= 1)      // direction
-//  320         msg_t[i].value = 1;
-//  321       else
-//  322         msg_t[i].value = 0;
+//  319   {
+//  320       if(pData[i*OPERATE_MSG_NUM] >= 1)      // direction
+//  321         msg_t[i].value = 1;
+//  322       else
+//  323         msg_t[i].value = 0;
 ??MotorAction_4:
         MOV     A,R4
         ADD     A,R0
@@ -2080,9 +2085,9 @@ MotorAction:
         CLR     A
 ??MotorAction_5:
         MOVX    @DPTR,A
-//  323       
-//  324       v = (pData[i*OPERATE_MSG_NUM+1]<<8) | pData[i*OPERATE_MSG_NUM+2];
-//  325       msg_t[i].level = 150000/TIMER3_INT_DELAY/v;  // velocity
+//  324       
+//  325       v = (pData[i*OPERATE_MSG_NUM+1]<<8) | pData[i*OPERATE_MSG_NUM+2];
+//  326       msg_t[i].level = 150000/TIMER3_INT_DELAY/v;  // velocity
         MOV     A,?V0 + 3
         MOV     B,#0x6
         MUL     AB
@@ -2126,18 +2131,18 @@ MotorAction:
         INC     DPTR
         MOV     A,R1
         LCALL   ?Subroutine16 & 0xFFFF
-//  326       msg_t[i].hour = pData[i*OPERATE_MSG_NUM+3];
+//  327       msg_t[i].hour = pData[i*OPERATE_MSG_NUM+3];
 ??CrossCallReturnLabel_28:
         MOVX    A,@DPTR
         MOV     DPL,?V0 + 6
         MOV     DPH,?V0 + 7
         LCALL   ?Subroutine6 & 0xFFFF
-//  327       msg_t[i].min = pData[i*OPERATE_MSG_NUM+4];
+//  328       msg_t[i].min = pData[i*OPERATE_MSG_NUM+4];
 ??CrossCallReturnLabel_10:
         LCALL   ?Subroutine13 & 0xFFFF
 ??CrossCallReturnLabel_24:
         LCALL   ?Subroutine6 & 0xFFFF
-//  328       msg_t[i].sec = pData[i*OPERATE_MSG_NUM+5];
+//  329       msg_t[i].sec = pData[i*OPERATE_MSG_NUM+5];
 ??CrossCallReturnLabel_11:
         INC     DPTR
         LCALL   ?Subroutine13 & 0xFFFF
@@ -2178,8 +2183,8 @@ MotorAction:
         MOV     DPH,A
         MOV     A,#0x1
         LJMP    ??MotorAction_5 & 0xFFFF
-//  329   }
-//  330   MotorControl[motor].msg = msg_t;
+//  330   }
+//  331   MotorControl[motor].msg = msg_t;
 ??MotorAction_6:
         MOV     DPL,?V0 + 2
         MOV     R6,DPL
@@ -2195,17 +2200,17 @@ MotorAction:
         INC     DPTR
         MOV     A,R5
         LCALL   ?Subroutine17 & 0xFFFF
-//  331   MotorControl[motor].total = len_t;
+//  332   MotorControl[motor].total = len_t;
 ??CrossCallReturnLabel_31:
         INC     DPTR
         INC     DPTR
         MOV     A,?V0 + 4
         LCALL   ?Subroutine9 & 0xFFFF
-//  332   MotorControl[motor].status = 0;
+//  333   MotorControl[motor].status = 0;
 ??CrossCallReturnLabel_16:
         CLR     A
         LCALL   ?Subroutine9 & 0xFFFF
-//  333   MotorControl[motor].command = command;
+//  334   MotorControl[motor].command = command;
 ??CrossCallReturnLabel_17:
         INC     DPTR
         INC     DPTR
@@ -2214,50 +2219,50 @@ MotorAction:
         INC     DPTR
         MOV     A,?V0 + 1
         MOVX    @DPTR,A
-//  334   osal_mem_free(msg_t);
+//  335   osal_mem_free(msg_t);
         ; Setup parameters for call to function osal_mem_free
         MOV     A,R4
         MOV     R2,A
         MOV     A,R5
         MOV     R3,A
         LCALL   ??osal_mem_free?relay
-//  335   /**************************** use ',' devide datas
-//  336   // devide word between No.3 and No.4 ','
-//  337   if(motor>=MOTOR_NUM_MAX)return;   // data error
-//  338   uint8 i;
-//  339   uint8 posx1, posx2;
-//  340   uint8 num = Num_Pos(len, pData);
-//  341   uint8 motorVelocity_arr[5], motorDelay_arr[5];
-//  342   if(num%2)return;  // data error
-//  343   if(num/2 > MOTOR_MAX_OPERATION)num = MOTOR_MAX_OPERATION*2;   // data too long
-//  344   
-//  345   posx1 = 0;
-//  346   for(i=0; i<num; i++)
-//  347   {
-//  348       posx2 = Locate_Pos(pData, i+1);
-//  349       if(posx2 - posx1 == 0)
-//  350         return; //data error
-//  351       if(i%2)
-//  352       {
-//  353         mid(motorDelay_arr, pData, posx2-posx1-1,posx1);
-//  354         MotorControl[motor].delay[i/2] = atoi(motorDelay_arr);
-//  355       }
-//  356       else
-//  357       {
-//  358         mid(motorVelocity_arr, pData, posx2-posx1-1,posx1);
-//  359         MotorControl[motor].velocity[i/2] = 150000/TIMER3_INT_DELAY/atoi(motorVelocity_arr);
-//  360       }
-//  361       posx1 = posx2;
-//  362   }
-//  363   MotorControl[motor].total = num/2;
-//  364   MotorControl[motor].direct = command;
-//  365   MotorControl[motor].status = 0;
-//  366   */
-//  367   
-//  368   uint16 event_t;
-//  369   event_t = MOTOR_UPDATE_EVT | motor;       // 0x5000 | 0x00??
-//  370   
-//  371   osal_stop_timerEx(Motor_TaskID, event_t);
+//  336   /**************************** use ',' devide datas
+//  337   // devide word between No.3 and No.4 ','
+//  338   if(motor>=MOTOR_NUM_MAX)return;   // data error
+//  339   uint8 i;
+//  340   uint8 posx1, posx2;
+//  341   uint8 num = Num_Pos(len, pData);
+//  342   uint8 motorVelocity_arr[5], motorDelay_arr[5];
+//  343   if(num%2)return;  // data error
+//  344   if(num/2 > MOTOR_MAX_OPERATION)num = MOTOR_MAX_OPERATION*2;   // data too long
+//  345   
+//  346   posx1 = 0;
+//  347   for(i=0; i<num; i++)
+//  348   {
+//  349       posx2 = Locate_Pos(pData, i+1);
+//  350       if(posx2 - posx1 == 0)
+//  351         return; //data error
+//  352       if(i%2)
+//  353       {
+//  354         mid(motorDelay_arr, pData, posx2-posx1-1,posx1);
+//  355         MotorControl[motor].delay[i/2] = atoi(motorDelay_arr);
+//  356       }
+//  357       else
+//  358       {
+//  359         mid(motorVelocity_arr, pData, posx2-posx1-1,posx1);
+//  360         MotorControl[motor].velocity[i/2] = 150000/TIMER3_INT_DELAY/atoi(motorVelocity_arr);
+//  361       }
+//  362       posx1 = posx2;
+//  363   }
+//  364   MotorControl[motor].total = num/2;
+//  365   MotorControl[motor].direct = command;
+//  366   MotorControl[motor].status = 0;
+//  367   */
+//  368   
+//  369   uint16 event_t;
+//  370   event_t = MOTOR_UPDATE_EVT | motor;       // 0x5000 | 0x00??
+//  371   
+//  372   osal_stop_timerEx(Motor_TaskID, event_t);
         ; Setup parameters for call to function osal_stop_timerEx
         MOV     A,R6
         MOV     R2,A
@@ -2266,12 +2271,12 @@ MotorAction:
         MOVX    A,@DPTR
         MOV     R1,A
         LCALL   ??osal_stop_timerEx?relay
-//  372   MotorUpdate(motor, 1);
+//  373   MotorUpdate(motor, 1);
         ; Setup parameters for call to function MotorUpdate
         MOV     R2,#0x1
         MOV     R1,?V0 + 2
         LCALL   ??MotorUpdate?relay
-//  373 }
+//  374 }
 ??MotorAction_2:
         MOV     R7,#0xc
         LJMP    ?BANKED_LEAVE_XDATA
@@ -2684,15 +2689,15 @@ MotorAction:
         CFI EndBlock cfiCond44
         CFI EndBlock cfiCond45
         CFI EndBlock cfiPicker46
-//  374 
+//  375 
 
         RSEG BANKED_CODE:CODE:NOROOT(0)
-//  375 void MotorUpdate(uint8 motor, uint8 first_boot)
+//  376 void MotorUpdate(uint8 motor, uint8 first_boot)
 MotorUpdate:
         CFI Block cfiBlock47 Using cfiCommon0
         CFI Function MotorUpdate
         CODE
-//  376 {
+//  377 {
         FUNCALL MotorUpdate, MotorDone
         LOCFRAME ISTACK, 0, STACK
         LOCFRAME PSTACK, 0, STACK
@@ -2781,8 +2786,8 @@ MotorUpdate:
         MOV     R7,A
         MOV     A,R2
         MOV     R6,A
-//  377     uint8 status_m;
-//  378     status_m = MotorControl[motor].status;
+//  378     uint8 status_m;
+//  379     status_m = MotorControl[motor].status;
         MOV     DPL,R7
         MOV     A,DPL
         MOV     B,#0x7
@@ -2798,7 +2803,7 @@ MotorUpdate:
         INC     DPTR
         MOVX    A,@DPTR
         MOV     ?V0 + 0,A
-//  379     if(status_m == (MotorControl[motor].total)-1)
+//  380     if(status_m == (MotorControl[motor].total)-1)
         MOV     ?V0 + 2,A
         MOV     DPL,R0
         MOV     DPH,R1
@@ -2816,8 +2821,8 @@ MotorUpdate:
         MOV     A,R1
 ??MotorUpdate_0:
         JNZ     ??MotorUpdate_1
-//  380     {
-//  381         if(MotorControl[motor].command == LOOP_OPERATE_CLUSTER)
+//  381     {
+//  382         if(MotorControl[motor].command == LOOP_OPERATE_CLUSTER)
         MOV     A,R7
         MOV     B,#0x7
         MUL     AB
@@ -2837,44 +2842,44 @@ MotorUpdate:
         MOVX    A,@DPTR
 ??MotorUpdate_2:
         JNZ     ??MotorUpdate_3
-//  382         {
-//  383             MotorControl[motor].status = 0x00;
+//  383         {
+//  384             MotorControl[motor].status = 0x00;
         LCALL   ?Subroutine10 & 0xFFFF
 ??CrossCallReturnLabel_18:
         CLR     A
         MOVX    @DPTR,A
-//  384             status_m = 0xff;
+//  385             status_m = 0xff;
         MOV     ?V0 + 0,#-0x1
-//  385         }
-//  386         else
-//  387         {
-//  388             // STOP
-//  389             // Sleep Pin -> low
-//  390             (MotorControl[motor].status)++;
-//  391             motorTimeout[motor] = 0;
-//  392             if(MotorDone())
-//  393             {
-//  394                 HalTimerStop();
-//  395                 osal_mem_free(MotorControl[motor].msg);
-//  396             }
-//  397             return;
-//  398         }
-//  399     }
-//  400     if(MotorDone())   // first boot
+//  386         }
+//  387         else
+//  388         {
+//  389             // STOP
+//  390             // Sleep Pin -> low
+//  391             (MotorControl[motor].status)++;
+//  392             motorTimeout[motor] = 0;
+//  393             if(MotorDone())
+//  394             {
+//  395                 HalTimerStop();
+//  396                 osal_mem_free(MotorControl[motor].msg);
+//  397             }
+//  398             return;
+//  399         }
+//  400     }
+//  401     if(MotorDone())   // first boot
 ??MotorUpdate_1:
         ; Setup parameters for call to function MotorDone
         LCALL   ??MotorDone?relay
         MOV     A,R1
         JZ      ??MotorUpdate_4
-//  401     {
-//  402       motorTimeout[motor] = MotorControl[motor].msg[status_m].level;
+//  402     {
+//  403       motorTimeout[motor] = MotorControl[motor].msg[status_m].level;
         LCALL   ?Subroutine0 & 0xFFFF
-//  403       HalTimerStart();
+//  404       HalTimerStart();
 ??CrossCallReturnLabel_48:
         ; Setup parameters for call to function HalTimerStart
         LCALL   ??HalTimerStart?relay
         SJMP    ??CrossCallReturnLabel_49
-//  404     }
+//  405     }
 ??MotorUpdate_3:
         MOV     DPL,R7
         MOV     R0,DPL
@@ -2920,25 +2925,25 @@ MotorUpdate:
 ??CrossCallReturnLabel_53:
         LCALL   ??osal_mem_free?relay
         SJMP    ??MotorUpdate_5
-//  405     else
-//  406     {
-//  407       if(!first_boot)
+//  406     else
+//  407     {
+//  408       if(!first_boot)
 ??MotorUpdate_4:
         MOV     A,R6
         JNZ     ??MotorUpdate_6
-//  408       {
-//  409           if(status_m == 0xff)
+//  409       {
+//  410           if(status_m == 0xff)
         MOV     A,#-0x1
         XRL     A,?V0 + 0
         JNZ     ??MotorUpdate_7
-//  410           {
-//  411             status_m = 0;
+//  411           {
+//  412             status_m = 0;
         MOV     ?V0 + 0,#0x0
         SJMP    ??MotorUpdate_6
-//  412           }
-//  413           else
-//  414           {
-//  415             MotorControl[motor].status = status_m+1;
+//  413           }
+//  414           else
+//  415           {
+//  416             MotorControl[motor].status = status_m+1;
 ??MotorUpdate_7:
         MOV     A,#0x1
         ADD     A,?V0 + 0
@@ -2954,16 +2959,16 @@ MotorUpdate:
         POP     A
         CFI CFA_SP SP+0
         MOVX    @DPTR,A
-//  416             status_m++;
+//  417             status_m++;
         INC     ?V0 + 0
-//  417           }
-//  418       }
-//  419       motorTimeout[motor] = MotorControl[motor].msg[status_m].level;
+//  418           }
+//  419       }
+//  420       motorTimeout[motor] = MotorControl[motor].msg[status_m].level;
 ??MotorUpdate_6:
         LCALL   ?Subroutine0 & 0xFFFF
-//  420     }
-//  421     
-//  422     switch (MotorControl[motor].port)
+//  421     }
+//  422     
+//  423     switch (MotorControl[motor].port)
 ??CrossCallReturnLabel_49:
         MOV     A,R7
         LCALL   ?Subroutine8 & 0xFFFF
@@ -2972,33 +2977,33 @@ MotorUpdate:
         DEC     A
         JZ      ??MotorUpdate_9
         SJMP    ??MotorUpdate_10
-//  423     {
-//  424       case 0:
-//  425         MOTOR_DIR_1 = MotorControl[motor].msg[status_m].value;
+//  424     {
+//  425       case 0:
+//  426         MOTOR_DIR_1 = MotorControl[motor].msg[status_m].value;
 ??MotorUpdate_8:
         LCALL   ?Subroutine5 & 0xFFFF
 ??CrossCallReturnLabel_8:
         MOV     0x90.2,C
-//  426         break;
+//  427         break;
         SJMP    ??MotorUpdate_10
-//  427       case 1:
-//  428         MOTOR_DIR_2 = MotorControl[motor].msg[status_m].value;
+//  428       case 1:
+//  429         MOTOR_DIR_2 = MotorControl[motor].msg[status_m].value;
 ??MotorUpdate_9:
         LCALL   ?Subroutine5 & 0xFFFF
 ??CrossCallReturnLabel_9:
         MOV     0x90.4,C
-//  429         break;
-//  430     }
-//  431     
-//  432     uint16 event_t;
-//  433     event_t = MOTOR_UPDATE_EVT | motor;       // 0x5000 | 0x00??
-//  434     /*
-//  435     if(MotorControl[motor].msg[status_m].hour || MotorControl[motor].msg[status_m].min)
-//  436       osal_start_timerEx(Motor_TaskID, event_t, 60000); // calc 1min
-//  437     else
-//  438       osal_start_timerEx(Motor_TaskID, event_t, (MotorControl[motor].msg[status_m].sec)*1000);
-//  439       MotorControl[motor].msg[status_m].sec = 0;*/
-//  440     osal_set_event(Motor_TaskID, event_t);
+//  430         break;
+//  431     }
+//  432     
+//  433     uint16 event_t;
+//  434     event_t = MOTOR_UPDATE_EVT | motor;       // 0x5000 | 0x00??
+//  435     /*
+//  436     if(MotorControl[motor].msg[status_m].hour || MotorControl[motor].msg[status_m].min)
+//  437       osal_start_timerEx(Motor_TaskID, event_t, 60000); // calc 1min
+//  438     else
+//  439       osal_start_timerEx(Motor_TaskID, event_t, (MotorControl[motor].msg[status_m].sec)*1000);
+//  440       MotorControl[motor].msg[status_m].sec = 0;*/
+//  441     osal_set_event(Motor_TaskID, event_t);
 ??MotorUpdate_10:
         ; Setup parameters for call to function osal_set_event
         MOV     A,R7
@@ -3008,7 +3013,7 @@ MotorUpdate:
         MOVX    A,@DPTR
         MOV     R1,A
         LCALL   ??osal_set_event?relay
-//  441 }
+//  442 }
 ??MotorUpdate_5:
         MOV     R7,#0x4
         LJMP    ?BANKED_LEAVE_XDATA
@@ -4329,15 +4334,15 @@ MotorUpdate:
         CFI EndBlock cfiCond119
         CFI EndBlock cfiCond120
         CFI EndBlock cfiPicker121
-//  442 
+//  443 
 
         RSEG BANKED_CODE:CODE:NOROOT(0)
-//  443 void Timer3_uSec()
+//  444 void Timer3_uSec()
 Timer3_uSec:
         CFI Block cfiBlock122 Using cfiCommon0
         CFI Function Timer3_uSec
         CODE
-//  444 {
+//  445 {
         MOV     A,#-0x9
         LCALL   ?BANKED_ENTER_XDATA
         CFI DPH0 load(1, XDATA, add(CFA_XSP16, literal(-1)))
@@ -4353,19 +4358,19 @@ Timer3_uSec:
         CFI CFA_XSP16 add(XSP16, 9)
         ; Saved register size: 9
         ; Auto size: 0
-//  445     for(char i = 0; i<MOTOR_NUM_MAX; i++)
+//  446     for(char i = 0; i<MOTOR_NUM_MAX; i++)
         MOV     R6,#0x0
-//  446     {
-//  447         if(motorTimeout[i] == 0)
+//  447     {
+//  448         if(motorTimeout[i] == 0)
 ??Timer3_uSec_0:
         MOV     A,R6
         LCALL   ?Subroutine2 & 0xFFFF
 ??CrossCallReturnLabel_2:
         JZ      ??CrossCallReturnLabel_47
-//  448         {
-//  449           continue;
-//  450         }
-//  451         motorTimeout[i]--;
+//  449         {
+//  450           continue;
+//  451         }
+//  452         motorTimeout[i]--;
         MOV     DPL,R6
         MOV     A,DPL
         CLR     C
@@ -4389,7 +4394,7 @@ Timer3_uSec:
         MOVX    A,@DPTR
         ADDC    A,#-0x1
         LCALL   ?Subroutine17 & 0xFFFF
-//  452         if(motorTimeout[i] == 0)
+//  453         if(motorTimeout[i] == 0)
 ??CrossCallReturnLabel_33:
         MOVX    A,@DPTR
         MOV     R0,A
@@ -4399,9 +4404,9 @@ Timer3_uSec:
         MOV     A,R0
         ORL     A,R1
         JNZ     ??CrossCallReturnLabel_47
-//  453         {
-//  454             // reverse
-//  455             switch(MotorControl[i].port)
+//  454         {
+//  455             // reverse
+//  456             switch(MotorControl[i].port)
         MOV     A,R6
         LCALL   ?Subroutine8 & 0xFFFF
 ??CrossCallReturnLabel_15:
@@ -4409,20 +4414,20 @@ Timer3_uSec:
         DEC     A
         JZ      ??Timer3_uSec_2
         SJMP    ??Timer3_uSec_3
-//  456             {
-//  457             case 0:
-//  458               MOTOR_STEP_1 ^= 1;
+//  457             {
+//  458             case 0:
+//  459               MOTOR_STEP_1 ^= 1;
 ??Timer3_uSec_1:
         XRL     0x90,#0x8
-//  459               break;
+//  460               break;
         SJMP    ??Timer3_uSec_3
-//  460             case 1:
-//  461               MOTOR_STEP_2 ^= 1;
+//  461             case 1:
+//  462               MOTOR_STEP_2 ^= 1;
 ??Timer3_uSec_2:
         XRL     0x90,#0x20
-//  462               break;
-//  463             }
-//  464             motorTimeout[i] = MotorControl[i].msg[MotorControl[i].status].level;
+//  463               break;
+//  464             }
+//  465             motorTimeout[i] = MotorControl[i].msg[MotorControl[i].status].level;
 ??Timer3_uSec_3:
         MOV     DPL,R6
         MOV     R0,DPL
@@ -4450,15 +4455,15 @@ Timer3_uSec:
         MOV     DPL,R2
         MOV     DPH,R3
         LCALL   ??Subroutine26_0 & 0xFFFF
-//  465         }
-//  466     }
+//  466         }
+//  467     }
 ??CrossCallReturnLabel_47:
         INC     R6
         MOV     A,R6
         CLR     C
         SUBB    A,#0x2
         JC      ??Timer3_uSec_0
-//  467 }
+//  468 }
         MOV     R7,#0x1
         LJMP    ?BANKED_LEAVE_XDATA
         CFI EndBlock cfiBlock122
@@ -4584,17 +4589,17 @@ Timer3_uSec:
         CFI EndBlock cfiCond127
         CFI EndBlock cfiCond128
         CFI EndBlock cfiPicker129
-//  468 
 //  469 
-//  470 // Whether all of motor is stop: 1 -> yes
+//  470 
+//  471 // Whether all of motor is stop: 1 -> yes
 
         RSEG BANKED_CODE:CODE:NOROOT(0)
-//  471 uint8 MotorDone(void)
+//  472 uint8 MotorDone(void)
 MotorDone:
         CFI Block cfiBlock130 Using cfiCommon0
         CFI Function MotorDone
         CODE
-//  472 {
+//  473 {
         PUSH    DPL
         CFI DPL0 Frame(CFA_SP, 4)
         CFI CFA_SP SP+-4
@@ -4603,31 +4608,31 @@ MotorDone:
         CFI CFA_SP SP+-5
         ; Saved register size: 2
         ; Auto size: 0
-//  473     char i=0;
+//  474     char i=0;
         MOV     R2,#0x0
-//  474     for(i; i<MOTOR_NUM_MAX; i++)
-//  475     {
-//  476         if(motorTimeout[i]!=0)    
+//  475     for(i; i<MOTOR_NUM_MAX; i++)
+//  476     {
+//  477         if(motorTimeout[i]!=0)    
 ??MotorDone_0:
         MOV     A,R2
         LCALL   ?Subroutine2 & 0xFFFF
 ??CrossCallReturnLabel_3:
         JZ      ??MotorDone_1
-//  477         { 
-//  478           // if not 0 : running
-//  479             return 0;   // not first
+//  478         { 
+//  479           // if not 0 : running
+//  480             return 0;   // not first
         MOV     R1,#0x0
         SJMP    ??MotorDone_2
-//  480         }
-//  481     }
+//  481         }
+//  482     }
 ??MotorDone_1:
         INC     R2
         MOV     A,R2
         CLR     C
         SUBB    A,#0x2
         JC      ??MotorDone_0
-//  482     // all is 0 : all is Stop
-//  483     return 1;
+//  483     // all is 0 : all is Stop
+//  484     return 1;
         MOV     R1,#0x1
 ??MotorDone_2:
         POP     DPH
@@ -4638,7 +4643,7 @@ MotorDone:
         CFI CFA_SP SP+-3
         LJMP    ?BRET
         CFI EndBlock cfiBlock130
-//  484 }
+//  485 }
 
         RSEG BANKED_CODE:CODE:NOROOT(0)
 ?Subroutine2:
@@ -4743,22 +4748,22 @@ MotorDone:
         DC24    MotorDone
 
         END
-//  485 
 //  486 
-//  487 void Send2Coor(uint8 dev_num, uint16 commandId, uint8 *pData)
-//  488 {
-//  489     Sys_SendDataRequest( 0xFFFE, &Motor_epDesc[dev_num], commandId, (uint8)osal_strlen( pData ),
-//  490                            pData, sysSeqNumber, 0, 0 );
-//  491 }
+//  487 
+//  488 void Send2Coor(uint8 dev_num, uint16 commandId, uint8 *pData)
+//  489 {
+//  490     Sys_SendDataRequest( 0xFFFE, &Motor_epDesc[dev_num], commandId, (uint8)osal_strlen( pData ),
+//  491                            pData, sysSeqNumber, 0, 0 );
+//  492 }
 // 
-// 1 622 bytes in segment BANKED_CODE
+// 1 628 bytes in segment BANKED_CODE
 //    36 bytes in segment BANK_RELAYS
 //     4 bytes in segment SFR_AN
 //    32 bytes in segment XDATA_I
 //    32 bytes in segment XDATA_ID
 //    44 bytes in segment XDATA_Z
 // 
-// 1 690 bytes of CODE  memory
+// 1 696 bytes of CODE  memory
 //     0 bytes of DATA  memory (+ 4 bytes shared)
 //    76 bytes of XDATA memory
 //

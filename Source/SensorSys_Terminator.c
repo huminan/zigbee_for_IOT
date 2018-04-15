@@ -61,6 +61,7 @@
  * INCLUDES
  */
 #include "AF.h"
+#include <string.h>
 #include "ZDObject.h"
 #include "ZDProfile.h"
 #include "sapi.h"
@@ -365,10 +366,9 @@ uint8 Type2EP(uint8 type)
                 // 10~59
                 if(keyCnt == KEY_NUM_MAX)
                 {
-                    return 0;     // error
-                }
-                keyCnt++;
-                return (KEY_ENDPOINT+keyCnt-1);
+                  return 0;     // error: Max
+                }                
+                return (KEY_ENDPOINT+keyCnt);
           }
         case SWITCH_TYPE_ID:
           {
@@ -377,8 +377,7 @@ uint8 Type2EP(uint8 type)
                 {
                     return 0;     // error
                 }
-                swCnt++;
-                return (SWITCH_ENDPOINT+swCnt-1);
+                return (SWITCH_ENDPOINT+swCnt);
           }
         case MOTOR_TYPE_ID:
           {
@@ -387,8 +386,7 @@ uint8 Type2EP(uint8 type)
                 {
                   return 0;     // error
                 }
-                motorCnt++;
-                return (MOTOR_ENDPOINT+motorCnt-1);
+                return (MOTOR_ENDPOINT+motorCnt);
           }
     }
     return 0;
