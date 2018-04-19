@@ -50,20 +50,8 @@ cId_t Switch_ClusterList[SWITCH_MAX_CLUSTERS] =
 };
 
 // Switch 端点简单描述符
-SimpleDescriptionFormat_t Switch_SimpleDesc[SWITCH_NUM_MAX] =
-{
-	SWITCH_ENDPOINT,           //  int Endpoint;
-	SYS_PROFID,                //  uint16 AppProfId[2];
-	SYS_DEVICEID,              //  uint16 AppDeviceId[2];
-	SYS_DEVICE_VERSION,        //  int   AppDevVer:4;
-	SYS_FLAGS,                 //  int   AppFlags:4;
-	0,                          //  byte  AppNumInClusters;
-	NULL,                       //  byte *pAppInClusterList;
-	SWITCH_MAX_CLUSTERS,          //  byte  AppNumOutClusters;
-	(cId_t *)Switch_ClusterList   //  byte *pAppOutClusterList;
-};
-
-endPointDesc_t Switch_epDesc[SWITCH_NUM_MAX];
+SimpleDescriptionFormat_t *Switch_SimpleDesc[SWITCH_NUM_MAX];
+endPointDesc_t *Switch_epDesc[SWITCH_NUM_MAX];
 
 /*********************************************************************
  * EXTERNAL VARIABLES
@@ -118,17 +106,7 @@ void Switch_Init( byte task_id )
 
     for( i=0; i<SWITCH_NUM_MAX; i++)
     {
-        // Fill out the endpoint description.
-        Switch_epDesc[i].endPoint = SWITCH_ENDPOINT+i;
-        Switch_epDesc[i].task_id = &Switch_TaskID;
-        Switch_SimpleDesc[i] = Switch_SimpleDesc[0];
-        Switch_epDesc[i].simpleDesc
-                                            = (SimpleDescriptionFormat_t *)&(Switch_SimpleDesc[i]);
-        Switch_SimpleDesc[i].EndPoint += i;
-        Switch_epDesc[i].latencyReq = noLatencyReqs;
-        
-        // Register the endpoint description with the AF
-        afRegister( &(Switch_epDesc[i]) );
+
     }
 
   switch_bindInProgress = 0xffff;
@@ -227,7 +205,7 @@ void Switch_ProcessZDOMsgs( zdoIncomingMsg_t *inMsg )
 
           for(char i=0; i<SWITCH_MAX_CLUSTERS; i++)
           {
-                if ( APSME_BindRequest( Switch_epDesc[swCnt].simpleDesc->EndPoint,
+                if ( APSME_BindRequest( Switch_epDesc[swCnt]->simpleDesc->EndPoint,
                      switch_bindInProgress+i, &dstAddr, pRsp->epList[0] ) != ZSuccess )
                 {
                     ret = 1;
@@ -247,9 +225,8 @@ void Switch_ProcessZDOMsgs( zdoIncomingMsg_t *inMsg )
           }
           else
           {
-                // ClusterID wrong
-                HalLedSet(HAL_LED_2, HAL_LED_MODE_ON);
-                HalLedSet(HAL_LED_3, HAL_LED_MODE_OFF);
+                // ClusterID error
+                
           }
         }
       }
@@ -276,6 +253,36 @@ void Switch_BindDevice ( uint8 create, uint8 endpoint, uint16 *commandId, uint8 
   zAddrType_t destination;
   uint8 ret = ZB_ALREADY_IN_PROGRESS;
 
+  // malloc epDesc
+    Switch_epDesc[swCnt] = (endPointDesc_t *)osal_mem_alloc(sizeof(endPointDesc_t));
+    Switch_SimpleDesc[swCnt] = (SimpleDescriptionFormat_t *)osal_mem_alloc(sizeof(SimpleDescriptionFormat_t));
+    
+    SimpleDescriptionFormat_t simpleDesc_temp =
+    {
+        SWITCH_ENDPOINT,           //  int Endpoint;
+        SYS_PROFID,                //  uint16 AppProfId[2];
+        SYS_DEVICEID,              //  uint16 AppDeviceId[2];
+        SYS_DEVICE_VERSION,        //  int   AppDevVer:4;
+        SYS_FLAGS,                 //  int   AppFlags:4;
+        0,                          //  byte  AppNumInClusters;
+        NULL,                       //  byte *pAppInClusterList;
+        SWITCH_MAX_CLUSTERS,          //  byte  AppNumOutClusters;
+        (cId_t *)Switch_ClusterList   //  byte *pAppOutClusterList;
+    };
+    // Fill out the endpoint description.
+    Switch_epDesc[swCnt]->endPoint = SWITCH_ENDPOINT+swCnt;
+    Switch_epDesc[swCnt]->task_id = &Switch_TaskID;
+    
+    osal_memcpy(Switch_SimpleDesc[swCnt], &simpleDesc_temp, sizeof(SimpleDescriptionFormat_t));
+    
+    Switch_epDesc[swCnt]->simpleDesc
+                                        = (SimpleDescriptionFormat_t *)(Switch_SimpleDesc[swCnt]);
+    Switch_SimpleDesc[swCnt]->EndPoint += swCnt;
+    Switch_epDesc[swCnt]->latencyReq = noLatencyReqs;
+    
+    // Register the endpoint description with the AF
+    afRegister( Switch_epDesc[swCnt] );
+  
   if ( create )
   {
     if (switch_bindInProgress == 0xffff)
@@ -300,18 +307,18 @@ void Switch_BindDevice ( uint8 create, uint8 endpoint, uint16 *commandId, uint8 
         ret = ZB_INVALID_PARAMETER;
         destination.addrMode = Addr16Bit;
         destination.addr.shortAddr = NWK_BROADCAST_SHORTADDR;
-        if ( ZDO_AnyClusterMatches( SWITCH_MAX_CLUSTERS, commandId, Switch_epDesc[swCnt].simpleDesc->AppNumOutClusters,
-                                                Switch_epDesc[swCnt].simpleDesc->pAppOutClusterList ) )
+        if ( ZDO_AnyClusterMatches( SWITCH_MAX_CLUSTERS, commandId, Switch_epDesc[swCnt]->simpleDesc->AppNumOutClusters,
+                                                Switch_epDesc[swCnt]->simpleDesc->pAppOutClusterList ) )
         {
           // Try to match with a device in the allow bind mode
           ret = ZDP_MatchDescReq( &destination, NWK_BROADCAST_SHORTADDR,
-              Switch_epDesc[swCnt].simpleDesc->AppProfId, SWITCH_MAX_CLUSTERS, commandId, 0, (cId_t *)NULL, 0 );
+              Switch_epDesc[swCnt]->simpleDesc->AppProfId, SWITCH_MAX_CLUSTERS, commandId, 0, (cId_t *)NULL, 0 );
         }
-        else if ( ZDO_AnyClusterMatches( SWITCH_MAX_CLUSTERS, commandId, Switch_epDesc[swCnt].simpleDesc->AppNumInClusters,
-                                                Switch_epDesc[swCnt].simpleDesc->pAppInClusterList ) )
+        else if ( ZDO_AnyClusterMatches( SWITCH_MAX_CLUSTERS, commandId, Switch_epDesc[swCnt]->simpleDesc->AppNumInClusters,
+                                                Switch_epDesc[swCnt]->simpleDesc->pAppInClusterList ) )
         {
           ret = ZDP_MatchDescReq( &destination, NWK_BROADCAST_SHORTADDR,
-              Switch_epDesc[swCnt].simpleDesc->AppProfId, 0, (cId_t *)NULL, SWITCH_MAX_CLUSTERS, commandId, 0 );
+              Switch_epDesc[swCnt]->simpleDesc->AppProfId, 0, (cId_t *)NULL, SWITCH_MAX_CLUSTERS, commandId, 0 );
         }
 
         if ( ret == ZB_SUCCESS )

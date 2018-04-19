@@ -111,7 +111,7 @@ void KeySend2Coor(uint8 dev_num, uint16 commandId, uint8 *pData);
 void Key_Init( byte task_id )
 {
 	Key_TaskID = task_id;
-
+        KeyObserve = NULL;
 	// Device hardware initialization can be added here or in main() (Zmain.c).
 	// If the hardware is application specific - add it here.
 	// If the hardware is other parts of the device add it in main().
@@ -120,7 +120,7 @@ void Key_Init( byte task_id )
 	Key_DstAddr.endPoint = 0;
 	Key_DstAddr.addr.shortAddr = 0;
 
-        KeyObserve = NULL;
+        
 	// Register for all key events - This app will handle all key events
 	RegisterForKeys( Key_TaskID );
  
@@ -229,9 +229,68 @@ void Key_HandleKeys( byte shift, byte keys )
 			if(type_join)
 			{
 				Sys_AllowBind(10);
+                                if( type_join == KEY_TYPE_ID )
+                                {
+                                    Key_epDesc[keyCnt] = (endPointDesc_t *)osal_mem_alloc(sizeof(endPointDesc_t));
+                                    Key_SimpleDesc[keyCnt] = (SimpleDescriptionFormat_t *)osal_mem_alloc(sizeof(SimpleDescriptionFormat_t));
+                                    SimpleDescriptionFormat_t simpleDesc_temp =
+                                    {
+                                            KEY_ENDPOINT,           //  int Endpoint;
+                                            SYS_PROFID,                //  uint16 AppProfId[2];
+                                            SYS_DEVICEID,              //  uint16 AppDeviceId[2];
+                                            SYS_DEVICE_VERSION,        //  int   AppDevVer:4;
+                                            SYS_FLAGS,                 //  int   AppFlags:4;
+                                            KEY_MAX_CLUSTERS,          //  byte  AppNumInClusters;
+                                            (cId_t *)Key_ClusterList,  //  byte *pAppInClusterList;
+                                            KEY_MAX_CLUSTERS,          //  byte  AppNumInClusters;
+                                            (cId_t *)Key_ClusterList   //  byte *pAppInClusterList;
+                                    };
+                                    
+                                    // Fill out the endpoint description.
+                                    Key_epDesc[keyCnt]->endPoint = KEY_ENDPOINT+keyCnt;
+                                    Key_epDesc[keyCnt]->task_id = &Key_TaskID;
                                 
-			// osal_start_timerEx(Sys_TaskID, CLOSE_BIND_EVT, 10000);
-			
+                                    osal_memcpy(Key_SimpleDesc[keyCnt], &simpleDesc_temp, sizeof(SimpleDescriptionFormat_t));
+                                    
+                                    Key_epDesc[keyCnt]->simpleDesc
+                                                                        = (SimpleDescriptionFormat_t *)(Key_SimpleDesc[keyCnt]);
+                                    Key_SimpleDesc[keyCnt]->EndPoint += keyCnt;
+                                    Key_epDesc[keyCnt]->latencyReq = noLatencyReqs;
+                                    
+                                    // Register the endpoint description with the AF
+                                    afRegister( Key_epDesc[keyCnt] );
+                                }
+			        if( type_join == SWITCH_TYPE_ID )
+                                {
+                                     Switch_epDesc[swCnt] = (endPointDesc_t *)osal_mem_alloc(sizeof(endPointDesc_t));
+                                     Switch_SimpleDesc[swCnt] = (SimpleDescriptionFormat_t *)osal_mem_alloc(sizeof(SimpleDescriptionFormat_t));
+                                     SimpleDescriptionFormat_t simpleDesc_temp =
+                                     {
+                                        SWITCH_ENDPOINT,           //  int Endpoint;
+                                        SYS_PROFID,                //  uint16 AppProfId[2];
+                                        SYS_DEVICEID,              //  uint16 AppDeviceId[2];
+                                        SYS_DEVICE_VERSION,        //  int   AppDevVer:4;
+                                        SYS_FLAGS,                 //  int   AppFlags:4;
+                                        SWITCH_MAX_CLUSTERS,        //  byte  AppNumInClusters;
+                                        (cId_t *)Switch_ClusterList,  //  byte *pAppInClusterList;
+                                        0,                          //  byte  AppNumInClusters;
+                                        NULL                         //  byte *pAppInClusterList;
+                                     };
+                                     
+                                     // Fill out the endpoint description.
+                                     Switch_epDesc[swCnt]->endPoint = SWITCH_ENDPOINT+swCnt;
+                                     Switch_epDesc[swCnt]->task_id = &Switch_TaskID;
+                                    
+                                     osal_memcpy(Switch_SimpleDesc[swCnt], &simpleDesc_temp, sizeof(SimpleDescriptionFormat_t));
+                                    
+                                     Switch_epDesc[swCnt]->simpleDesc
+                                                                        = (SimpleDescriptionFormat_t *)(Switch_SimpleDesc[swCnt]);
+                                     Switch_SimpleDesc[swCnt]->EndPoint += swCnt;
+                                     Switch_epDesc[swCnt]->latencyReq = noLatencyReqs;
+                                    
+                                     // Register the endpoint description with the AF
+                                     afRegister( Switch_epDesc[swCnt] );
+                                }
 				keys_shift = 0;
 			}
 			else
@@ -270,10 +329,6 @@ void Key_HandleKeys( byte shift, byte keys )
 		        zb_SystemReset();
 
     		    }*/
-		  //  else
-		//    {
-
-	//	    }
 		}
 
 		if ( keys & HAL_KEY_SW_2 )
@@ -408,37 +463,7 @@ void KeySend2Coor(uint8 dev_num, uint16 commandId, uint8 *pData)
  */
 void Key_AllowBindConfirm( uint16 source )
 {
-    Key_epDesc[keyCnt] = (endPointDesc_t *)osal_mem_alloc(sizeof(endPointDesc_t));
-    Key_SimpleDesc[keyCnt] = (SimpleDescriptionFormat_t *)osal_mem_alloc(sizeof(SimpleDescriptionFormat_t));
-    SimpleDescriptionFormat_t simpleDesc_temp =
-    {
-            KEY_ENDPOINT,           //  int Endpoint;
-            SYS_PROFID,                //  uint16 AppProfId[2];
-            SYS_DEVICEID,              //  uint16 AppDeviceId[2];
-            SYS_DEVICE_VERSION,        //  int   AppDevVer:4;
-            SYS_FLAGS,                 //  int   AppFlags:4;
-            KEY_MAX_CLUSTERS,          //  byte  AppNumInClusters;
-            (cId_t *)Key_ClusterList,  //  byte *pAppInClusterList;
-            KEY_MAX_CLUSTERS,          //  byte  AppNumInClusters;
-            (cId_t *)Key_ClusterList   //  byte *pAppInClusterList;
-    };
-    
-    // Fill out the endpoint description.
-    Key_epDesc[keyCnt]->endPoint = KEY_ENDPOINT+keyCnt;
-    Key_epDesc[keyCnt]->task_id = &Key_TaskID;
-
-    osal_memcpy(Key_SimpleDesc[keyCnt], &simpleDesc_temp, sizeof(SimpleDescriptionFormat_t));
-    
-    Key_epDesc[keyCnt]->simpleDesc
-                                        = (SimpleDescriptionFormat_t *)(Key_SimpleDesc[keyCnt]);
-    Key_SimpleDesc[keyCnt]->EndPoint += keyCnt;
-    Key_epDesc[keyCnt]->latencyReq = noLatencyReqs;
-    
-    // Register the endpoint description with the AF
-    afRegister( Key_epDesc[keyCnt] );
-    
     keyCnt++;
-    
     Sys_AllowBindConfirm(source);
 }
 

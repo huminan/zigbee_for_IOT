@@ -116,7 +116,7 @@ void Bluetooth_Handle(byte *msg)
              break;
              
            case SWITCH_TYPE_ID:
-             Sys_SendDataRequest( 0xFFFE, &Switch_epDesc[dev_num], msg[MT_RPC_POS_CMD0], len_t,
+             Sys_SendDataRequest( 0xFFFE, Switch_epDesc[dev_num], msg[MT_RPC_POS_CMD0], len_t,
                            data_p, sysSeqNumber, 0, 0 );
              break;
        }

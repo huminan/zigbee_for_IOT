@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //                                                                            /
-// IAR C/C++ Compiler V8.10.3.10338/W32 for 8051        15/Apr/2018  22:57:36 /
+// IAR C/C++ Compiler V8.10.3.10338/W32 for 8051        17/Apr/2018  12:33:10 /
 // Copyright 2004-2011 IAR Systems AB.                                        /
 //                                                                            /
 //    Core               =  plain                                             /
@@ -849,12 +849,6 @@ Bluetooth_Handle:
         ADD     A,R2
         MOV     DPL,A
         MOV     A,#(Key_epDesc >> 8) & 0xff
-        ADDC    A,R3
-        MOV     DPH,A
-        MOVX    A,@DPTR
-        MOV     R4,A
-        INC     DPTR
-        MOVX    A,@DPTR
         SJMP    ??Bluetooth_Handle_11
         CFI CFA_XSP16 add(XSP16, 14)
 //  111              break;
@@ -894,12 +888,13 @@ Bluetooth_Handle:
         ADD     A,R2
         MOV     R4,A
         MOV     A,#(Motor_epDesc >> 8) & 0xff
+        ADDC    A,R3
         SJMP    ??Bluetooth_Handle_12
         CFI CFA_XSP16 add(XSP16, 14)
 //  116              break;
 //  117              
 //  118            case SWITCH_TYPE_ID:
-//  119              Sys_SendDataRequest( 0xFFFE, &Switch_epDesc[dev_num], msg[MT_RPC_POS_CMD0], len_t,
+//  119              Sys_SendDataRequest( 0xFFFE, Switch_epDesc[dev_num], msg[MT_RPC_POS_CMD0], len_t,
 //  120                            data_p, sysSeqNumber, 0, 0 );
 ??Bluetooth_Handle_9:
         ; Setup parameters for call to function Sys_SendDataRequest
@@ -925,17 +920,24 @@ Bluetooth_Handle:
         CFI CFA_XSP16 add(XSP16, 21)
         MOV     R1,?V0 + 5
         MOV     A,?V0 + 4
-        MOV     B,#0x6
-        MUL     AB
+        CLR     C
+        RLC     A
         MOV     R2,A
-        MOV     R3,B
+        CLR     A
+        RLC     A
+        MOV     R3,A
         MOV     A,#Switch_epDesc & 0xff
         ADD     A,R2
-        MOV     R4,A
+        MOV     DPL,A
         MOV     A,#(Switch_epDesc >> 8) & 0xff
-??Bluetooth_Handle_12:
-        ADDC    A,R3
 ??Bluetooth_Handle_11:
+        ADDC    A,R3
+        MOV     DPH,A
+        MOVX    A,@DPTR
+        MOV     R4,A
+        INC     DPTR
+        MOVX    A,@DPTR
+??Bluetooth_Handle_12:
         MOV     R5,A
         MOV     R2,#-0x2
         MOV     R3,#-0x1

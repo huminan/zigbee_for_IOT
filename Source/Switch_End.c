@@ -52,20 +52,8 @@ cId_t Switch_ClusterList[SWITCH_MAX_CLUSTERS] =
 };
 
 // Switch 端点简单描述符
-SimpleDescriptionFormat_t Switch_SimpleDesc[SWITCH_NUM_MAX] =
-{
-	SWITCH_ENDPOINT,           //  int Endpoint;
-	SYS_PROFID,                //  uint16 AppProfId[2];
-	SYS_DEVICEID,              //  uint16 AppDeviceId[2];
-	SYS_DEVICE_VERSION,        //  int   AppDevVer:4;
-	SYS_FLAGS,                 //  int   AppFlags:4;
-	SWITCH_MAX_CLUSTERS,        //  byte  AppNumInClusters;
-	(cId_t *)Switch_ClusterList,  //  byte *pAppInClusterList;
-	0,                          //  byte  AppNumInClusters;
-	NULL                         //  byte *pAppInClusterList;
-};
-
-endPointDesc_t Switch_epDesc[SWITCH_NUM_MAX];
+SimpleDescriptionFormat_t *Switch_SimpleDesc[SWITCH_NUM_MAX];
+endPointDesc_t *Switch_epDesc[SWITCH_NUM_MAX];
 
 /*********************************************************************
  * EXTERNAL VARIABLES
@@ -113,9 +101,8 @@ static void Send2Coor(uint8 dev_num, uint16 commandId, uint8 *pData);
  */
 void Switch_Init( byte task_id )
 {
-        char i;
 	Switch_TaskID = task_id;
-
+//        SwitchControl = NULL;
 	// Device hardware initialization can be added here or in main() (Zmain.c).
 	// If the hardware is application specific - add it here.
 	// If the hardware is other parts of the device add it in main().
@@ -123,21 +110,6 @@ void Switch_Init( byte task_id )
 	Switch_DstAddr.addrMode = (afAddrMode_t)AddrNotPresent;
 	Switch_DstAddr.endPoint = 0;
 	Switch_DstAddr.addr.shortAddr = 0;
-        
-        for( i=0; i<SWITCH_NUM_MAX; i++)
-        {
-            // Fill out the endpoint description.
-            Switch_epDesc[i].endPoint = SWITCH_ENDPOINT+i;
-            Switch_epDesc[i].task_id = &Switch_TaskID;
-            Switch_SimpleDesc[i] = Switch_SimpleDesc[0];
-            Switch_epDesc[i].simpleDesc
-						= (SimpleDescriptionFormat_t *)&(Switch_SimpleDesc[i]);
-            Switch_SimpleDesc[i].EndPoint += i;
-	    Switch_epDesc[i].latencyReq = noLatencyReqs;
-            
-            // Register the endpoint description with the AF
-	    afRegister( &(Switch_epDesc[i]) );
-        }
  
 	//	ZDO_RegisterForZDOMsg( Switch_TaskID, End_Device_Bind_rsp );
 	ZDO_RegisterForZDOMsg( Switch_TaskID, Match_Desc_rsp );
@@ -395,11 +367,12 @@ void SwitchUpdate(uint8 sw, uint8 first_boot)
 void Switch_AllowBindConfirm( uint16 source )
 {
      swCnt++;
+     
      Sys_AllowBindConfirm(source);
 }
 
 void Send2Coor(uint8 dev_num, uint16 commandId, uint8 *pData)
 {
-    Sys_SendDataRequest( 0xFFFE, &Switch_epDesc[dev_num], commandId, (uint8)osal_strlen( pData ),
+    Sys_SendDataRequest( 0xFFFE, Switch_epDesc[dev_num], commandId, (uint8)osal_strlen( pData ),
                            pData, sysSeqNumber, 0, 0 );
 }

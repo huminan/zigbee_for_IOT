@@ -1,6 +1,6 @@
 ###############################################################################
 #                                                                             #
-# IAR C/C++ Compiler V8.10.3.10338/W32 for 8051         15/Apr/2018  22:48:22 #
+# IAR C/C++ Compiler V8.10.3.10338/W32 for 8051         19/Apr/2018  22:11:29 #
 # Copyright 2004-2011 IAR Systems AB.                                         #
 #                                                                             #
 #    Core               =  plain                                              #
@@ -220,243 +220,136 @@ D:\ProgramData\Hardware\zigbee\Projects\zstack\Samples\SensorSys\Source\Switch_E
      53          
      54          // Switch 端点简单描述符
 
-   \                                 In  segment XDATA_I, align 1, keep-with-next
-     55          SimpleDescriptionFormat_t Switch_SimpleDesc[SWITCH_NUM_MAX] =
+   \                                 In  segment XDATA_Z, align 1, keep-with-next
+     55          SimpleDescriptionFormat_t *Switch_SimpleDesc[SWITCH_NUM_MAX];
    \                     Switch_SimpleDesc:
-   \   000000                DS 60
-   \   00003C                REQUIRE `?<Initializer for Switch_SimpleDesc>`
-   \   00003C                REQUIRE __INIT_XDATA_I
-     56          {
-     57          	SWITCH_ENDPOINT,           //  int Endpoint;
-     58          	SYS_PROFID,                //  uint16 AppProfId[2];
-     59          	SYS_DEVICEID,              //  uint16 AppDeviceId[2];
-     60          	SYS_DEVICE_VERSION,        //  int   AppDevVer:4;
-     61          	SYS_FLAGS,                 //  int   AppFlags:4;
-     62          	SWITCH_MAX_CLUSTERS,        //  byte  AppNumInClusters;
-     63          	(cId_t *)Switch_ClusterList,  //  byte *pAppInClusterList;
-     64          	0,                          //  byte  AppNumInClusters;
-     65          	NULL                         //  byte *pAppInClusterList;
-     66          };
-     67          
+   \   000000                DS 10
+   \   00000A                REQUIRE __INIT_XDATA_Z
 
    \                                 In  segment XDATA_Z, align 1, keep-with-next
-     68          endPointDesc_t Switch_epDesc[SWITCH_NUM_MAX];
+     56          endPointDesc_t *Switch_epDesc[SWITCH_NUM_MAX];
    \                     Switch_epDesc:
-   \   000000                DS 30
-   \   00001E                REQUIRE __INIT_XDATA_Z
-     69          
-     70          /*********************************************************************
-     71           * EXTERNAL VARIABLES
-     72           */
-     73          extern uint8 myAppState;
-     74          extern uint8 keys_shift;
-     75          extern uint8 type_join;
-     76          /*********************************************************************
-     77           * EXTERNAL FUNCTIONS
-     78           */
-     79          
-     80          /*********************************************************************
-     81           * LOCAL VARIABLES
-     82           */
-     83          
+   \   000000                DS 10
+   \   00000A                REQUIRE __INIT_XDATA_Z
+     57          
+     58          /*********************************************************************
+     59           * EXTERNAL VARIABLES
+     60           */
+     61          extern uint8 myAppState;
+     62          extern uint8 keys_shift;
+     63          extern uint8 type_join;
+     64          /*********************************************************************
+     65           * EXTERNAL FUNCTIONS
+     66           */
+     67          
+     68          /*********************************************************************
+     69           * LOCAL VARIABLES
+     70           */
+     71          
 
    \                                 In  segment XDATA_Z, align 1, keep-with-next
-     84          afAddrType_t Switch_DstAddr;
+     72          afAddrType_t Switch_DstAddr;
    \                     Switch_DstAddr:
    \   000000                DS 12
    \   00000C                REQUIRE __INIT_XDATA_Z
 
    \                                 In  segment XDATA_Z, align 1, keep-with-next
-     85          SensorControl_t SwitchControl[SWITCH_NUM_MAX]; 
+     73          SensorControl_t SwitchControl[SWITCH_NUM_MAX]; 
    \                     SwitchControl:
    \   000000                DS 35
    \   000023                REQUIRE __INIT_XDATA_Z
 
    \                                 In  segment XDATA_Z, align 1, keep-with-next
-     86          uint8 swTimenow;
+     74          uint8 swTimenow;
    \                     swTimenow:
    \   000000                DS 1
    \   000001                REQUIRE __INIT_XDATA_Z
-     87          
+     75          
+     76          /*********************************************************************
+     77           * LOCAL FUNCTIONS
+     78           */
+     79          void Switch_Init( byte task_id );
+     80          UINT16 Switch_ProcessEvent( byte task_id, UINT16 events );
+     81          
+     82          static void Switch_ReceiveDataIndication( uint16 source, uint8 endPoint, 
+     83                                        uint16 command, uint16 len, uint8 *pData  );
+     84          static void Switch_AllowBindConfirm( uint16 source );
+     85          static void SwitchAction( uint8 sw, uint16 command, uint16 len, uint8 *pData );
+     86          static void SwitchUpdate(uint8 sw, uint8 first_boot);
+     87          static void Send2Coor(uint8 dev_num, uint16 commandId, uint8 *pData);
      88          /*********************************************************************
-     89           * LOCAL FUNCTIONS
-     90           */
-     91          void Switch_Init( byte task_id );
-     92          UINT16 Switch_ProcessEvent( byte task_id, UINT16 events );
-     93          
-     94          static void Switch_ReceiveDataIndication( uint16 source, uint8 endPoint, 
-     95                                        uint16 command, uint16 len, uint8 *pData  );
-     96          static void Switch_AllowBindConfirm( uint16 source );
-     97          static void SwitchAction( uint8 sw, uint16 command, uint16 len, uint8 *pData );
-     98          static void SwitchUpdate(uint8 sw, uint8 first_boot);
-     99          static void Send2Coor(uint8 dev_num, uint16 commandId, uint8 *pData);
-    100          /*********************************************************************
-    101           * @fn      Switch_Init
-    102           *
-    103           * @brief   Initialization function for the Generic App Task.
-    104           *          This is called during initialization and should contain
-    105           *          any application specific initialization (ie. hardware
-    106           *          initialization/setup, table initialization, power up
-    107           *          notificaiton ... ).
-    108           *
-    109           * @param   task_id - the ID assigned by OSAL.  This ID should be
-    110           *                    used to send messages and set timers.
-    111           *
-    112           * @return  none
-    113           */
+     89           * @fn      Switch_Init
+     90           *
+     91           * @brief   Initialization function for the Generic App Task.
+     92           *          This is called during initialization and should contain
+     93           *          any application specific initialization (ie. hardware
+     94           *          initialization/setup, table initialization, power up
+     95           *          notificaiton ... ).
+     96           *
+     97           * @param   task_id - the ID assigned by OSAL.  This ID should be
+     98           *                    used to send messages and set timers.
+     99           *
+    100           * @return  none
+    101           */
 
    \                                 In  segment BANKED_CODE, align 1, keep-with-next
-    114          void Switch_Init( byte task_id )
+    102          void Switch_Init( byte task_id )
    \                     Switch_Init:
-    115          {
+    103          {
    \   000000   74F7         MOV     A,#-0x9
    \   000002   12....       LCALL   ?BANKED_ENTER_XDATA
    \   000005                ; Saved register size: 9
    \   000005                ; Auto size: 0
    \   000005   E9           MOV     A,R1
-    116                  char i;
-    117          	Switch_TaskID = task_id;
+    104          	Switch_TaskID = task_id;
    \   000006   90....       MOV     DPTR,#Switch_TaskID
    \   000009   F0           MOVX    @DPTR,A
-    118          
-    119          	// Device hardware initialization can be added here or in main() (Zmain.c).
-    120          	// If the hardware is application specific - add it here.
-    121          	// If the hardware is other parts of the device add it in main().
-    122          
-    123          	Switch_DstAddr.addrMode = (afAddrMode_t)AddrNotPresent;
+    105          //        SwitchControl = NULL;
+    106          	// Device hardware initialization can be added here or in main() (Zmain.c).
+    107          	// If the hardware is application specific - add it here.
+    108          	// If the hardware is other parts of the device add it in main().
+    109          
+    110          	Switch_DstAddr.addrMode = (afAddrMode_t)AddrNotPresent;
    \   00000A   90....       MOV     DPTR,#Switch_DstAddr + 8
    \   00000D   E4           CLR     A
    \   00000E   F0           MOVX    @DPTR,A
-    124          	Switch_DstAddr.endPoint = 0;
+    111          	Switch_DstAddr.endPoint = 0;
    \   00000F   A3           INC     DPTR
    \   000010   F0           MOVX    @DPTR,A
-    125          	Switch_DstAddr.addr.shortAddr = 0;
+    112          	Switch_DstAddr.addr.shortAddr = 0;
    \   000011   90....       MOV     DPTR,#Switch_DstAddr
    \   000014   F0           MOVX    @DPTR,A
    \   000015   A3           INC     DPTR
    \   000016   F0           MOVX    @DPTR,A
-    126                  
-    127                  for( i=0; i<SWITCH_NUM_MAX; i++)
-   \   000017   FF           MOV     R7,A
-    128                  {
-    129                      // Fill out the endpoint description.
-    130                      Switch_epDesc[i].endPoint = SWITCH_ENDPOINT+i;
-   \                     ??Switch_Init_0:
-   \   000018   8F82         MOV     DPL,R7
-   \   00001A   A882         MOV     R0,DPL
-   \   00001C   E8           MOV     A,R0
-   \   00001D   75F006       MOV     B,#0x6
-   \   000020   A4           MUL     AB
-   \   000021   FA           MOV     R2,A
-   \   000022   ABF0         MOV     R3,B
-   \   000024   74..         MOV     A,#Switch_epDesc & 0xff
-   \   000026   2A           ADD     A,R2
-   \   000027   FA           MOV     R2,A
-   \   000028   74..         MOV     A,#(Switch_epDesc >> 8) & 0xff
-   \   00002A   3B           ADDC    A,R3
-   \   00002B   FB           MOV     R3,A
-   \   00002C   743C         MOV     A,#0x3c
-   \   00002E   2F           ADD     A,R7
-   \   00002F   8A82         MOV     DPL,R2
-   \   000031   8B83         MOV     DPH,R3
-   \   000033   F0           MOVX    @DPTR,A
-    131                      Switch_epDesc[i].task_id = &Switch_TaskID;
-   \   000034   A3           INC     DPTR
-   \   000035   74..         MOV     A,#Switch_TaskID & 0xff
-   \   000037   F0           MOVX    @DPTR,A
-   \   000038   A3           INC     DPTR
-   \   000039   74..         MOV     A,#(Switch_TaskID >> 8) & 0xff
-   \   00003B   F0           MOVX    @DPTR,A
-    132                      Switch_SimpleDesc[i] = Switch_SimpleDesc[0];
-   \   00003C   E8           MOV     A,R0
-   \   00003D   75F00C       MOV     B,#0xc
-   \   000040   A4           MUL     AB
-   \   000041   F8           MOV     R0,A
-   \   000042   A9F0         MOV     R1,B
-   \   000044   74..         MOV     A,#Switch_SimpleDesc & 0xff
-   \   000046   28           ADD     A,R0
-   \   000047   F8           MOV     R0,A
-   \   000048   74..         MOV     A,#(Switch_SimpleDesc >> 8) & 0xff
-   \   00004A   39           ADDC    A,R1
-   \   00004B   F9           MOV     R1,A
-   \   00004C   90....       MOV     DPTR,#Switch_SimpleDesc
-   \   00004F   E8           MOV     A,R0
-   \   000050   FC           MOV     R4,A
-   \   000051   E9           MOV     A,R1
-   \   000052   FD           MOV     R5,A
-   \   000053   740C         MOV     A,#0xc
-   \   000055   12....       LCALL   ?MOVE_LONG8_XDATA_XDATA
-    133                      Switch_epDesc[i].simpleDesc
-    134          						= (SimpleDescriptionFormat_t *)&(Switch_SimpleDesc[i]);
-   \   000058   8A82         MOV     DPL,R2
-   \   00005A   8B83         MOV     DPH,R3
-   \   00005C   A3           INC     DPTR
-   \   00005D   A3           INC     DPTR
-   \   00005E   A3           INC     DPTR
-   \   00005F   E8           MOV     A,R0
-   \   000060   F0           MOVX    @DPTR,A
-   \   000061   A3           INC     DPTR
-   \   000062   E9           MOV     A,R1
-   \   000063   F0           MOVX    @DPTR,A
-    135                      Switch_SimpleDesc[i].EndPoint += i;
-   \   000064   8882         MOV     DPL,R0
-   \   000066   8983         MOV     DPH,R1
-   \   000068   E0           MOVX    A,@DPTR
-   \   000069   2F           ADD     A,R7
-   \   00006A   F0           MOVX    @DPTR,A
-    136          	    Switch_epDesc[i].latencyReq = noLatencyReqs;
-   \   00006B   8A82         MOV     DPL,R2
-   \   00006D   8B83         MOV     DPH,R3
-   \   00006F   A3           INC     DPTR
-   \   000070   A3           INC     DPTR
-   \   000071   A3           INC     DPTR
-   \   000072   A3           INC     DPTR
-   \   000073   A3           INC     DPTR
-   \   000074   E4           CLR     A
-   \   000075   F0           MOVX    @DPTR,A
-    137                      
-    138                      // Register the endpoint description with the AF
-    139          	    afRegister( &(Switch_epDesc[i]) );
-   \   000076                ; Setup parameters for call to function afRegister
-   \   000076   12....       LCALL   ??afRegister?relay
-    140                  }
-   \   000079   0F           INC     R7
-   \   00007A   EF           MOV     A,R7
-   \   00007B   C3           CLR     C
-   \   00007C   9405         SUBB    A,#0x5
-   \   00007E   4098         JC      ??Switch_Init_0
-    141           
-    142          	//	ZDO_RegisterForZDOMsg( Switch_TaskID, End_Device_Bind_rsp );
-    143          	ZDO_RegisterForZDOMsg( Switch_TaskID, Match_Desc_rsp );
-   \   000080                ; Setup parameters for call to function ZDO_RegisterForZDOMsg
-   \   000080   7A06         MOV     R2,#0x6
-   \   000082   7B80         MOV     R3,#-0x80
-   \   000084   90....       MOV     DPTR,#Switch_TaskID
-   \   000087   E0           MOVX    A,@DPTR
-   \   000088   F9           MOV     R1,A
-   \   000089   12....       LCALL   ??ZDO_RegisterForZDOMsg?relay
-    144          }
-   \   00008C   7F01         MOV     R7,#0x1
-   \   00008E   02....       LJMP    ?BANKED_LEAVE_XDATA
-    145          
-    146          /*********************************************************************
-    147           * @fn      Switch_ProcessEvent
-    148           *
-    149           * @brief   Generic Application Task event processor.  This function
-    150           *          is called to process all events for the task.  Events
-    151           *          include timers, messages and any other user defined events.
-    152           *
-    153           * @param   task_id  - The OSAL assigned task ID.
-    154           * @param   events - events to process.  This is a bit map and can
-    155           *                   contain more than one event.
-    156           *
-    157           * @return  none
-    158           */
+    113           
+    114          	//	ZDO_RegisterForZDOMsg( Switch_TaskID, End_Device_Bind_rsp );
+    115          	ZDO_RegisterForZDOMsg( Switch_TaskID, Match_Desc_rsp );
+   \   000017                ; Setup parameters for call to function ZDO_RegisterForZDOMsg
+   \   000017   7A06         MOV     R2,#0x6
+   \   000019   7B80         MOV     R3,#-0x80
+   \   00001B   12....       LCALL   ??ZDO_RegisterForZDOMsg?relay
+    116          }
+   \   00001E   7F01         MOV     R7,#0x1
+   \   000020   02....       LJMP    ?BANKED_LEAVE_XDATA
+    117          
+    118          /*********************************************************************
+    119           * @fn      Switch_ProcessEvent
+    120           *
+    121           * @brief   Generic Application Task event processor.  This function
+    122           *          is called to process all events for the task.  Events
+    123           *          include timers, messages and any other user defined events.
+    124           *
+    125           * @param   task_id  - The OSAL assigned task ID.
+    126           * @param   events - events to process.  This is a bit map and can
+    127           *                   contain more than one event.
+    128           *
+    129           * @return  none
+    130           */
 
    \                                 In  segment BANKED_CODE, align 1, keep-with-next
-    159          UINT16 Switch_ProcessEvent( byte task_id, UINT16 events )
+    131          UINT16 Switch_ProcessEvent( byte task_id, UINT16 events )
    \                     Switch_ProcessEvent:
-    160          {
+    132          {
    \   000000   74F3         MOV     A,#-0xd
    \   000002   12....       LCALL   ?BANKED_ENTER_XDATA
    \   000005                ; Saved register size: 13
@@ -465,28 +358,28 @@ D:\ProgramData\Hardware\zigbee\Projects\zstack\Samples\SensorSys\Source\Switch_E
    \   000006   FE           MOV     R6,A
    \   000007   EB           MOV     A,R3
    \   000008   FF           MOV     R7,A
-    161              afIncomingMSGPacket_t *MSGpkt = NULL;
-    162              (void)task_id;  // Intentionally unreferenced parameter
-    163          
-    164              if ( events & SYS_EVENT_MSG )
+    133              afIncomingMSGPacket_t *MSGpkt = NULL;
+    134              (void)task_id;  // Intentionally unreferenced parameter
+    135          
+    136              if ( events & SYS_EVENT_MSG )
    \   000009   5480         ANL     A,#0x80
    \   00000B   7003         JNZ     $+5
    \   00000D   02....       LJMP    ??Switch_ProcessEvent_0 & 0xFFFF
-    165              {
-    166                  MSGpkt = (afIncomingMSGPacket_t *)osal_msg_receive( task_id );
+    137              {
+    138                  MSGpkt = (afIncomingMSGPacket_t *)osal_msg_receive( task_id );
    \   000010                ; Setup parameters for call to function osal_msg_receive
    \   000010   801C         SJMP    ??Switch_ProcessEvent_1
-    167                  while ( MSGpkt )
-    168                  {
-    169                    switch ( MSGpkt->hdr.event )
-    170                    {
-    171                      case AF_INCOMING_MSG_CMD:
-    172                          Switch_ReceiveDataIndication( MSGpkt->srcAddr.addr.shortAddr, MSGpkt->endPoint, MSGpkt->clusterId,
-    173                                                  MSGpkt->cmd.DataLength, MSGpkt->cmd.Data);
-    174                          break;
-    175                        
-    176                      case ZDO_MATCH_DESC_RSP_SENT:
-    177                          Switch_AllowBindConfirm( ((ZDO_MatchDescRspSent_t *)MSGpkt)->nwkAddr );
+    139                  while ( MSGpkt )
+    140                  {
+    141                    switch ( MSGpkt->hdr.event )
+    142                    {
+    143                      case AF_INCOMING_MSG_CMD:
+    144                          Switch_ReceiveDataIndication( MSGpkt->srcAddr.addr.shortAddr, MSGpkt->endPoint, MSGpkt->clusterId,
+    145                                                  MSGpkt->cmd.DataLength, MSGpkt->cmd.Data);
+    146                          break;
+    147                        
+    148                      case ZDO_MATCH_DESC_RSP_SENT:
+    149                          Switch_AllowBindConfirm( ((ZDO_MatchDescRspSent_t *)MSGpkt)->nwkAddr );
    \                     ??Switch_ProcessEvent_2:
    \   000012   A3           INC     DPTR
    \   000013   A3           INC     DPTR
@@ -501,18 +394,18 @@ D:\ProgramData\Hardware\zigbee\Projects\zstack\Samples\SensorSys\Source\Switch_E
    \   00001E   F0           MOVX    @DPTR,A
    \   00001F                ; Setup parameters for call to function Sys_AllowBindConfirm
    \   00001F   12....       LCALL   ??Sys_AllowBindConfirm?relay
-    178                          break;
-    179                    }
-    180                    // Release the memory
-    181                    osal_msg_deallocate( (uint8 *)MSGpkt );
+    150                          break;
+    151                    }
+    152                    // Release the memory
+    153                    osal_msg_deallocate( (uint8 *)MSGpkt );
    \                     ??Switch_ProcessEvent_3:
    \   000022                ; Setup parameters for call to function osal_msg_deallocate
    \   000022   AA..         MOV     R2,?V0 + 0
    \   000024   AB..         MOV     R3,?V0 + 1
    \   000026   12....       LCALL   ??osal_msg_deallocate?relay
-    182              
-    183                    // Next
-    184                    MSGpkt = (afIncomingMSGPacket_t *)osal_msg_receive( Switch_TaskID );
+    154              
+    155                    // Next
+    156                    MSGpkt = (afIncomingMSGPacket_t *)osal_msg_receive( Switch_TaskID );
    \   000029                ; Setup parameters for call to function osal_msg_receive
    \   000029   90....       MOV     DPTR,#Switch_TaskID
    \   00002C   E0           MOVX    A,@DPTR
@@ -576,8 +469,8 @@ D:\ProgramData\Hardware\zigbee\Projects\zstack\Samples\SensorSys\Source\Switch_E
    \   00008E   7402         MOV     A,#0x2
    \   000090   12....       LCALL   ?DEALLOC_XSTACK8
    \   000093   808D         SJMP    ??Switch_ProcessEvent_3
-    185                  }
-    186                  return (events ^ SYS_EVENT_MSG);
+    157                  }
+    158                  return (events ^ SYS_EVENT_MSG);
    \                     ??Switch_ProcessEvent_4:
    \   000095   EE           MOV     A,R6
    \   000096   FA           MOV     R2,A
@@ -585,20 +478,20 @@ D:\ProgramData\Hardware\zigbee\Projects\zstack\Samples\SensorSys\Source\Switch_E
    \   000098   6480         XRL     A,#0x80
    \   00009A   FB           MOV     R3,A
    \   00009B   02....       LJMP    ??Switch_ProcessEvent_6 & 0xFFFF
-    187              }
-    188              if( (events & 0xFF00) & SW_UPDATE_EVT )
+    159              }
+    160              if( (events & 0xFF00) & SW_UPDATE_EVT )
    \                     ??Switch_ProcessEvent_0:
    \   00009E   EF           MOV     A,R7
    \   00009F   5450         ANL     A,#0x50
    \   0000A1   7003         JNZ     $+5
    \   0000A3   02....       LJMP    ??Switch_ProcessEvent_7 & 0xFFFF
-    189              {
-    190                  uint8 sw;
-    191                  sw = (uint8)(events);
+    161              {
+    162                  uint8 sw;
+    163                  sw = (uint8)(events);
    \   0000A6   EE           MOV     A,R6
    \   0000A7   FC           MOV     R4,A
-    192                  uint8 status_m;
-    193                  status_m = SwitchControl[sw].status;
+    164                  uint8 status_m;
+    165                  status_m = SwitchControl[sw].status;
    \   0000A8   75F007       MOV     B,#0x7
    \   0000AB   A4           MUL     AB
    \   0000AC   F8           MOV     R0,A
@@ -616,82 +509,82 @@ D:\ProgramData\Hardware\zigbee\Projects\zstack\Samples\SensorSys\Source\Switch_E
    \   0000C0   A3           INC     DPTR
    \   0000C1   E0           MOVX    A,@DPTR
    \   0000C2   FD           MOV     R5,A
-    194                  if(SwitchControl[sw].msg[status_m].hour)
+    166                  if(SwitchControl[sw].msg[status_m].hour)
    \   0000C3   75F006       MOV     B,#0x6
    \   0000C6   A4           MUL     AB
    \   0000C7   F8           MOV     R0,A
    \   0000C8   A9F0         MOV     R1,B
    \   0000CA   85..82       MOV     DPL,?V0 + 2
    \   0000CD   85..83       MOV     DPH,?V0 + 3
-   \   0000D0   12....       LCALL   ?Subroutine3 & 0xFFFF
-   \                     ??CrossCallReturnLabel_6:
+   \   0000D0   12....       LCALL   ?Subroutine5 & 0xFFFF
+   \                     ??CrossCallReturnLabel_10:
    \   0000D3   E0           MOVX    A,@DPTR
    \   0000D4   6023         JZ      ??Switch_ProcessEvent_8
-    195                  {
-    196                      if(SwitchControl[sw].msg[status_m].min == 0)
-   \   0000D6   12....       LCALL   ?Subroutine2 & 0xFFFF
-   \                     ??CrossCallReturnLabel_4:
+    167                  {
+    168                      if(SwitchControl[sw].msg[status_m].min == 0)
+   \   0000D6   12....       LCALL   ?Subroutine3 & 0xFFFF
+   \                     ??CrossCallReturnLabel_6:
    \   0000D9   7019         JNZ     ??Switch_ProcessEvent_9
-    197                      {
-    198                          (SwitchControl[sw].msg[status_m].hour)--;
+    169                      {
+    170                          (SwitchControl[sw].msg[status_m].hour)--;
    \   0000DB   ED           MOV     A,R5
    \   0000DC   75F006       MOV     B,#0x6
    \   0000DF   A4           MUL     AB
    \   0000E0   F5..         MOV     ?V0 + 0,A
    \   0000E2   E5F0         MOV     A,B
    \   0000E4   F5..         MOV     ?V0 + 1,A
-   \   0000E6   12....       LCALL   ?Subroutine10 & 0xFFFF
-   \                     ??CrossCallReturnLabel_21:
+   \   0000E6   12....       LCALL   ?Subroutine4 & 0xFFFF
+   \                     ??CrossCallReturnLabel_8:
    \   0000E9   E0           MOVX    A,@DPTR
    \   0000EA   14           DEC     A
    \   0000EB   F0           MOVX    @DPTR,A
-    199                          SwitchControl[sw].msg[status_m].min = 59;
-   \   0000EC   12....       LCALL   ?Subroutine10 & 0xFFFF
-    200                      }
-   \                     ??CrossCallReturnLabel_22:
+    171                          SwitchControl[sw].msg[status_m].min = 59;
+   \   0000EC   12....       LCALL   ?Subroutine4 & 0xFFFF
+    172                      }
+   \                     ??CrossCallReturnLabel_9:
    \   0000EF   A3           INC     DPTR
    \   0000F0   743B         MOV     A,#0x3b
-   \   0000F2   8057         SJMP    ??CrossCallReturnLabel_3
-    201                      else
-    202                        (SwitchControl[sw].msg[status_m].min)--;
+   \   0000F2   8057         SJMP    ??CrossCallReturnLabel_5
+    173                      else
+    174                        (SwitchControl[sw].msg[status_m].min)--;
    \                     ??Switch_ProcessEvent_9:
-   \   0000F4   12....       LCALL   ?Subroutine1 & 0xFFFF
-    203                      osal_start_timerEx(Switch_TaskID, events, 60000); // calc 1min
-    204                  }
-   \                     ??CrossCallReturnLabel_2:
-   \   0000F7   8052         SJMP    ??CrossCallReturnLabel_3
+   \   0000F4   12....       LCALL   ?Subroutine2 & 0xFFFF
+    175                      osal_start_timerEx(Switch_TaskID, events, 60000); // calc 1min
+    176                  }
+   \                     ??CrossCallReturnLabel_4:
+   \   0000F7   8052         SJMP    ??CrossCallReturnLabel_5
    \   0000F9                ; Setup parameters for call to function osal_start_timerEx
-    205                  else
-    206                  {
-    207                      if(SwitchControl[sw].msg[status_m].min == 0)
+    177                  else
+    178                  {
+    179                      if(SwitchControl[sw].msg[status_m].min == 0)
    \                     ??Switch_ProcessEvent_8:
-   \   0000F9   12....       LCALL   ?Subroutine2 & 0xFFFF
-   \                     ??CrossCallReturnLabel_5:
+   \   0000F9   12....       LCALL   ?Subroutine3 & 0xFFFF
+   \                     ??CrossCallReturnLabel_7:
    \   0000FC   704A         JNZ     ??Switch_ProcessEvent_10
-    208                      {
-    209                          if(SwitchControl[sw].msg[status_m].sec == 0)
+    180                      {
+    181                          if(SwitchControl[sw].msg[status_m].sec == 0)
    \   0000FE   EC           MOV     A,R4
    \   0000FF   75F007       MOV     B,#0x7
    \   000102   A4           MUL     AB
    \   000103   FA           MOV     R2,A
-   \   000104   12....       LCALL   ?Subroutine15 & 0xFFFF
-   \                     ??CrossCallReturnLabel_31:
-   \   000107   12....       LCALL   ?Subroutine3 & 0xFFFF
-   \                     ??CrossCallReturnLabel_7:
+   \   000104   12....       LCALL   ?Subroutine17 & 0xFFFF
+   \                     ??CrossCallReturnLabel_35:
+   \   000107   12....       LCALL   ?Subroutine5 & 0xFFFF
+   \                     ??CrossCallReturnLabel_11:
    \   00010A   A3           INC     DPTR
    \   00010B   A3           INC     DPTR
    \   00010C   E0           MOVX    A,@DPTR
    \   00010D   7009         JNZ     ??Switch_ProcessEvent_11
-    210                              SwitchUpdate(sw,0);
+    182                              SwitchUpdate(sw,0);
    \   00010F                ; Setup parameters for call to function SwitchUpdate
    \   00010F   7A00         MOV     R2,#0x0
    \   000111   EC           MOV     A,R4
    \   000112   F9           MOV     R1,A
    \   000113   12....       LCALL   ??SwitchUpdate?relay
    \   000116   8044         SJMP    ??Switch_ProcessEvent_7
-    211                          else
-    212                          {
-    213                              osal_start_timerEx(Switch_TaskID, events, (SwitchControl[sw].msg[status_m].sec)*1000);
+    183                          else
+    184                          {
+    185                              osal_start_timerEx(Switch_TaskID, events, (SwitchControl[sw].msg[status_m].sec)*1000);
    \                     ??Switch_ProcessEvent_11:
    \   000118   ED           MOV     A,R5
    \   000119   75F006       MOV     B,#0x6
@@ -700,8 +593,8 @@ D:\ProgramData\Hardware\zigbee\Projects\zstack\Samples\SensorSys\Source\Switch_E
    \   00011F   E5F0         MOV     A,B
    \   000121   F5..         MOV     ?V0 + 1,A
    \   000123                ; Setup parameters for call to function osal_start_timerEx
-   \   000123   12....       LCALL   ?Subroutine9 & 0xFFFF
-   \                     ??CrossCallReturnLabel_19:
+   \   000123   12....       LCALL   ?Subroutine1 & 0xFFFF
+   \                     ??CrossCallReturnLabel_2:
    \   000126   E0           MOVX    A,@DPTR
    \   000127   FC           MOV     R4,A
    \   000128   75F0E8       MOV     B,#-0x18
@@ -720,22 +613,22 @@ D:\ProgramData\Hardware\zigbee\Projects\zstack\Samples\SensorSys\Source\Switch_E
    \   00013C   E0           MOVX    A,@DPTR
    \   00013D   F9           MOV     R1,A
    \   00013E   12....       LCALL   ??osal_start_timerEx?relay
-    214                              SwitchControl[sw].msg[status_m].sec = 0;
-   \   000141   12....       LCALL   ?Subroutine9 & 0xFFFF
-    215                          }
-    216                      }
-   \                     ??CrossCallReturnLabel_20:
+    186                              SwitchControl[sw].msg[status_m].sec = 0;
+   \   000141   12....       LCALL   ?Subroutine1 & 0xFFFF
+    187                          }
+    188                      }
+   \                     ??CrossCallReturnLabel_3:
    \   000144   E4           CLR     A
    \   000145   F0           MOVX    @DPTR,A
    \   000146   8014         SJMP    ??Switch_ProcessEvent_7
-    217                      else
-    218                      {
-    219                        (SwitchControl[sw].msg[status_m].min)--;
+    189                      else
+    190                      {
+    191                        (SwitchControl[sw].msg[status_m].min)--;
    \                     ??Switch_ProcessEvent_10:
-   \   000148   12....       LCALL   ?Subroutine1 & 0xFFFF
-   \                     ??CrossCallReturnLabel_3:
+   \   000148   12....       LCALL   ?Subroutine2 & 0xFFFF
+   \                     ??CrossCallReturnLabel_5:
    \   00014B   F0           MOVX    @DPTR,A
-    220                        osal_start_timerEx(Switch_TaskID, events, 60000); // calc 1min
+    192                        osal_start_timerEx(Switch_TaskID, events, 60000); // calc 1min
    \   00014C                ; Setup parameters for call to function osal_start_timerEx
    \   00014C   7C60         MOV     R4,#0x60
    \   00014E   7DEA         MOV     R5,#-0x16
@@ -747,28 +640,37 @@ D:\ProgramData\Hardware\zigbee\Projects\zstack\Samples\SensorSys\Source\Switch_E
    \   000157   E0           MOVX    A,@DPTR
    \   000158   F9           MOV     R1,A
    \   000159   12....       LCALL   ??osal_start_timerEx?relay
-    221                      }
-    222                  }
-    223                  return (events ^ events);
+    193                      }
+    194                  }
+    195                  return (events ^ events);
    \                     ??Switch_ProcessEvent_7:
    \   00015C   7A00         MOV     R2,#0x0
    \   00015E   7B00         MOV     R3,#0x0
    \                     ??Switch_ProcessEvent_6:
    \   000160   7F05         MOV     R7,#0x5
    \   000162   02....       LJMP    ?BANKED_LEAVE_XDATA
-    224              }
-    225              
-    226              return 0;
-    227          }
+    196              }
+    197              
+    198              return 0;
+    199          }
 
    \                                 In  segment BANKED_CODE, align 1, keep-with-next
-   \                     ?Subroutine10:
-   \   000000   12....       LCALL   ?Subroutine16 & 0xFFFF
-   \                     ??CrossCallReturnLabel_34:
+   \                     ?Subroutine5:
+   \   000000   12....       LCALL   ?Subroutine14 & 0xFFFF
+   \                     ??CrossCallReturnLabel_30:
+   \   000003   A3           INC     DPTR
+   \   000004   A3           INC     DPTR
+   \   000005   A3           INC     DPTR
+   \   000006   22           RET
+
+   \                                 In  segment BANKED_CODE, align 1, keep-with-next
+   \                     ?Subroutine4:
+   \   000000   12....       LCALL   ?Subroutine13 & 0xFFFF
+   \                     ??CrossCallReturnLabel_28:
    \   000003   22           RET
 
    \                                 In  segment BANKED_CODE, align 1, keep-with-next
-   \                     ?Subroutine16:
+   \                     ?Subroutine13:
    \   000000   85..82       MOV     DPL,?V0 + 2
    \   000003   85..83       MOV     DPH,?V0 + 3
    \   000006   E0           MOVX    A,@DPTR
@@ -785,24 +687,7 @@ D:\ProgramData\Hardware\zigbee\Projects\zstack\Samples\SensorSys\Source\Switch_E
    \   000015   22           RET
 
    \                                 In  segment BANKED_CODE, align 1, keep-with-next
-   \                     ?Subroutine9:
-   \   000000   12....       LCALL   ?Subroutine16 & 0xFFFF
-   \                     ??CrossCallReturnLabel_33:
-   \   000003   A3           INC     DPTR
-   \   000004   A3           INC     DPTR
-   \   000005   22           RET
-
-   \                                 In  segment BANKED_CODE, align 1, keep-with-next
    \                     ?Subroutine3:
-   \   000000   12....       LCALL   ?Subroutine13 & 0xFFFF
-   \                     ??CrossCallReturnLabel_28:
-   \   000003   A3           INC     DPTR
-   \   000004   A3           INC     DPTR
-   \   000005   A3           INC     DPTR
-   \   000006   22           RET
-
-   \                                 In  segment BANKED_CODE, align 1, keep-with-next
-   \                     ?Subroutine2:
    \   000000   EC           MOV     A,R4
    \   000001   75F007       MOV     B,#0x7
    \   000004   A4           MUL     AB
@@ -827,7 +712,7 @@ D:\ProgramData\Hardware\zigbee\Projects\zstack\Samples\SensorSys\Source\Switch_E
    \   00000B   22           RET
 
    \                                 In  segment BANKED_CODE, align 1, keep-with-next
-   \                     ?Subroutine1:
+   \                     ?Subroutine2:
    \   000000   EC           MOV     A,R4
    \   000001   75F007       MOV     B,#0x7
    \   000004   A4           MUL     AB
@@ -838,7 +723,15 @@ D:\ProgramData\Hardware\zigbee\Projects\zstack\Samples\SensorSys\Source\Switch_E
    \   00000A   22           RET
 
    \                                 In  segment BANKED_CODE, align 1, keep-with-next
-   \                     ?Subroutine15:
+   \                     ?Subroutine1:
+   \   000000   12....       LCALL   ?Subroutine13 & 0xFFFF
+   \                     ??CrossCallReturnLabel_27:
+   \   000003   A3           INC     DPTR
+   \   000004   A3           INC     DPTR
+   \   000005   22           RET
+
+   \                                 In  segment BANKED_CODE, align 1, keep-with-next
+   \                     ?Subroutine17:
    \   000000   12....       LCALL   ?Subroutine19 & 0xFFFF
    \                     ??CrossCallReturnLabel_40:
    \   000003   22           RET
@@ -854,7 +747,7 @@ D:\ProgramData\Hardware\zigbee\Projects\zstack\Samples\SensorSys\Source\Switch_E
    \   00000A   22           RET
 
    \                                 In  segment BANKED_CODE, align 1, keep-with-next
-   \                     ?Subroutine13:
+   \                     ?Subroutine14:
    \   000000   12....       LCALL   ?Subroutine18 & 0xFFFF
    \                     ??CrossCallReturnLabel_38:
    \   000003   22           RET
@@ -870,40 +763,40 @@ D:\ProgramData\Hardware\zigbee\Projects\zstack\Samples\SensorSys\Source\Switch_E
    \   000006   8A82         MOV     DPL,R2
    \   000008   F583         MOV     DPH,A
    \   00000A   22           RET
-    228          
-    229          /******************************************************************************
-    230           * @fn          Switch_ReceiveDataIndication
-    231           *
-    232           * @brief       The SAPI_ReceiveDataIndication callback function is called
-    233           *              asynchronously by the ZigBee stack to notify the application
-    234           *              when data is received from a peer device.
-    235           *
-    236           * @param       source - The short address of the peer device that sent the data
-    237           *              command - The commandId associated with the data
-    238           *              len - The number of bytes in the pData parameter
-    239           *              pData - The data sent by the peer device
-    240           *
-    241           * @return      none
-    242           */
-    243          void Switch_ReceiveDataIndication( uint16 source, uint8 endPoint, uint16 command, uint16 len, uint8 *pData  )
-    244          {
-    245               SwitchAction(endPoint-SWITCH_ENDPOINT, command, len, pData);
-    246          }
-    247          
-    248          /******************************************************************************
-    249           * @fn          SwitchAction
-    250           *
-    251           * @brief       Switch Action Decide
-    252           *
-    253           * @param
-    254           *
-    255           * @return      none
-    256           */
+    200          
+    201          /******************************************************************************
+    202           * @fn          Switch_ReceiveDataIndication
+    203           *
+    204           * @brief       The SAPI_ReceiveDataIndication callback function is called
+    205           *              asynchronously by the ZigBee stack to notify the application
+    206           *              when data is received from a peer device.
+    207           *
+    208           * @param       source - The short address of the peer device that sent the data
+    209           *              command - The commandId associated with the data
+    210           *              len - The number of bytes in the pData parameter
+    211           *              pData - The data sent by the peer device
+    212           *
+    213           * @return      none
+    214           */
+    215          void Switch_ReceiveDataIndication( uint16 source, uint8 endPoint, uint16 command, uint16 len, uint8 *pData  )
+    216          {
+    217               SwitchAction(endPoint-SWITCH_ENDPOINT, command, len, pData);
+    218          }
+    219          
+    220          /******************************************************************************
+    221           * @fn          SwitchAction
+    222           *
+    223           * @brief       Switch Action Decide
+    224           *
+    225           * @param
+    226           *
+    227           * @return      none
+    228           */
 
    \                                 In  segment BANKED_CODE, align 1, keep-with-next
-    257          void SwitchAction( uint8 sw, uint16 command, uint16 len, uint8 *pData )
+    229          void SwitchAction( uint8 sw, uint16 command, uint16 len, uint8 *pData )
    \                     SwitchAction:
-    258          {
+    230          {
    \   000000   74EF         MOV     A,#-0x11
    \   000002   12....       LCALL   ?BANKED_ENTER_XDATA
    \   000005                ; Saved register size: 17
@@ -918,39 +811,39 @@ D:\ProgramData\Hardware\zigbee\Projects\zstack\Samples\SensorSys\Source\Switch_E
    \   000012   A3           INC     DPTR
    \   000013   E0           MOVX    A,@DPTR
    \   000014   FF           MOV     R7,A
-    259            if(command == PORT_INIT_CLUSTER)
+    231            if(command == PORT_INIT_CLUSTER)
    \   000015   7401         MOV     A,#0x1
    \   000017   65..         XRL     A,?V0 + 0
    \   000019   7001         JNZ     ??SwitchAction_0
    \   00001B   EB           MOV     A,R3
    \                     ??SwitchAction_0:
    \   00001C   7053         JNZ     ??SwitchAction_1
-    260            {
-    261              uint8 port;
-    262              port = *pData;
+    232            {
+    233              uint8 port;
+    234              port = *pData;
    \   00001E   8E82         MOV     DPL,R6
    \   000020   8F83         MOV     DPH,R7
    \   000022   E0           MOVX    A,@DPTR
    \   000023   F9           MOV     R1,A
-    263              
-    264            //  P2: 1 2 3 4 ; P1: 2 3 4 5 6 7
-    265            //-----------------------------------
-    266            //port: 0 1 2 3       4 5 6 7 8 9
-    267              if(port < SWITCH_NUM_MAX)
+    235              
+    236            //  P2: 1 2 3 4 ; P1: 2 3 4 5 6 7
+    237            //-----------------------------------
+    238            //port: 0 1 2 3       4 5 6 7 8 9
+    239              if(port < SWITCH_NUM_MAX)
    \   000024   C3           CLR     C
    \   000025   9405         SUBB    A,#0x5
    \   000027   4003         JC      $+5
    \   000029   02....       LJMP    ??SwitchAction_2 & 0xFFFF
-    268              {
-    269                  if(port < P2_SWITCH_NUM)
+    240              {
+    241                  if(port < P2_SWITCH_NUM)
    \   00002C   E9           MOV     A,R1
    \   00002D   C3           CLR     C
    \   00002E   9404         SUBB    A,#0x4
    \   000030   75..01       MOV     ?V0 + 0,#0x1
    \   000033   75..00       MOV     ?V0 + 1,#0x0
    \   000036   5013         JNC     ??SwitchAction_3
-    270                  {
-    271                      P2SEL &= ~(0x01 << (port + 1));
+    242                  {
+    243                      P2SEL &= ~(0x01 << (port + 1));
    \   000038   7401         MOV     A,#0x1
    \   00003A   29           ADD     A,R1
    \   00003B   78..         MOV     R0,#?V0 + 0
@@ -959,14 +852,14 @@ D:\ProgramData\Hardware\zigbee\Projects\zstack\Samples\SensorSys\Source\Switch_E
    \   000042   E8           MOV     A,R0
    \   000043   F4           CPL     A
    \   000044   52F5         ANL     0xf5,A
-    272                      P2DIR |= 0x01 << (port+1);
+    244                      P2DIR |= 0x01 << (port+1);
    \   000046   E8           MOV     A,R0
    \   000047   42FF         ORL     0xff,A
    \   000049   8011         SJMP    ??SwitchAction_4
-    273                  }
-    274                  else
-    275                  {
-    276                      P1SEL &= ~(0x01 << (port - 2));
+    245                  }
+    246                  else
+    247                  {
+    248                      P1SEL &= ~(0x01 << (port - 2));
    \                     ??SwitchAction_3:
    \   00004B   74FE         MOV     A,#-0x2
    \   00004D   29           ADD     A,R1
@@ -976,11 +869,11 @@ D:\ProgramData\Hardware\zigbee\Projects\zstack\Samples\SensorSys\Source\Switch_E
    \   000055   E8           MOV     A,R0
    \   000056   F4           CPL     A
    \   000057   52F4         ANL     0xf4,A
-    277                      P1DIR |= 0x01 << (port - 2);
+    249                      P1DIR |= 0x01 << (port - 2);
    \   000059   E8           MOV     A,R0
    \   00005A   42FE         ORL     0xfe,A
-    278                  }
-    279                  SwitchControl[sw].port = port;
+    250                  }
+    251                  SwitchControl[sw].port = port;
    \                     ??SwitchAction_4:
    \   00005C   E9           MOV     A,R1
    \   00005D   C0E0         PUSH    A
@@ -989,29 +882,29 @@ D:\ProgramData\Hardware\zigbee\Projects\zstack\Samples\SensorSys\Source\Switch_E
    \   000064   A4           MUL     AB
    \   000065   F8           MOV     R0,A
    \   000066   A9F0         MOV     R1,B
-   \   000068   12....       LCALL   ?Subroutine7 & 0xFFFF
-   \                     ??CrossCallReturnLabel_15:
+   \   000068   12....       LCALL   ?Subroutine10 & 0xFFFF
+   \                     ??CrossCallReturnLabel_21:
    \   00006B   D0E0         POP     A
    \   00006D   F0           MOVX    @DPTR,A
-    280                  return;
+    252                  return;
    \   00006E   02....       LJMP    ??SwitchAction_2 & 0xFFFF
-    281              }
-    282              else
-    283              {
-    284                  // send error back
-    285                  return;
-    286              }
-    287            }
-    288            
-    289            
-    290            if(sw>=SWITCH_NUM_MAX)return;   // data error
+    253              }
+    254              else
+    255              {
+    256                  // send error back
+    257                  return;
+    258              }
+    259            }
+    260            
+    261            
+    262            if(sw>=SWITCH_NUM_MAX)return;   // data error
    \                     ??SwitchAction_1:
    \   000071   E9           MOV     A,R1
    \   000072   C3           CLR     C
    \   000073   9405         SUBB    A,#0x5
    \   000075   4003         JC      $+5
    \   000077   02....       LJMP    ??SwitchAction_2 & 0xFFFF
-    291            if( len % OPERATE_MSG_NUM )return;  // data error: Must be 6 data each group
+    263            if( len % OPERATE_MSG_NUM )return;  // data error: Must be 6 data each group
    \   00007A   EC           MOV     A,R4
    \   00007B   F8           MOV     R0,A
    \   00007C   ED           MOV     A,R5
@@ -1024,10 +917,10 @@ D:\ProgramData\Hardware\zigbee\Projects\zstack\Samples\SensorSys\Source\Switch_E
    \   000088   45..         ORL     A,?V0 + 5
    \   00008A   6003         JZ      $+5
    \   00008C   02....       LJMP    ??SwitchAction_2 & 0xFFFF
-    292          
-    293            uint16 len_t;
-    294            sensor_msg_t *msg_t = NULL;
-    295            len_t = len/OPERATE_MSG_NUM;
+    264          
+    265            uint16 len_t;
+    266            sensor_msg_t *msg_t = NULL;
+    267            len_t = len/OPERATE_MSG_NUM;
    \   00008F   EC           MOV     A,R4
    \   000090   F8           MOV     R0,A
    \   000091   ED           MOV     A,R5
@@ -1037,7 +930,7 @@ D:\ProgramData\Hardware\zigbee\Projects\zstack\Samples\SensorSys\Source\Switch_E
    \   000097   12....       LCALL   ?US_DIV_MOD
    \   00009A   88..         MOV     ?V0 + 4,R0
    \   00009C   89..         MOV     ?V0 + 5,R1
-    296            msg_t = (sensor_msg_t *)osal_mem_alloc(sizeof(sensor_msg_t) * len_t);
+    268            msg_t = (sensor_msg_t *)osal_mem_alloc(sizeof(sensor_msg_t) * len_t);
    \   00009E                ; Setup parameters for call to function osal_mem_alloc
    \   00009E   E8           MOV     A,R0
    \   00009F   75F006       MOV     B,#0x6
@@ -1050,15 +943,15 @@ D:\ProgramData\Hardware\zigbee\Projects\zstack\Samples\SensorSys\Source\Switch_E
    \   0000AB   28           ADD     A,R0
    \   0000AC   FB           MOV     R3,A
    \   0000AD   12....       LCALL   ??osal_mem_alloc?relay
-    297            uint8 i;
-    298            for(i=0; i<len_t; i++)
+    269            uint8 i;
+    270            for(i=0; i<len_t; i++)
    \   0000B0   75..00       MOV     ?V0 + 3,#0x0
    \   0000B3   803A         SJMP    ??SwitchAction_5
-    299            {    
-    300                if(pData[i*OPERATE_MSG_NUM] > 1)      // ON/OFF
-    301                  msg_t[i].value = 1;
-    302                else
-    303                  msg_t[i].value = 0;
+    271            {    
+    272                if(pData[i*OPERATE_MSG_NUM] > 1)      // ON/OFF
+    273                  msg_t[i].value = 1;
+    274                else
+    275                  msg_t[i].value = 0;
    \                     ??SwitchAction_6:
    \   0000B5   28           ADD     A,R0
    \   0000B6   F582         MOV     DPL,A
@@ -1068,7 +961,7 @@ D:\ProgramData\Hardware\zigbee\Projects\zstack\Samples\SensorSys\Source\Switch_E
    \   0000BC   E4           CLR     A
    \                     ??SwitchAction_7:
    \   0000BD   F0           MOVX    @DPTR,A
-    304                msg_t[i].level = pData[i*OPERATE_MSG_NUM+1];   // NO USE
+    276                msg_t[i].level = pData[i*OPERATE_MSG_NUM+1];   // NO USE
    \   0000BE   EA           MOV     A,R2
    \   0000BF   28           ADD     A,R0
    \   0000C0   FC           MOV     R4,A
@@ -1091,22 +984,22 @@ D:\ProgramData\Hardware\zigbee\Projects\zstack\Samples\SensorSys\Source\Switch_E
    \   0000D5   F0           MOVX    @DPTR,A
    \   0000D6   A3           INC     DPTR
    \   0000D7   E4           CLR     A
-   \   0000D8   12....       LCALL   ?Subroutine5 & 0xFFFF
-    305                msg_t[i].hour = pData[i*OPERATE_MSG_NUM+3];
-   \                     ??CrossCallReturnLabel_10:
-   \   0000DB   12....       LCALL   ?Subroutine17 & 0xFFFF
-   \                     ??CrossCallReturnLabel_35:
-   \   0000DE   12....       LCALL   ?Subroutine5 & 0xFFFF
-    306                msg_t[i].min = pData[i*OPERATE_MSG_NUM+4];
-   \                     ??CrossCallReturnLabel_11:
+   \   0000D8   12....       LCALL   ?Subroutine7 & 0xFFFF
+    277                msg_t[i].hour = pData[i*OPERATE_MSG_NUM+3];
+   \                     ??CrossCallReturnLabel_14:
+   \   0000DB   12....       LCALL   ?Subroutine16 & 0xFFFF
+   \                     ??CrossCallReturnLabel_33:
+   \   0000DE   12....       LCALL   ?Subroutine7 & 0xFFFF
+    278                msg_t[i].min = pData[i*OPERATE_MSG_NUM+4];
+   \                     ??CrossCallReturnLabel_15:
    \   0000E1   A3           INC     DPTR
-   \   0000E2   12....       LCALL   ?Subroutine11 & 0xFFFF
-   \                     ??CrossCallReturnLabel_23:
-   \   0000E5   12....       LCALL   ?Subroutine4 & 0xFFFF
-    307                msg_t[i].sec = pData[i*OPERATE_MSG_NUM+5];
-   \                     ??CrossCallReturnLabel_8:
-   \   0000E8   12....       LCALL   ?Subroutine11 & 0xFFFF
-   \                     ??CrossCallReturnLabel_24:
+   \   0000E2   12....       LCALL   ?Subroutine8 & 0xFFFF
+   \                     ??CrossCallReturnLabel_17:
+   \   0000E5   12....       LCALL   ?Subroutine6 & 0xFFFF
+    279                msg_t[i].sec = pData[i*OPERATE_MSG_NUM+5];
+   \                     ??CrossCallReturnLabel_12:
+   \   0000E8   12....       LCALL   ?Subroutine8 & 0xFFFF
+   \                     ??CrossCallReturnLabel_18:
    \   0000EB   A3           INC     DPTR
    \   0000EC   F0           MOVX    @DPTR,A
    \   0000ED   05..         INC     ?V0 + 3
@@ -1141,8 +1034,8 @@ D:\ProgramData\Hardware\zigbee\Projects\zstack\Samples\SensorSys\Source\Switch_E
    \   000119   F583         MOV     DPH,A
    \   00011B   7401         MOV     A,#0x1
    \   00011D   809E         SJMP    ??SwitchAction_7
-    308            }
-    309            SwitchControl[sw].msg = msg_t;
+    280            }
+    281            SwitchControl[sw].msg = msg_t;
    \                     ??SwitchAction_8:
    \   00011F   85..82       MOV     DPL,?V0 + 2
    \   000122   AE82         MOV     R6,DPL
@@ -1151,38 +1044,38 @@ D:\ProgramData\Hardware\zigbee\Projects\zstack\Samples\SensorSys\Source\Switch_E
    \   000128   A4           MUL     AB
    \   000129   F8           MOV     R0,A
    \   00012A   A9F0         MOV     R1,B
-   \   00012C   12....       LCALL   ?Subroutine6 & 0xFFFF
-   \                     ??CrossCallReturnLabel_13:
+   \   00012C   12....       LCALL   ?Subroutine9 & 0xFFFF
+   \                     ??CrossCallReturnLabel_19:
    \   00012F   EA           MOV     A,R2
    \   000130   F0           MOVX    @DPTR,A
    \   000131   A3           INC     DPTR
    \   000132   EB           MOV     A,R3
    \   000133   F0           MOVX    @DPTR,A
-    310            SwitchControl[sw].total = len_t;
+    282            SwitchControl[sw].total = len_t;
    \   000134   8882         MOV     DPL,R0
    \   000136   8983         MOV     DPH,R1
    \   000138   A3           INC     DPTR
    \   000139   A3           INC     DPTR
    \   00013A   E5..         MOV     A,?V0 + 4
-   \   00013C   12....       LCALL   ?Subroutine5 & 0xFFFF
-    311            SwitchControl[sw].status = 0;
-   \                     ??CrossCallReturnLabel_12:
+   \   00013C   12....       LCALL   ?Subroutine7 & 0xFFFF
+    283            SwitchControl[sw].status = 0;
+   \                     ??CrossCallReturnLabel_16:
    \   00013F   E4           CLR     A
-   \   000140   12....       LCALL   ?Subroutine4 & 0xFFFF
-    312            SwitchControl[sw].command = command;
-   \                     ??CrossCallReturnLabel_9:
+   \   000140   12....       LCALL   ?Subroutine6 & 0xFFFF
+    284            SwitchControl[sw].command = command;
+   \                     ??CrossCallReturnLabel_13:
    \   000143   E5..         MOV     A,?V0 + 0
    \   000145   F0           MOVX    @DPTR,A
    \   000146   A3           INC     DPTR
    \   000147   E5..         MOV     A,?V0 + 1
    \   000149   F0           MOVX    @DPTR,A
-    313            osal_mem_free(msg_t);
+    285            osal_mem_free(msg_t);
    \   00014A                ; Setup parameters for call to function osal_mem_free
    \   00014A   12....       LCALL   ??osal_mem_free?relay
-    314              uint16 event_t;
-    315              event_t = SW_UPDATE_EVT | sw;       // 0x5000 | 0x00??
-    316            
-    317              osal_stop_timerEx(Switch_TaskID, event_t);
+    286              uint16 event_t;
+    287              event_t = SW_UPDATE_EVT | sw;       // 0x5000 | 0x00??
+    288            
+    289              osal_stop_timerEx(Switch_TaskID, event_t);
    \   00014D                ; Setup parameters for call to function osal_stop_timerEx
    \   00014D   EE           MOV     A,R6
    \   00014E   FA           MOV     R2,A
@@ -1191,12 +1084,12 @@ D:\ProgramData\Hardware\zigbee\Projects\zstack\Samples\SensorSys\Source\Switch_E
    \   000154   E0           MOVX    A,@DPTR
    \   000155   F9           MOV     R1,A
    \   000156   12....       LCALL   ??osal_stop_timerEx?relay
-    318              SwitchUpdate(sw,1);
+    290              SwitchUpdate(sw,1);
    \   000159                ; Setup parameters for call to function SwitchUpdate
    \   000159   7A01         MOV     R2,#0x1
    \   00015B   A9..         MOV     R1,?V0 + 2
    \   00015D   12....       LCALL   ??SwitchUpdate?relay
-    319          }
+    291          }
    \                     ??SwitchAction_2:
    \   000160   7F09         MOV     R7,#0x9
    \   000162   02....       LJMP    ?BANKED_LEAVE_XDATA
@@ -1206,14 +1099,14 @@ D:\ProgramData\Hardware\zigbee\Projects\zstack\Samples\SensorSys\Source\Switch_E
    \   000165                REQUIRE P1DIR
 
    \                                 In  segment BANKED_CODE, align 1, keep-with-next
-   \                     ?Subroutine11:
-   \   000000   12....       LCALL   ?Subroutine17 & 0xFFFF
-   \                     ??CrossCallReturnLabel_36:
+   \                     ?Subroutine8:
+   \   000000   12....       LCALL   ?Subroutine16 & 0xFFFF
+   \                     ??CrossCallReturnLabel_34:
    \   000003   A3           INC     DPTR
    \   000004   22           RET
 
    \                                 In  segment BANKED_CODE, align 1, keep-with-next
-   \                     ?Subroutine17:
+   \                     ?Subroutine16:
    \   000000   E0           MOVX    A,@DPTR
    \   000001   8C82         MOV     DPL,R4
    \   000003   8D83         MOV     DPH,R5
@@ -1223,13 +1116,13 @@ D:\ProgramData\Hardware\zigbee\Projects\zstack\Samples\SensorSys\Source\Switch_E
    \   000008   22           RET
 
    \                                 In  segment BANKED_CODE, align 1, keep-with-next
-   \                     ?Subroutine5:
-   \   000000   12....       LCALL   ?Subroutine14 & 0xFFFF
-   \                     ??CrossCallReturnLabel_29:
+   \                     ?Subroutine7:
+   \   000000   12....       LCALL   ?Subroutine15 & 0xFFFF
+   \                     ??CrossCallReturnLabel_31:
    \   000003   22           RET
 
    \                                 In  segment BANKED_CODE, align 1, keep-with-next
-   \                     ?Subroutine14:
+   \                     ?Subroutine15:
    \   000000   F0           MOVX    @DPTR,A
    \   000001   8882         MOV     DPL,R0
    \   000003   8983         MOV     DPH,R1
@@ -1239,15 +1132,15 @@ D:\ProgramData\Hardware\zigbee\Projects\zstack\Samples\SensorSys\Source\Switch_E
    \   000008   22           RET
 
    \                                 In  segment BANKED_CODE, align 1, keep-with-next
-   \                     ?Subroutine4:
-   \   000000   12....       LCALL   ?Subroutine14 & 0xFFFF
-   \                     ??CrossCallReturnLabel_30:
+   \                     ?Subroutine6:
+   \   000000   12....       LCALL   ?Subroutine15 & 0xFFFF
+   \                     ??CrossCallReturnLabel_32:
    \   000003   A3           INC     DPTR
    \   000004   A3           INC     DPTR
    \   000005   22           RET
 
    \                                 In  segment BANKED_CODE, align 1, keep-with-next
-   \                     ?Subroutine7:
+   \                     ?Subroutine10:
    \   000000   74..         MOV     A,#(SwitchControl + 4) & 0xff
    \   000002   28           ADD     A,R0
    \   000003   F582         MOV     DPL,A
@@ -1257,7 +1150,7 @@ D:\ProgramData\Hardware\zigbee\Projects\zstack\Samples\SensorSys\Source\Switch_E
    \   00000A   22           RET
 
    \                                 In  segment BANKED_CODE, align 1, keep-with-next
-   \                     ?Subroutine6:
+   \                     ?Subroutine9:
    \   000000   74..         MOV     A,#SwitchControl & 0xff
    \   000002   28           ADD     A,R0
    \   000003   F8           MOV     R0,A
@@ -1267,12 +1160,12 @@ D:\ProgramData\Hardware\zigbee\Projects\zstack\Samples\SensorSys\Source\Switch_E
    \   000008   8882         MOV     DPL,R0
    \   00000A   8983         MOV     DPH,R1
    \   00000C   22           RET
-    320          
+    292          
 
    \                                 In  segment BANKED_CODE, align 1, keep-with-next
-    321          void SwitchUpdate(uint8 sw, uint8 first_boot)
+    293          void SwitchUpdate(uint8 sw, uint8 first_boot)
    \                     SwitchUpdate:
-    322          {
+    294          {
    \   000000   74F6         MOV     A,#-0xa
    \   000002   12....       LCALL   ?BANKED_ENTER_XDATA
    \   000005                ; Saved register size: 10
@@ -1288,16 +1181,16 @@ D:\ProgramData\Hardware\zigbee\Projects\zstack\Samples\SensorSys\Source\Switch_E
    \   00000F   AAF0         MOV     R2,B
    \   000011   EA           MOV     A,R2
    \   000012   F9           MOV     R1,A
-   \   000013   12....       LCALL   ?Subroutine6 & 0xFFFF
-   \                     ??CrossCallReturnLabel_14:
+   \   000013   12....       LCALL   ?Subroutine9 & 0xFFFF
+   \                     ??CrossCallReturnLabel_20:
    \   000016   A3           INC     DPTR
    \   000017   A3           INC     DPTR
    \   000018   A3           INC     DPTR
    \   000019   E0           MOVX    A,@DPTR
    \   00001A   FB           MOV     R3,A
-    323              uint8 status_m;
-    324              status_m = SwitchControl[sw].status;
-    325              if(status_m == (SwitchControl[sw].total)-1)
+    295              uint8 status_m;
+    296              status_m = SwitchControl[sw].status;
+    297              if(status_m == (SwitchControl[sw].total)-1)
    \   00001B   8B..         MOV     ?V0 + 0,R3
    \   00001D   8882         MOV     DPL,R0
    \   00001F   8983         MOV     DPH,R1
@@ -1315,8 +1208,8 @@ D:\ProgramData\Hardware\zigbee\Projects\zstack\Samples\SensorSys\Source\Switch_E
    \   000030   E9           MOV     A,R1
    \                     ??SwitchUpdate_0:
    \   000031   7038         JNZ     ??SwitchUpdate_1
-    326              {
-    327                  if(SwitchControl[sw].command == LOOP_OPERATE_CLUSTER)
+    298              {
+    299                  if(SwitchControl[sw].command == LOOP_OPERATE_CLUSTER)
    \   000033   EF           MOV     A,R7
    \   000034   75F007       MOV     B,#0x7
    \   000037   A4           MUL     AB
@@ -1336,19 +1229,19 @@ D:\ProgramData\Hardware\zigbee\Projects\zstack\Samples\SensorSys\Source\Switch_E
    \   00004B   E0           MOVX    A,@DPTR
    \                     ??SwitchUpdate_2:
    \   00004C   7009         JNZ     ??SwitchUpdate_3
-    328                  {
-    329                      SwitchControl[sw].status = 0x00;
-   \   00004E   12....       LCALL   ?Subroutine8 & 0xFFFF
-   \                     ??CrossCallReturnLabel_17:
+    300                  {
+    301                      SwitchControl[sw].status = 0x00;
+   \   00004E   12....       LCALL   ?Subroutine11 & 0xFFFF
+   \                     ??CrossCallReturnLabel_23:
    \   000051   E4           CLR     A
    \   000052   F0           MOVX    @DPTR,A
-    330                      status_m = 0xff;
+    302                      status_m = 0xff;
    \   000053   7BFF         MOV     R3,#-0x1
    \   000055   802F         SJMP    ??SwitchUpdate_4
-    331                  }
-    332                  else
-    333                  {
-    334                      osal_mem_free(SwitchControl[sw].msg);
+    303                  }
+    304                  else
+    305                  {
+    306                      osal_mem_free(SwitchControl[sw].msg);
    \                     ??SwitchUpdate_3:
    \   000057                ; Setup parameters for call to function osal_mem_free
    \   000057   74..         MOV     A,#SwitchControl & 0xff
@@ -1363,29 +1256,29 @@ D:\ProgramData\Hardware\zigbee\Projects\zstack\Samples\SensorSys\Source\Switch_E
    \   000064   E0           MOVX    A,@DPTR
    \   000065   FB           MOV     R3,A
    \   000066   12....       LCALL   ??osal_mem_free?relay
-    335                      return;
+    307                      return;
    \   000069   807F         SJMP    ??SwitchUpdate_5
-    336                  }
-    337              }
-    338              else
-    339              {
-    340                if(!first_boot)
+    308                  }
+    309              }
+    310              else
+    311              {
+    312                if(!first_boot)
    \                     ??SwitchUpdate_1:
    \   00006B   EE           MOV     A,R6
    \   00006C   7018         JNZ     ??SwitchUpdate_4
-    341                {
-    342                    if(status_m == 0xff)
+    313                {
+    314                    if(status_m == 0xff)
    \   00006E   74FF         MOV     A,#-0x1
    \   000070   6B           XRL     A,R3
    \   000071   7004         JNZ     ??SwitchUpdate_6
-    343                    {
-    344                      status_m = 0;
+    315                    {
+    316                      status_m = 0;
    \   000073   7B00         MOV     R3,#0x0
    \   000075   800F         SJMP    ??SwitchUpdate_4
-    345                    }
-    346                    else
-    347                    {
-    348                      (SwitchControl[sw].status)++;
+    317                    }
+    318                    else
+    319                    {
+    320                      (SwitchControl[sw].status)++;
    \                     ??SwitchUpdate_6:
    \   000077   EF           MOV     A,R7
    \   000078   75F007       MOV     B,#0x7
@@ -1393,19 +1286,19 @@ D:\ProgramData\Hardware\zigbee\Projects\zstack\Samples\SensorSys\Source\Switch_E
    \   00007C   F8           MOV     R0,A
    \   00007D   EA           MOV     A,R2
    \   00007E   F9           MOV     R1,A
-   \   00007F   12....       LCALL   ?Subroutine8 & 0xFFFF
-   \                     ??CrossCallReturnLabel_18:
+   \   00007F   12....       LCALL   ?Subroutine11 & 0xFFFF
+   \                     ??CrossCallReturnLabel_24:
    \   000082   E0           MOVX    A,@DPTR
    \   000083   04           INC     A
    \   000084   F0           MOVX    @DPTR,A
-    349                      status_m++;
+    321                      status_m++;
    \   000085   0B           INC     R3
-    350                    }
-    351                }
-    352              }
-    353              
-    354              uint8 port;
-    355              port = SwitchControl[sw].port;
+    322                    }
+    323                }
+    324              }
+    325              
+    326              uint8 port;
+    327              port = SwitchControl[sw].port;
    \                     ??SwitchUpdate_4:
    \   000086   EF           MOV     A,R7
    \   000087   75F007       MOV     B,#0x7
@@ -1413,23 +1306,23 @@ D:\ProgramData\Hardware\zigbee\Projects\zstack\Samples\SensorSys\Source\Switch_E
    \   00008B   F8           MOV     R0,A
    \   00008C   EA           MOV     A,R2
    \   00008D   F9           MOV     R1,A
-   \   00008E   12....       LCALL   ?Subroutine7 & 0xFFFF
-   \                     ??CrossCallReturnLabel_16:
+   \   00008E   12....       LCALL   ?Subroutine10 & 0xFFFF
+   \                     ??CrossCallReturnLabel_22:
    \   000091   E0           MOVX    A,@DPTR
    \   000092   FD           MOV     R5,A
-    356              if( port < P2_SWITCH_NUM )
+    328              if( port < P2_SWITCH_NUM )
    \   000093   C3           CLR     C
    \   000094   9404         SUBB    A,#0x4
    \   000096   EB           MOV     A,R3
    \   000097   75F006       MOV     B,#0x6
    \   00009A   5022         JNC     ??SwitchUpdate_7
-    357              {
-    358                  if(SwitchControl[sw].msg[status_m].value)
+    329              {
+    330                  if(SwitchControl[sw].msg[status_m].value)
    \   00009C   12....       LCALL   ?Subroutine0 & 0xFFFF
    \                     ??CrossCallReturnLabel_0:
    \   00009F   600E         JZ      ??SwitchUpdate_8
-    359                  {
-    360                      P2 |= 0x01 << (port+1);
+    331                  {
+    332                      P2 |= 0x01 << (port+1);
    \   0000A1   7401         MOV     A,#0x1
    \   0000A3   2D           ADD     A,R5
    \   0000A4   78..         MOV     R0,#?V0 + 0
@@ -1437,10 +1330,10 @@ D:\ProgramData\Hardware\zigbee\Projects\zstack\Samples\SensorSys\Source\Switch_E
    \   0000A9   E5..         MOV     A,?V0 + 0
    \   0000AB   42A0         ORL     0xa0,A
    \   0000AD   802F         SJMP    ??SwitchUpdate_9
-    361                  }
-    362                  else
-    363                  {
-    364                      P2 &= ~(0x01 << (port+1));
+    333                  }
+    334                  else
+    335                  {
+    336                      P2 &= ~(0x01 << (port+1));
    \                     ??SwitchUpdate_8:
    \   0000AF   7401         MOV     A,#0x1
    \   0000B1   2D           ADD     A,R5
@@ -1450,17 +1343,17 @@ D:\ProgramData\Hardware\zigbee\Projects\zstack\Samples\SensorSys\Source\Switch_E
    \   0000B9   F4           CPL     A
    \   0000BA   52A0         ANL     0xa0,A
    \   0000BC   8020         SJMP    ??SwitchUpdate_9
-    365                  }
-    366              }
-    367              else
-    368              {
-    369                  if(SwitchControl[sw].msg[status_m].value)
+    337                  }
+    338              }
+    339              else
+    340              {
+    341                  if(SwitchControl[sw].msg[status_m].value)
    \                     ??SwitchUpdate_7:
    \   0000BE   12....       LCALL   ?Subroutine0 & 0xFFFF
    \                     ??CrossCallReturnLabel_1:
    \   0000C1   600E         JZ      ??SwitchUpdate_10
-    370                  {
-    371                      P1 |= 0x01 << (port-2);
+    342                  {
+    343                      P1 |= 0x01 << (port-2);
    \   0000C3   74FE         MOV     A,#-0x2
    \   0000C5   2D           ADD     A,R5
    \   0000C6   78..         MOV     R0,#?V0 + 0
@@ -1468,10 +1361,10 @@ D:\ProgramData\Hardware\zigbee\Projects\zstack\Samples\SensorSys\Source\Switch_E
    \   0000CB   E5..         MOV     A,?V0 + 0
    \   0000CD   4290         ORL     0x90,A
    \   0000CF   800D         SJMP    ??SwitchUpdate_9
-    372                  }
-    373                  else
-    374                  {
-    375                      P1 &= ~(0x01 << (port-2));
+    344                  }
+    345                  else
+    346                  {
+    347                      P1 &= ~(0x01 << (port-2));
    \                     ??SwitchUpdate_10:
    \   0000D1   74FE         MOV     A,#-0x2
    \   0000D3   2D           ADD     A,R5
@@ -1480,13 +1373,13 @@ D:\ProgramData\Hardware\zigbee\Projects\zstack\Samples\SensorSys\Source\Switch_E
    \   0000D9   E5..         MOV     A,?V0 + 0
    \   0000DB   F4           CPL     A
    \   0000DC   5290         ANL     0x90,A
-    376                  }
-    377              }
-    378              
-    379              uint16 event_t;
-    380              event_t = SW_UPDATE_EVT | sw;       // 0x5000 | 0x00??
-    381              
-    382              osal_set_event(Switch_TaskID, event_t);
+    348                  }
+    349              }
+    350              
+    351              uint16 event_t;
+    352              event_t = SW_UPDATE_EVT | sw;       // 0x5000 | 0x00??
+    353              
+    354              osal_set_event(Switch_TaskID, event_t);
    \                     ??SwitchUpdate_9:
    \   0000DE                ; Setup parameters for call to function osal_set_event
    \   0000DE   EF           MOV     A,R7
@@ -1496,7 +1389,7 @@ D:\ProgramData\Hardware\zigbee\Projects\zstack\Samples\SensorSys\Source\Switch_E
    \   0000E5   E0           MOVX    A,@DPTR
    \   0000E6   F9           MOV     R1,A
    \   0000E7   12....       LCALL   ??osal_set_event?relay
-    383          }
+    355          }
    \                     ??SwitchUpdate_5:
    \   0000EA   7F02         MOV     R7,#0x2
    \   0000EC   02....       LJMP    ?BANKED_LEAVE_XDATA
@@ -1504,7 +1397,7 @@ D:\ProgramData\Hardware\zigbee\Projects\zstack\Samples\SensorSys\Source\Switch_E
    \   0000EF                REQUIRE _A_P1
 
    \                                 In  segment BANKED_CODE, align 1, keep-with-next
-   \                     ?Subroutine8:
+   \                     ?Subroutine11:
    \   000000   74..         MOV     A,#(SwitchControl + 3) & 0xff
    \   000002   28           ADD     A,R0
    \   000003   F582         MOV     DPL,A
@@ -1523,10 +1416,10 @@ D:\ProgramData\Hardware\zigbee\Projects\zstack\Samples\SensorSys\Source\Switch_E
    \   000008   A4           MUL     AB
    \   000009   FA           MOV     R2,A
    \   00000A   ABF0         MOV     R3,B
-   \   00000C   12....       LCALL   ?Subroutine15 & 0xFFFF
-   \                     ??CrossCallReturnLabel_32:
-   \   00000F   12....       LCALL   ?Subroutine13 & 0xFFFF
-   \                     ??CrossCallReturnLabel_27:
+   \   00000C   12....       LCALL   ?Subroutine17 & 0xFFFF
+   \                     ??CrossCallReturnLabel_36:
+   \   00000F   12....       LCALL   ?Subroutine14 & 0xFFFF
+   \                     ??CrossCallReturnLabel_29:
    \   000012   E0           MOVX    A,@DPTR
    \   000013   75..01       MOV     ?V0 + 0,#0x1
    \   000016   75..00       MOV     ?V0 + 1,#0x0
@@ -1538,29 +1431,6 @@ D:\ProgramData\Hardware\zigbee\Projects\zstack\Samples\SensorSys\Source\Switch_E
    \   000002   0200         DW 2
    \   000004   0300         DW 3
    \   000006   0400         DW 4
-
-   \                                 In  segment XDATA_ID, align 1, keep-with-next
-   \                     `?<Initializer for Switch_SimpleDesc>`:
-   \   000000   3C           DB 60
-   \   000001   040F         DW 3844
-   \   000003   0100         DW 1
-   \   000005   00           DB 0
-   \   000006   04           DB 4
-   \   000007   ....         DW Switch_ClusterList
-   \   000009   00           DB 0
-   \   00000A   0000         DW 0H
-   \   00000C   00000000     DB 0, 0, 0, 0, 0, 0, 0, 0
-   \            00000000
-   \   000014   00000000     DB 0, 0, 0, 0, 0, 0, 0, 0
-   \            00000000
-   \   00001C   00000000     DB 0, 0, 0, 0, 0, 0, 0, 0
-   \            00000000
-   \   000024   00000000     DB 0, 0, 0, 0, 0, 0, 0, 0
-   \            00000000
-   \   00002C   00000000     DB 0, 0, 0, 0, 0, 0, 0, 0
-   \            00000000
-   \   000034   00000000     DB 0, 0, 0, 0, 0, 0, 0, 0
-   \            00000000
 
    \                                 In  segment BANK_RELAYS, align 1
    \                     ??Switch_Init?relay:
@@ -1581,36 +1451,37 @@ D:\ProgramData\Hardware\zigbee\Projects\zstack\Samples\SensorSys\Source\Switch_E
    \                     ??SwitchUpdate?relay:
    \   000000   12....       LCALL   ?BDISPATCH
    \   000003   ......       DC24    SwitchUpdate
-    384          
-    385          
-    386          /******************************************************************************
-    387           * @fn          Switch_AllowBindConfirm
-    388           *
-    389           * @brief       Indicates when another device attempted to bind to this device
-    390           *
-    391           * @param
-    392           *
-    393           * @return      none
-    394           */
-    395          void Switch_AllowBindConfirm( uint16 source )
-    396          {
-    397               swCnt++;
-    398               Sys_AllowBindConfirm(source);
-    399          }
-    400          
-    401          void Send2Coor(uint8 dev_num, uint16 commandId, uint8 *pData)
-    402          {
-    403              Sys_SendDataRequest( 0xFFFE, &Switch_epDesc[dev_num], commandId, (uint8)osal_strlen( pData ),
-                                                                                                          ^
+    356          
+    357          
+    358          /******************************************************************************
+    359           * @fn          Switch_AllowBindConfirm
+    360           *
+    361           * @brief       Indicates when another device attempted to bind to this device
+    362           *
+    363           * @param
+    364           *
+    365           * @return      none
+    366           */
+    367          void Switch_AllowBindConfirm( uint16 source )
+    368          {
+    369               swCnt++;
+    370               
+    371               Sys_AllowBindConfirm(source);
+    372          }
+    373          
+    374          void Send2Coor(uint8 dev_num, uint16 commandId, uint8 *pData)
+    375          {
+    376              Sys_SendDataRequest( 0xFFFE, Switch_epDesc[dev_num], commandId, (uint8)osal_strlen( pData ),
+                                                                                                         ^
 Warning[Pe167]: argument of type "unsigned char *" is incompatible with
           parameter of type "char *"
 
   void Send2Coor(uint8 dev_num, uint16 commandId, uint8 *pData)
        ^
-"D:\ProgramData\Hardware\zigbee\Projects\zstack\Samples\SensorSys\Source\Switch_End.c",401  Warning[Pe177]: 
+"D:\ProgramData\Hardware\zigbee\Projects\zstack\Samples\SensorSys\Source\Switch_End.c",374  Warning[Pe177]: 
           function "Send2Coor" was declared but never referenced
-    404                                     pData, sysSeqNumber, 0, 0 );
-    405          }
+    377                                     pData, sysSeqNumber, 0, 0 );
+    378          }
 
    Maximum stack usage in bytes:
 
@@ -1624,8 +1495,7 @@ Warning[Pe167]: argument of type "unsigned char *" is incompatible with
      SwitchUpdate                   0      0     27
        -> osal_mem_free             0      0     20
        -> osal_set_event            0      0     20
-     Switch_Init                    1      0      9
-       -> afRegister                0      0     18
+     Switch_Init                    0      0      9
        -> ZDO_RegisterForZDOMsg     0      0     18
      Switch_ProcessEvent            0      0     15
        -> osal_msg_receive          0      0     26
@@ -1652,53 +1522,52 @@ Warning[Pe167]: argument of type "unsigned char *" is incompatible with
      Switch_TaskID                            1
      swCnt                                    1
      Switch_ClusterList                       8
-     Switch_SimpleDesc                       60
-     Switch_epDesc                           30
+     Switch_SimpleDesc                       10
+     Switch_epDesc                           10
      Switch_DstAddr                          12
      SwitchControl                           35
      swTimenow                                1
-     Switch_Init                            145
+     Switch_Init                             35
      Switch_ProcessEvent                    357
-     ?Subroutine10                            4
-     ?Subroutine16                           22
-     ?Subroutine9                             6
-     ?Subroutine3                             7
-     ?Subroutine2                            15
+     ?Subroutine5                             7
+     ?Subroutine4                             4
+     ?Subroutine13                           22
+     ?Subroutine3                            15
      ?Subroutine12                           12
-     ?Subroutine1                            11
-     ?Subroutine15                            4
+     ?Subroutine2                            11
+     ?Subroutine1                             6
+     ?Subroutine17                            4
      ?Subroutine19                           11
-     ?Subroutine13                            4
+     ?Subroutine14                            4
      ?Subroutine18                           11
      SwitchAction                           357
-     ?Subroutine11                            5
-     ?Subroutine17                            9
-     ?Subroutine5                             4
-     ?Subroutine14                            9
-     ?Subroutine4                             6
-     ?Subroutine7                            11
-     ?Subroutine6                            13
+     ?Subroutine8                             5
+     ?Subroutine16                            9
+     ?Subroutine7                             4
+     ?Subroutine15                            9
+     ?Subroutine6                             6
+     ?Subroutine10                           11
+     ?Subroutine9                            13
      SwitchUpdate                           239
-     ?Subroutine8                            11
+     ?Subroutine11                           11
      ?Subroutine0                            26
      ?<Initializer for Switch_ClusterList>    8
-     ?<Initializer for Switch_SimpleDesc>    60
      ??Switch_Init?relay                      6
      ??Switch_ProcessEvent?relay              6
      ??SwitchAction?relay                     6
      ??SwitchUpdate?relay                     6
 
  
- 1 299 bytes in segment BANKED_CODE
+ 1 189 bytes in segment BANKED_CODE
     24 bytes in segment BANK_RELAYS
      6 bytes in segment SFR_AN
-    68 bytes in segment XDATA_I
-    68 bytes in segment XDATA_ID
-    80 bytes in segment XDATA_Z
+     8 bytes in segment XDATA_I
+     8 bytes in segment XDATA_ID
+    70 bytes in segment XDATA_Z
  
- 1 391 bytes of CODE  memory
+ 1 221 bytes of CODE  memory
      0 bytes of DATA  memory (+ 6 bytes shared)
-   148 bytes of XDATA memory
+    78 bytes of XDATA memory
 
 Errors: none
 Warnings: 2

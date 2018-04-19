@@ -232,36 +232,7 @@ void Key_ProcessZDOMsgs( zdoIncomingMsg_t *inMsg )
             // Send bind confirm callback to application
             Sys_BindConfirm( key_bindInProgress, ZB_SUCCESS );
             key_bindInProgress = 0xffff;
-            
-            // malloc epDesc
-             Key_epDesc[keyCnt] = (endPointDesc_t *)osal_mem_alloc(sizeof(endPointDesc_t));
-            Key_SimpleDesc[keyCnt] = (SimpleDescriptionFormat_t *)osal_mem_alloc(sizeof(SimpleDescriptionFormat_t));
-            SimpleDescriptionFormat_t simpleDesc_temp =
-            {
-                    KEY_ENDPOINT,           //  int Endpoint;
-                    SYS_PROFID,                //  uint16 AppProfId[2];
-                    SYS_DEVICEID,              //  uint16 AppDeviceId[2];
-                    SYS_DEVICE_VERSION,        //  int   AppDevVer:4;
-                    SYS_FLAGS,                 //  int   AppFlags:4;
-                    KEY_MAX_CLUSTERS,          //  byte  AppNumInClusters;
-                    (cId_t *)Key_ClusterList,  //  byte *pAppInClusterList;
-                    KEY_MAX_CLUSTERS,          //  byte  AppNumInClusters;
-                    (cId_t *)Key_ClusterList   //  byte *pAppInClusterList;
-            };
-            
-            // Fill out the endpoint description.
-            Key_epDesc[keyCnt]->endPoint = KEY_ENDPOINT+keyCnt;
-            Key_epDesc[keyCnt]->task_id = &Key_TaskID;
-        
-            osal_memcpy(Key_SimpleDesc[keyCnt], &simpleDesc_temp, sizeof(SimpleDescriptionFormat_t));
-            
-            Key_epDesc[keyCnt]->simpleDesc
-                                                = (SimpleDescriptionFormat_t *)(Key_SimpleDesc[keyCnt]);
-            Key_SimpleDesc[keyCnt]->EndPoint += keyCnt;
-            Key_epDesc[keyCnt]->latencyReq = noLatencyReqs;
-            
-            // Register the endpoint description with the AF
-            afRegister( Key_epDesc[keyCnt] );
+
             keyCnt++;
           }
           else
@@ -293,6 +264,36 @@ void Key_BindDevice ( uint8 create, uint8 endpoint, uint16 *commandId, uint8 *pD
   zAddrType_t destination;
   uint8 ret = ZB_ALREADY_IN_PROGRESS;
 
+  // malloc epDesc
+    Key_epDesc[keyCnt] = (endPointDesc_t *)osal_mem_alloc(sizeof(endPointDesc_t));
+    Key_SimpleDesc[keyCnt] = (SimpleDescriptionFormat_t *)osal_mem_alloc(sizeof(SimpleDescriptionFormat_t));
+    SimpleDescriptionFormat_t simpleDesc_temp =
+    {
+            KEY_ENDPOINT,           //  int Endpoint;
+            SYS_PROFID,                //  uint16 AppProfId[2];
+            SYS_DEVICEID,              //  uint16 AppDeviceId[2];
+            SYS_DEVICE_VERSION,        //  int   AppDevVer:4;
+            SYS_FLAGS,                 //  int   AppFlags:4;
+            KEY_MAX_CLUSTERS,          //  byte  AppNumInClusters;
+            (cId_t *)Key_ClusterList,  //  byte *pAppInClusterList;
+            KEY_MAX_CLUSTERS,          //  byte  AppNumInClusters;
+            (cId_t *)Key_ClusterList   //  byte *pAppInClusterList;
+    };
+    
+    // Fill out the endpoint description.
+    Key_epDesc[keyCnt]->endPoint = KEY_ENDPOINT+keyCnt;
+    Key_epDesc[keyCnt]->task_id = &Key_TaskID;
+
+    osal_memcpy(Key_SimpleDesc[keyCnt], &simpleDesc_temp, sizeof(SimpleDescriptionFormat_t));
+    
+    Key_epDesc[keyCnt]->simpleDesc
+                                        = (SimpleDescriptionFormat_t *)(Key_SimpleDesc[keyCnt]);
+    Key_SimpleDesc[keyCnt]->EndPoint += keyCnt;
+    Key_epDesc[keyCnt]->latencyReq = noLatencyReqs;
+    
+    // Register the endpoint description with the AF
+    afRegister( Key_epDesc[keyCnt] );
+  
   if ( create )
   {
     if (key_bindInProgress == 0xffff)

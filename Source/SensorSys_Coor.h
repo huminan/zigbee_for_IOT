@@ -79,7 +79,7 @@ extern uint8 ZDAppTaskID;
 extern endPointDesc_t Sys_epDesc;
 extern endPointDesc_t *Key_epDesc[KEY_NUM_MAX];
 extern endPointDesc_t Motor_epDesc[MOTOR_NUM_MAX];
-extern endPointDesc_t Switch_epDesc[SWITCH_NUM_MAX];
+extern endPointDesc_t *Switch_epDesc[SWITCH_NUM_MAX];
 
 extern uint8 sysSeqNumber;
 
